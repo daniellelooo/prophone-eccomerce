@@ -1,0 +1,196 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { useCartStore } from "@/lib/store";
+import { formatPrice } from "@/lib/products";
+
+export default function CartDrawer() {
+  const { items, isOpen, closeCart, removeItem, updateQuantity, total } =
+    useCartStore();
+  const cartTotal = total();
+
+  const whatsappMessage = items
+    .map(
+      (item) =>
+        `• ${item.product.name} (x${item.quantity}) - ${formatPrice(
+          item.product.price * item.quantity
+        )}`
+    )
+    .join("\n");
+
+  const whatsappUrl = `https://wa.me/573001234567?text=${encodeURIComponent(
+    `Hola! Me interesa comprar:\n\n${whatsappMessage}\n\n*Total: ${formatPrice(cartTotal)}*\n\n¿Me pueden ayudar?`
+  )}`;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            key="overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+            onClick={closeCart}
+          />
+
+          <motion.aside
+            key="drawer"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col"
+          >
+            <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-100">
+              <div className="flex items-center gap-2">
+                <ShoppingBag size={20} className="text-neutral-700" />
+                <span className="font-semibold text-neutral-900">
+                  Tu carrito
+                </span>
+                {items.length > 0 && (
+                  <span className="text-sm text-neutral-500">
+                    ({items.length} {items.length === 1 ? "producto" : "productos"})
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={closeCart}
+                className="p-2 rounded-full hover:bg-neutral-100 transition-colors"
+                aria-label="Cerrar carrito"
+              >
+                <X size={18} className="text-neutral-600" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-16">
+                  <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
+                    <ShoppingBag size={24} className="text-neutral-400" />
+                  </div>
+                  <p className="font-medium text-neutral-700 mb-2">
+                    Tu carrito está vacío
+                  </p>
+                  <p className="text-sm text-neutral-400 mb-6">
+                    Agrega productos para continuar
+                  </p>
+                  <Link
+                    href="/catalogo"
+                    onClick={closeCart}
+                    className="text-sm text-[#0071E3] font-medium hover:underline"
+                  >
+                    Ver catálogo →
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <motion.div
+                      key={item.product.id}
+                      layout
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="flex gap-4 py-4 border-b border-neutral-100 last:border-0"
+                    >
+                      <div className="w-20 h-20 bg-neutral-50 rounded-2xl flex items-center justify-center flex-shrink-0 overflow-hidden p-2">
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          width={80}
+                          height={80}
+                          className="object-contain w-full h-full"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-neutral-900 text-sm truncate">
+                          {item.product.name}
+                        </p>
+                        {item.selectedStorage && (
+                          <p className="text-xs text-neutral-500 mt-0.5">
+                            {item.selectedStorage}
+                          </p>
+                        )}
+                        {item.selectedColor && (
+                          <p className="text-xs text-neutral-500">
+                            {item.selectedColor}
+                          </p>
+                        )}
+                        <p className="text-sm font-semibold text-neutral-900 mt-1">
+                          {formatPrice(item.product.price * item.quantity)}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity - 1)
+                            }
+                            className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="text-sm font-medium w-5 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.product.id, item.quantity + 1)
+                            }
+                            className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                          >
+                            <Plus size={12} />
+                          </button>
+                          <button
+                            onClick={() => removeItem(item.product.id)}
+                            className="ml-auto text-neutral-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {items.length > 0 && (
+              <div className="px-6 py-5 border-t border-neutral-100 space-y-3 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600">Subtotal</span>
+                  <span className="font-semibold text-neutral-900">
+                    {formatPrice(cartTotal)}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-400">
+                  El precio final puede variar. Te confirmaremos por WhatsApp.
+                </p>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-[#1ebe5d] active:scale-98 transition-all"
+                >
+                  Pedir por WhatsApp
+                </a>
+                <Link
+                  href="/checkout"
+                  onClick={closeCart}
+                  className="flex items-center justify-center gap-2 w-full bg-[#0071E3] text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-[#0051a2] active:scale-98 transition-all"
+                >
+                  Finalizar compra
+                </Link>
+              </div>
+            )}
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
