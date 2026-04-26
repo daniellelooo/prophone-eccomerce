@@ -63,28 +63,98 @@ export type Product = {
 };
 
 // ────────────────────────────────────────────────────────────────────────────
-// Imágenes placeholder (se reemplazan en A2)
+// Imágenes — fuentes oficiales: apple.com/co (CDN propio) y mac-center.com (CDN Shopify).
+// Para modelos cuya imagen real no se pudo verificar (15 Pro / 13 series /
+// algunos MacBook viejos), se usa un placeholder genérico — están listados en
+// ROADMAP.md → Fase A2 imágenes pendientes y se pueden reemplazar desde el
+// panel admin (fase C).
 // ────────────────────────────────────────────────────────────────────────────
+
+// Mac Center (Shopify CDN)
+const MC = "https://mac-center.com/cdn/shop/files";
+
+// Imágenes verificadas
+const IMG = {
+  // iPhone 17 series
+  iphone17ProMax: `${MC}/IMG-18067850_m_jpeg_1_7f0a8770-3be1-4888-9af6-dc0827bb625e_533x.jpg`,
+  iphone17ProMaxOrange: `${MC}/IMG-18067840_m_jpeg_1_cbb81747-c097-4877-b37f-be80c757bd35_533x.jpg`,
+  iphone17ProMaxSilver: `${MC}/IMG-18067860_m_jpeg_1_d4944749-fbd5-40f6-8768-b7fe47ec128e_533x.jpg`,
+  iphone17Pro: `${MC}/IMG-18067820_m_jpeg_1_f42ce3c3-2f23-4ffe-9735-738b5ae914ac_533x.jpg`,
+  iphone17ProSilver: `${MC}/IMG-18067870_m_jpeg_1_d919f178-0873-4be3-acd3-31a69585e4de_533x.jpg`,
+  iphone17ProBlue: `${MC}/IMG-18067830_m_jpeg_1_62ab681f-ce40-49f4-afca-e47b925d6e2f_533x.jpg`,
+  iphone17: `${MC}/IMG-18067890_m_jpeg_1_2dc09583-6b92-4954-8962-efc8f0f7e4ef_533x.jpg`,
+  iphone17Black: `${MC}/IMG-18067790_m_jpeg_1_5efc0450-43dc-407e-971d-7715dec0f20c_533x.jpg`,
+  iphone17Lavender: `${MC}/IMG-18067800_m_jpeg_1_7074eee5-198f-41ee-b96d-0203c1d47da8_533x.jpg`,
+  iphoneAir: `${MC}/IMG-18067929_m_jpeg_1_c78cd6ab-1f03-403c-983b-7a38ef6d9a26_533x.jpg`,
+  iphoneAirGold: `${MC}/IMG-18067909_m_jpeg_1_6f3dd72c-74cc-4ff5-a566-3e6c98d48803_533x.jpg`,
+  iphoneAirSky: `${MC}/IMG-18067919_m_jpeg_1_f8a85703-1b31-4276-abe2-e4c9457f0e75_533x.jpg`,
+  iphoneAirWhite: `${MC}/IMG-18067900_m_jpeg_1_c56192bd-db22-44d5-b8fa-35816f464d78_533x.jpg`,
+
+  // iPhone 16 series
+  iphone16ProMax: `${MC}/IMG-14858921_533x.jpg`,
+  iphone16ProMaxBlack: `${MC}/IMG-14858901_533x.jpg`,
+  iphone16ProMaxWhite: `${MC}/IMG-14858931_533x.jpg`,
+  iphone16Pro: `${MC}/IMG-14858881_533x.jpg`,
+  iphone16ProNatural: `${MC}/IMG-14858941_533x.jpg`,
+  iphone16ProDesert: `${MC}/IMG-14858891_4aaca27f-7b1a-443d-90c5-9b94c5255297_533x.jpg`,
+  iphone16ProWhite: `${MC}/IMG-14858951_533x.jpg`,
+  iphone16: `${MC}/IMG-14858811_e0b5bf26-cf08-4eb8-831d-4b6a64eb4081_533x.jpg`,
+
+  // iPhone 15 series (parcial)
+  iphone15Black: `${MC}/iPhone_15_Negro_de_128_GB_533x.jpg`,
+  iphone15Blue: `${MC}/IMG-10935061_533x.jpg`,
+  iphone15Pink: `${MC}/IMG-10935081_533x.jpg`,
+  iphone15Green: `${MC}/IMG-10935071_e8d611ec-53bf-4319-8326-91c29d1bbc3b_533x.jpg`,
+  iphone15Plus: `${MC}/IMG-10935121_1c9a6788-db9f-4c2e-bc2a-ec310a624aa4_533x.jpg`,
+
+  // iPhone 14 series (parcial — Pro Max no encontrada)
+  iphone14: `${MC}/IMG-7379905_533x.jpg`,
+  iphone14Pro: `${MC}/iPhone_14_Pro_Silver_PDP_Image_Position-1a_COES_e35b492d-d1f3-47e7-991b-95c81d5717a7_533x.jpg`,
+  iphone14PlusYellow: `${MC}/iPhone_14_Plus_Yellow_PDP_Image_Position-1A_COES_7b1cb922-ae7e-4ce2-acf8-c6a8ce41ae31_533x.jpg`,
+
+  // iPad
+  ipadA16Silver: `${MC}/IMG-16741320_ccd08b7b-9345-4fd6-9d28-88354825b10e_533x.jpg`,
+  ipadA16Blue: `${MC}/IMG-16741304_63c4f7dd-76c6-4fba-91d3-b41dff34a696_533x.jpg`,
+  ipadA16Pink: `${MC}/IMG-16741312_93298a39-c3a6-4234-8eca-9cef88b60393_533x.jpg`,
+  ipadA16Yellow: `${MC}/IMG-16741328_533x.jpg`,
+
+  // Apple Watch
+  watchUltra2: `${MC}/Watch_Ultra2_LTE_49mm_Titanium_White_Ocean_Band_PDP_Image_Position-1__COES_607c25f9-bd82-465c-b6fc-32dd3c0b8740_533x.jpg`,
+  watchUltra2Trail: `${MC}/Watch_Ultra2_LTE_49mm_Titanium_Green_Gray_Trail_Loop_PDP_Image_Position-1__COES_ed27fae3-4b46-455e-9686-8ff72b386370_533x.jpg`,
+
+  // AirPods
+  airpods4Anc: `${MC}/IMG-14858597_533x.jpg`,
+  airpods4: `${MC}/IMG-14858589_533x.jpg`,
+
+  // MacBook (parcial — M5 14" / M3 14" / Air M1 / Neo no encontradas)
+  macbookProM4Silver: `${MC}/IMG-15363156_533x.jpg`,
+  macbookProM4Black: `${MC}/IMG-15363164_d48cfa0c-95bd-46f0-89a1-e7b64ab0a6e7_533x.jpg`,
+  macbookAirM5_13: `${MC}/IMG-19266122_m_jpeg_1_f8ff8742-917b-4eba-9769-0c258f4e6c97_533x.jpg`,
+  macbookAirM5_15: `${MC}/IMG-19266158_m_jpeg_1_fbcc712b-3768-4829-8d27-33090ff560a8_533x.jpg`,
+  macbookAirM4_15: `${MC}/IMG-16751998_09edd969-6335-4b1d-b5e3-460cfe2ffe28_533x.jpg`,
+};
+
+// Imágenes locales del proyecto (assets ya existentes)
+const LOCAL = {
+  iphone14: "/IPHONE14.jpeg",
+  iphone16: "/IPHONE16.jpeg",
+  ipadA16: "/IPADA16.png",
+  iphone17ProMax: "/IPHONE 17 PRO MAX HORIZONTAL.jpg",
+  iphone17Pro: "/IPHONE17PROHORIZONTAL.jpg",
+};
+
+// Placeholders genéricos para productos sin foto verificada todavía.
+// Listar en ROADMAP.md → "imágenes pendientes" para reemplazar luego.
 const PLACEHOLDER = {
-  iphone:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuD9g9pZG9mhpEKLP5AZyOP9WlwKdQ2k-VVn1kN-sqAo1TsbnsGjV_Sby7pexA8SBrhl_CPz0aDbuPPSJYy3UUUoKf7AWiECBAet6C-CgJjso76WYXMCgldFx_4dwWJ_uycuJ_iUCw46_kwO34XUM-6tl39QUb94vderlZ-gKeY_u3ph67syax9sp_CBbW_S8J0koexKLIUQ4O5kZWtw5ENcqi_7X64wVr0-Y95zLEjNXVgXoNOkgUeGaCS3muXRnlwkEcei9uFRjn0",
-  iphonePro:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBgc3-nl3Vn7l48ZC8Nms17dFZcVZFGDsqv1rt3Pa9KOvhOrvW88Vkakicz4VL7J4hs9f7kvhK-0xO34BwsW2oHiTOCya_vX4FRlYE6byFYALH422czxJOyPSOnNho72DmrUlichAOCrEAS-KGBlMWS0UClwjwvR_DAclyHF2nRLxUMeN8iiXTJcHb1nuHUJxs3PymxyhO8TzqZsd8X8ctCpLStuwUrZ7sk6c7N8nZ9nz5NWWlrSzj1rLkV8Eq0EXHVkRR17VJuoT4",
-  ipad:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuChQmBTGDPK2majj1XYr2eQJDvtLS6WF7nrgUQhD1wjHRPKtjflzdoK24G2E7yd1PV9d0D2svmvM5g5p5pvmk844ICda2yB37-_d24y60yGht04BvOLHOm-cTppqmst7YqxY7jzqH1q5PgorbE6Xs3M9TgIqOqTfWUrMB-or6U3CDXxyrhdJujyJCa2PT8uVNfTyqchnvMOG74eGHRG0kQZodUXAzJZuMnt0oeqhYIcSu2InlLmPhVGZg3uPwFYTJIw4dWgQVtohLM",
-  ipadA16:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuC7hcyOUaTXeSbVGw0BsOns7PXEa5In9n2uDeSg05GPvRDkqGl9dtwSE2uUqMQpPs5Ddglf619pcEanVs3Rn_U4Zz_4EmYgbE5JVtmnyyRl35qOHKO-3RLwD_NkDarrBNNZqSJOyAJK_OVGWyBmKeCovjSPNzx5wFWG_ZVf7HExGOMXSYcrZk0k1imHB9WOVVUz_9FlnzyfbA0jQ19vGeWBUlhlP-hyM9tnUw9jRyFww9ado_RRNPyywTns66pkOjKB_9O4hMnIG0U",
-  watchUltra:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCF3Zwi1jHIr2w31iOmURSErcQ8T-BaEGdy-UsV_0eDo3YzYcpU_sn5JbAe1n29P-bjb8YldJdF1APEJOlsNrKlrBAn4Bef6gLu70plqvEcN8YBH4R6UXiVAbxp8uI-S-IlKtLK89h64zzVS2V7lqe06WjDJz-p-7xQ1Lyvdw_m8tUs7cl5YVBQVbMted1NddNdOFeHOU5rgpAwMPXvejVfkHFqmySRJ_gZo267UwmaUYRt_a-DXo_uQ29VWTQe1V6DYK1yLNBbYAyk",
-  watchSeries:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBw3zo8Jla8vhu74BR0HBBXexXP4UTWfM_m25P6WvJZmIxfQnIffyVwdg7s5VsKq4Se7NHC3O_gY9Eh4M4APmJGBCRC9yE3bcUUHqIsstdj6ooUxLwbaRCiwcR73-aG7LS5w8auQ_wXhmLUbLaZItEBMFbLP1g-DI_Um0b_6kPZmtkQFscDUev9wFWCvygT_34rKOMsCZW51J3OOf6VELi3xAeJq4RwUaCxMfGATcIq-g0IqNAqeiC_6ZRPJCpGzz5bQYjJ2URYEZw",
-  airpods:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCdBBl3KFwzPGhRlxcOiyRaGcIXs2aBdKK1UfSJJzXqKklpXFuSakGp8D1GD5tNYCn3xSdmkf93nPMhEVAXLBXi6DAlAXCCzlQxPtD7l6RU-vj1kXEQTlJb97uagRBFlf8jJL6rG_mT5m3-8LVxhQMnbHJlBl_cDqiDjEqBYz-H3LGflU5FQE9P1RUv7TfcEH9OFp-9BF2Uh5Phu3VbmMlqxJnBHUCvlS2n7FBp3HIMmGJhzFZBOzSc0CdBT5FXpFf2xmJVfSug",
-  accesorio:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDvuS5CqHhkf8Dh3_Oc-vBjMV43XKE3mHqNrVeVs_56EwUTVt1pjFH4xvJSzU-kizEKIzD06pEi0v0Cj2W_GW2m6I2oQcR3sczp0cxTOt7kHBhsS5R0Zxii3bsumSqhbQHMOT_8AEPzGODSfmpMMDL3KLB0oNZlOE7B-EAJmMXAQbpFZ2Nt1a63bTwRy9NBZJW8DFB9WlGwkwqsVKSG7m0XKXSoiEkD0vVkCiqDfVEJeIJ2YgBXAkN0EAKGG9KT-EXWQHKbTbQ",
-  // MacBooks: usar imagen genérica de iPad por ahora hasta A2.
-  macbook:
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuChQmBTGDPK2majj1XYr2eQJDvtLS6WF7nrgUQhD1wjHRPKtjflzdoK24G2E7yd1PV9d0D2svmvM5g5p5pvmk844ICda2yB37-_d24y60yGht04BvOLHOm-cTppqmst7YqxY7jzqH1q5PgorbE6Xs3M9TgIqOqTfWUrMB-or6U3CDXxyrhdJujyJCa2PT8uVNfTyqchnvMOG74eGHRG0kQZodUXAzJZuMnt0oeqhYIcSu2InlLmPhVGZg3uPwFYTJIw4dWgQVtohLM",
+  iphone: IMG.iphone16, // genérico iPhone estándar
+  iphonePro: IMG.iphone16Pro, // genérico iPhone Pro
+  ipad: IMG.ipadA16Silver,
+  ipadA16: IMG.ipadA16Silver,
+  watchUltra: IMG.watchUltra2,
+  watchSeries: IMG.watchUltra2,
+  airpods: IMG.airpods4Anc,
+  accesorio: IMG.airpods4,
+  macbook: IMG.macbookProM4Silver,
 };
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -102,8 +172,8 @@ export const products: Product[] = [
     description:
       "El iPhone más avanzado del lineup 2025. Disponible nuevo con garantía Apple y en exhibición a precio especial.",
     shortDescription: "Nuevo y exhibición · Hasta 1 TB",
-    image: PLACEHOLDER.iphonePro,
-    images: [PLACEHOLDER.iphonePro],
+    image: IMG.iphone17ProMax,
+    images: [IMG.iphone17ProMax, IMG.iphone17ProMaxOrange, IMG.iphone17ProMaxSilver],
     colors: [],
     features: [],
     isNew: true,
@@ -126,8 +196,8 @@ export const products: Product[] = [
     family: "iPhone 17",
     description: "iPhone 17 Pro en exhibición con 3.5 meses de garantía Prophone.",
     shortDescription: "Exhibición · 256 GB y 512 GB",
-    image: PLACEHOLDER.iphonePro,
-    images: [PLACEHOLDER.iphonePro],
+    image: IMG.iphone17Pro,
+    images: [IMG.iphone17Pro, IMG.iphone17ProSilver, IMG.iphone17ProBlue],
     colors: [],
     features: [],
     isNew: true,
@@ -147,8 +217,8 @@ export const products: Product[] = [
     family: "iPhone 17",
     description: "iPhone 17 en exhibición.",
     shortDescription: "Exhibición · 256 GB",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone17,
+    images: [IMG.iphone17, IMG.iphone17Black, IMG.iphone17Lavender],
     colors: [],
     features: [],
     isNew: true,
@@ -166,8 +236,8 @@ export const products: Product[] = [
     family: "iPhone Air",
     description: "iPhone Air en exhibición.",
     shortDescription: "Exhibición · 256 GB y 512 GB",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphoneAir,
+    images: [IMG.iphoneAir, IMG.iphoneAirGold, IMG.iphoneAirSky, IMG.iphoneAirWhite],
     colors: [],
     features: [],
     isNew: true,
@@ -186,8 +256,8 @@ export const products: Product[] = [
     family: "iPhone 16",
     description: "iPhone 16 Pro Max en exhibición con la mejor relación precio/calidad.",
     shortDescription: "Exhibición · 256 GB y 512 GB",
-    image: PLACEHOLDER.iphonePro,
-    images: [PLACEHOLDER.iphonePro],
+    image: IMG.iphone16ProMax,
+    images: [IMG.iphone16ProMax, IMG.iphone16ProMaxBlack, IMG.iphone16ProMaxWhite],
     colors: [],
     features: [],
     isFeatured: true,
@@ -207,8 +277,8 @@ export const products: Product[] = [
     description:
       "El iPhone Pro de 2024. Chip A18 Pro, sistema de cámaras Pro de 48 MP y diseño en titanio. Disponible en exhibición.",
     shortDescription: "Chip A18 Pro · Cámara 48 MP · Titanio",
-    image: PLACEHOLDER.iphonePro,
-    images: [PLACEHOLDER.iphonePro],
+    image: IMG.iphone16Pro,
+    images: [IMG.iphone16Pro, IMG.iphone16ProNatural, IMG.iphone16ProDesert, IMG.iphone16ProWhite],
     colors: [
       { name: "Titanio Natural", hex: "#b5a898" },
       { name: "Titanio Negro", hex: "#3d3d3d" },
@@ -239,8 +309,8 @@ export const products: Product[] = [
     family: "iPhone 16",
     description: "iPhone 16 Plus en exhibición a precio bomba.",
     shortDescription: "Exhibición · 128 GB",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone16,
+    images: [IMG.iphone16],
     colors: [],
     features: [],
     badge: "Precio bomba",
@@ -259,8 +329,8 @@ export const products: Product[] = [
     description:
       "iPhone 16 con chip A18, sistema de cámara Fusion de 48 MP y Dynamic Island. Disponible nuevo y en exhibición.",
     shortDescription: "Chip A18 · Cámara 48 MP · Dynamic Island",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone16,
+    images: [IMG.iphone16, LOCAL.iphone16],
     colors: [
       { name: "Negro", hex: "#1c1c1c" },
       { name: "Blanco", hex: "#f5f5f0" },
@@ -291,7 +361,7 @@ export const products: Product[] = [
     family: "iPhone 15",
     description: "iPhone 15 Pro Max en exhibición.",
     shortDescription: "Exhibición · 256 GB y 1 TB",
-    image: PLACEHOLDER.iphonePro,
+    image: PLACEHOLDER.iphonePro, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphonePro],
     colors: [],
     features: [],
@@ -311,7 +381,7 @@ export const products: Product[] = [
     description:
       "iPhone 15 Pro de titanio con chip A17 Pro. Disponible en exhibición; la variante de 128 GB conserva batería al 100%.",
     shortDescription: "Chip A17 Pro · Titanio · USB-C",
-    image: PLACEHOLDER.iphonePro,
+    image: PLACEHOLDER.iphonePro, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphonePro],
     colors: [
       { name: "Titanio Natural", hex: "#b5a898" },
@@ -343,8 +413,8 @@ export const products: Product[] = [
     family: "iPhone 15",
     description: "iPhone 15 Plus en exhibición.",
     shortDescription: "Exhibición · 128 GB",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone15Plus,
+    images: [IMG.iphone15Plus],
     colors: [],
     features: [],
     variants: [
@@ -362,8 +432,8 @@ export const products: Product[] = [
     description:
       "iPhone 15 con Dynamic Island, chip A16 Bionic y conector USB-C. Disponible nuevo y en exhibición.",
     shortDescription: "Chip A16 · Dynamic Island · USB-C",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone15Black,
+    images: [IMG.iphone15Black, IMG.iphone15Blue, IMG.iphone15Pink, IMG.iphone15Green],
     colors: [
       { name: "Negro", hex: "#1c1c1c" },
       { name: "Rosa", hex: "#f5c6c6" },
@@ -394,7 +464,7 @@ export const products: Product[] = [
     family: "iPhone 14",
     description: "iPhone 14 Pro Max en exhibición.",
     shortDescription: "Exhibición · 128 GB, 256 GB y 512 GB",
-    image: PLACEHOLDER.iphonePro,
+    image: PLACEHOLDER.iphonePro, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphonePro],
     colors: [],
     features: [],
@@ -414,8 +484,8 @@ export const products: Product[] = [
     family: "iPhone 14",
     description: "iPhone 14 Pro en exhibición.",
     shortDescription: "Exhibición · 256 GB",
-    image: PLACEHOLDER.iphonePro,
-    images: [PLACEHOLDER.iphonePro],
+    image: IMG.iphone14Pro,
+    images: [IMG.iphone14Pro],
     colors: [],
     features: [],
     variants: [
@@ -433,8 +503,8 @@ export const products: Product[] = [
     description:
       "iPhone 14 con chip A15 Bionic, sistema de cámara dual de 12 MP y pantalla Super Retina XDR de 6.1\". Disponible nuevo a precio promocional y en exhibición.",
     shortDescription: "Chip A15 · Cámara 12 MP · Super Retina XDR",
-    image: PLACEHOLDER.iphone,
-    images: [PLACEHOLDER.iphone],
+    image: IMG.iphone14,
+    images: [IMG.iphone14, LOCAL.iphone14],
     colors: [
       { name: "Medianoche", hex: "#1c1c1e" },
       { name: "Blanco estrella", hex: "#f2f0eb" },
@@ -466,7 +536,7 @@ export const products: Product[] = [
     family: "iPhone 13",
     description: "iPhone 13 Pro Max en exhibición con batería al 100%.",
     shortDescription: "Exhibición · Batería al 100%",
-    image: PLACEHOLDER.iphonePro,
+    image: PLACEHOLDER.iphonePro, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphonePro],
     colors: [],
     features: [],
@@ -485,7 +555,7 @@ export const products: Product[] = [
     family: "iPhone 13",
     description: "iPhone 13 Pro en exhibición.",
     shortDescription: "Exhibición · 128 GB y 256 GB",
-    image: PLACEHOLDER.iphonePro,
+    image: PLACEHOLDER.iphonePro, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphonePro],
     colors: [],
     features: [],
@@ -504,7 +574,7 @@ export const products: Product[] = [
     family: "iPhone 13",
     description: "iPhone 13 en exhibición con batería al 100%.",
     shortDescription: "Exhibición · Batería al 100%",
-    image: PLACEHOLDER.iphone,
+    image: PLACEHOLDER.iphone, // imagen pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.iphone],
     colors: [],
     features: [],
@@ -524,7 +594,7 @@ export const products: Product[] = [
     description:
       "Ridículamente potente. Con chip M4, pantalla Ultra Retina XDR OLED tandem y diseño ultrafino de 5.1 mm.",
     shortDescription: "Chip M4 · OLED Ultra Retina · 5.1 mm",
-    image: PLACEHOLDER.ipad,
+    image: PLACEHOLDER.ipad, // imagen específica del Pro M4 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.ipad],
     colors: [
       { name: "Plata", hex: "#e3e3e3" },
@@ -558,8 +628,8 @@ export const products: Product[] = [
     description:
       "El iPad más accesible con chip A16 y pantalla Liquid Retina de 10.9\". Perfecto para empezar en el ecosistema Apple.",
     shortDescription: "Chip A16 · Liquid Retina 10.9\"",
-    image: PLACEHOLDER.ipadA16,
-    images: [PLACEHOLDER.ipadA16],
+    image: IMG.ipadA16Silver,
+    images: [IMG.ipadA16Silver, IMG.ipadA16Blue, IMG.ipadA16Pink, IMG.ipadA16Yellow, LOCAL.ipadA16],
     colors: [
       { name: "Azul", hex: "#a8c5da" },
       { name: "Rosa", hex: "#f2c4ce" },
@@ -590,7 +660,7 @@ export const products: Product[] = [
     family: "iPad Air",
     description: "Potencia M2 en un diseño ligero. Pantalla Liquid Retina de 10.9\".",
     shortDescription: "Chip M2 · Liquid Retina · Ligero",
-    image: PLACEHOLDER.ipadA16,
+    image: PLACEHOLDER.ipadA16, // imagen específica del Air M2 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.ipadA16],
     colors: [
       { name: "Azul", hex: "#a8c5da" },
@@ -620,8 +690,8 @@ export const products: Product[] = [
     description:
       "El Apple Watch más avanzado. Carcasa de titanio de 49 mm para los aventureros más exigentes.",
     shortDescription: "Titanio · 49 mm · GPS doble frecuencia",
-    image: PLACEHOLDER.watchUltra,
-    images: [PLACEHOLDER.watchUltra],
+    image: IMG.watchUltra2,
+    images: [IMG.watchUltra2, IMG.watchUltra2Trail],
     colors: [
       { name: "Titanio Natural", hex: "#b5a898" },
       { name: "Titanio Negro", hex: "#3d3d3d" },
@@ -649,7 +719,7 @@ export const products: Product[] = [
     description:
       "El Apple Watch más avanzado para el día a día. Chip S9, función de doble toque y Always-On Display.",
     shortDescription: "Chip S9 · Doble toque · 45 mm",
-    image: PLACEHOLDER.watchSeries,
+    image: PLACEHOLDER.watchSeries, // imagen específica del Series 9 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.watchSeries],
     colors: [
       { name: "Medianoche", hex: "#1c1c1e" },
@@ -679,8 +749,8 @@ export const products: Product[] = [
     description:
       "AirPods con sonido de alta fidelidad, cancelación de ruido activa y chip H2.",
     shortDescription: "Chip H2 · Cancelación de ruido · USB-C",
-    image: PLACEHOLDER.airpods,
-    images: [PLACEHOLDER.airpods],
+    image: IMG.airpods4Anc,
+    images: [IMG.airpods4Anc, IMG.airpods4],
     colors: [{ name: "Blanco", hex: "#f5f5f0" }],
     features: [
       "Chip H2",
@@ -706,7 +776,7 @@ export const products: Product[] = [
     description:
       "Cargador compacto USB-C de 20W de Apple. Compatible con iPhone 8 o superior y todos los iPad con USB-C.",
     shortDescription: "20W · USB-C · Carga rápida",
-    image: PLACEHOLDER.accesorio,
+    image: PLACEHOLDER.accesorio, // imagen específica pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.accesorio],
     colors: [{ name: "Blanco", hex: "#f5f5f0" }],
     features: [
@@ -730,7 +800,7 @@ export const products: Product[] = [
     description:
       "Cable USB-C a Lightning de Apple certificado MFi. Carga rápida y transferencia de datos. Longitud de 1 metro.",
     shortDescription: "1 m · MFi · Carga rápida",
-    image: PLACEHOLDER.accesorio,
+    image: PLACEHOLDER.accesorio, // imagen específica pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.accesorio],
     colors: [{ name: "Blanco", hex: "#f5f5f0" }],
     features: [
@@ -754,7 +824,7 @@ export const products: Product[] = [
     description:
       "Apple Pencil con conector USB-C. Escritura fluida y precisa para iPad.",
     shortDescription: "USB-C · Escritura precisa",
-    image: PLACEHOLDER.ipad,
+    image: PLACEHOLDER.ipad, // imagen específica del Apple Pencil USB-C pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.ipad],
     colors: [{ name: "Blanco", hex: "#f5f5f0" }],
     features: [
@@ -778,7 +848,7 @@ export const products: Product[] = [
     description:
       "Cargador MagSafe de Apple con hasta 15W de carga inalámbrica para iPhone 12 o superior.",
     shortDescription: "15W · Magnético · iPhone 12+",
-    image: PLACEHOLDER.accesorio,
+    image: PLACEHOLDER.accesorio, // imagen específica pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.accesorio],
     colors: [{ name: "Blanco", hex: "#f5f5f0" }],
     features: [
@@ -802,7 +872,7 @@ export const products: Product[] = [
     family: "MacBook Pro",
     description: "MacBook Pro 14\" con chip M5. Garantía Apple de 1 año.",
     shortDescription: "M5 · 14\" · 16 GB RAM",
-    image: PLACEHOLDER.macbook,
+    image: PLACEHOLDER.macbook, // imagen específica del Pro M5 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.macbook],
     colors: [],
     features: ["Chip Apple M5", "Pantalla 14\"", "16 GB RAM unificada"],
@@ -823,8 +893,8 @@ export const products: Product[] = [
     family: "MacBook Pro",
     description: "MacBook Pro 14\" con chip M4. Garantía Apple de 1 año.",
     shortDescription: "M4 · 14\" · 24 GB RAM · 512 GB",
-    image: PLACEHOLDER.macbook,
-    images: [PLACEHOLDER.macbook],
+    image: IMG.macbookProM4Silver,
+    images: [IMG.macbookProM4Silver, IMG.macbookProM4Black],
     colors: [],
     features: ["Chip Apple M4", "Pantalla 14\"", "24 GB RAM unificada"],
     variants: [
@@ -841,7 +911,7 @@ export const products: Product[] = [
     family: "MacBook Pro",
     description: "MacBook Pro 14\" con chip M3 (AS-IS).",
     shortDescription: "M3 · 14\" · 8 GB RAM · 1 TB",
-    image: PLACEHOLDER.macbook,
+    image: PLACEHOLDER.macbook, // imagen específica del Pro M3 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.macbook],
     colors: [],
     features: ["Chip Apple M3", "Pantalla 14\"", "8 GB RAM unificada"],
@@ -859,8 +929,8 @@ export const products: Product[] = [
     family: "MacBook Air",
     description: "MacBook Air 13\" con chip M5. Garantía Apple de 1 año.",
     shortDescription: "M5 · 13\" · 16 GB RAM",
-    image: PLACEHOLDER.macbook,
-    images: [PLACEHOLDER.macbook],
+    image: IMG.macbookAirM5_13,
+    images: [IMG.macbookAirM5_13],
     colors: [],
     features: ["Chip Apple M5", "Pantalla 13\"", "16 GB RAM unificada"],
     isNew: true,
@@ -880,8 +950,8 @@ export const products: Product[] = [
     family: "MacBook Air",
     description: "MacBook Air 15\" con chip M4 — preventa.",
     shortDescription: "M4 · 15\" · 16 GB RAM · 256 GB",
-    image: PLACEHOLDER.macbook,
-    images: [PLACEHOLDER.macbook],
+    image: IMG.macbookAirM4_15,
+    images: [IMG.macbookAirM4_15],
     colors: [],
     features: ["Chip Apple M4", "Pantalla 15\"", "16 GB RAM unificada"],
     badge: "Preventa",
@@ -900,7 +970,7 @@ export const products: Product[] = [
     description:
       "MacBook Air 13\" con chip M1 — open box, batería al 100% y 0 ciclos.",
     shortDescription: "M1 · 13\" · 8 GB RAM · 256 GB",
-    image: PLACEHOLDER.macbook,
+    image: PLACEHOLDER.macbook, // imagen específica del Air M1 pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.macbook],
     colors: [],
     features: ["Chip Apple M1", "Pantalla 13\"", "8 GB RAM unificada"],
@@ -918,7 +988,7 @@ export const products: Product[] = [
     family: "MacBook",
     description: "MacBook Neo 8 GB / 256 GB.",
     shortDescription: "8 GB RAM · 256 GB",
-    image: PLACEHOLDER.macbook,
+    image: PLACEHOLDER.macbook, // imagen específica del Neo pendiente — ver ROADMAP A2
     images: [PLACEHOLDER.macbook],
     colors: [],
     features: [],

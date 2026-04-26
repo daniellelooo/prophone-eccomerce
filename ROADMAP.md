@@ -114,18 +114,37 @@
 
 ### 1.2 Datos reales
 
-- [ ] Cargar todo el iPhone NUEVO y EXHIBICIÓN de la lista de precios.
-- [ ] Cargar todos los MacBook de la lista de precios.
-- [ ] Imágenes oficiales descargadas/linkadas desde apple.com/co (sin hotlink frágil de `lh3.googleusercontent.com`).
-  - [ ] iPhone 17 / 17 Pro / 17 Pro Max / Air
-  - [ ] iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max
-  - [ ] iPhone 15 / 15 Plus / 15 Pro / 15 Pro Max
-  - [ ] iPhone 14 / 14 Pro / 14 Pro Max
+- [x] Cargar todo el iPhone NUEVO y EXHIBICIÓN de la lista de precios.
+- [x] Cargar todos los MacBook de la lista de precios.
+- [x] `next.config.ts` con `images.remotePatterns` para `mac-center.com`, `cdn.shopify.com`, `www.apple.com`.
+- [x] Imágenes oficiales linkadas desde Mac Center y apple.com/co cuando estaban disponibles:
+  - [x] iPhone 17 / 17 Pro / 17 Pro Max / Air (Mac Center, varias colores)
+  - [x] iPhone 16 / 16 Pro / 16 Pro Max (Mac Center)
+  - [x] iPhone 15 / 15 Plus (Mac Center, varios colores)
+  - [x] iPhone 14 / 14 Pro (Mac Center)
+  - [x] iPad A16 (Mac Center, 4 colores)
+  - [x] Apple Watch Ultra 2 (Mac Center)
+  - [x] AirPods 4 (Mac Center)
+  - [x] MacBook Pro M4 14" (Mac Center, Silver + Black)
+  - [x] MacBook Air M5 13" / M4 15" (Mac Center)
+- [ ] Imágenes pendientes (productos con placeholder genérico — anotados con comentario `// imagen pendiente — ver ROADMAP A2`):
+  - [ ] iPhone 16 Plus
+  - [ ] iPhone 15 Pro / 15 Pro Max
+  - [ ] iPhone 14 Pro Max
   - [ ] iPhone 13 / 13 Pro / 13 Pro Max
-  - [ ] MacBook Pro M5 / M4 / M3 14"
-  - [ ] MacBook Air M5 13" / M4 15" / M1 13"
-- [ ] Imágenes guardadas en `public/products/` con naming consistente (`iphone-16-pro-max-front.webp`, etc.).
-- [ ] `next.config.ts` con `images.remotePatterns` si se siguen usando dominios externos; o quitar `unoptimized`.
+  - [ ] iPad Pro M4
+  - [ ] iPad Air M2
+  - [ ] Apple Watch Series 9
+  - [ ] Cargador USB-C 20W
+  - [ ] Cable USB-C a Lightning
+  - [ ] Apple Pencil USB-C
+  - [ ] Cargador MagSafe
+  - [ ] MacBook Pro M5 14"
+  - [ ] MacBook Pro M3 14"
+  - [ ] MacBook Air M1 13"
+  - [ ] MacBook Neo
+- [ ] Mover imágenes a `public/products/` y servirlas locales (mejor robustez y performance) — opcional, próxima iteración.
+- [ ] Quitar `unoptimized` de los `<Image>` ahora que hay remotePatterns — opcional, próxima iteración (requiere validar que los CDN de Mac Center y Apple respondan correctamente al optimizador de Next).
 
 ### 1.3 Catálogo
 
