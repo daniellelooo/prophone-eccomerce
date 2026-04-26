@@ -20,11 +20,15 @@ export default function AdminPromocionesPage() {
   const [draftEnabled, setDraftEnabled] = useState<boolean>(bannerEnabled);
   const [savedBanner, setSavedBanner] = useState(false);
 
-  const handleBannerSave = () => {
-    setBannerItems(draftItems.filter((x) => x.trim()));
-    updateConfig({ bannerEnabled: draftEnabled });
-    setSavedBanner(true);
-    setTimeout(() => setSavedBanner(false), 1800);
+  const handleBannerSave = async () => {
+    try {
+      await setBannerItems(draftItems.filter((x) => x.trim()));
+      await updateConfig({ bannerEnabled: draftEnabled });
+      setSavedBanner(true);
+      setTimeout(() => setSavedBanner(false), 1800);
+    } catch (err) {
+      alert("Error: " + (err as Error).message);
+    }
   };
 
   const featuredCount = products.filter((p) => p.isFeatured).length;
@@ -202,9 +206,9 @@ export default function AdminPromocionesPage() {
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     <button
-                      onClick={() =>
-                        upsert({ ...p, isFeatured: !p.isFeatured })
-                      }
+                      onClick={() => {
+                        void upsert({ ...p, isFeatured: !p.isFeatured });
+                      }}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
                         p.isFeatured
                           ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
@@ -224,7 +228,9 @@ export default function AdminPromocionesPage() {
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     <button
-                      onClick={() => upsert({ ...p, isNew: !p.isNew })}
+                      onClick={() => {
+                        void upsert({ ...p, isNew: !p.isNew });
+                      }}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${
                         p.isNew
                           ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
@@ -245,7 +251,7 @@ export default function AdminPromocionesPage() {
                         onBlur={(e) => {
                           const v = e.target.value.trim();
                           if (v !== (p.badge ?? "")) {
-                            upsert({ ...p, badge: v || undefined });
+                            void upsert({ ...p, badge: v || undefined });
                           }
                         }}
                         placeholder="—"

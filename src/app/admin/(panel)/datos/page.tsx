@@ -71,7 +71,7 @@ export default function AdminDatosPage() {
 
   const handleImport = (file: File) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const text = reader.result as string;
         const parsed = JSON.parse(text) as Partial<ExportPayload>;
@@ -88,9 +88,9 @@ export default function AdminDatosPage() {
         ) {
           return;
         }
-        setProducts(parsed.products);
+        await setProducts(parsed.products);
         const cfg = parsed.siteConfig;
-        updateConfig({
+        await updateConfig({
           whatsappNumber:
             cfg.whatsappNumber ?? DEFAULT_SITE_CONFIG.whatsappNumber,
           whatsappDefaultMessage:
@@ -102,12 +102,16 @@ export default function AdminDatosPage() {
           bannerItems: cfg.bannerItems ?? DEFAULT_SITE_CONFIG.bannerItems,
           hoursWeek: cfg.hoursWeek ?? DEFAULT_SITE_CONFIG.hoursWeek,
           hoursWeekend: cfg.hoursWeekend ?? DEFAULT_SITE_CONFIG.hoursWeekend,
-          sedes: cfg.sedes ?? DEFAULT_SITE_CONFIG.sedes,
         });
+        // Sincronizar sedes (upsert nuevas, borrar viejas)
+        const incomingSedes = cfg.sedes ?? DEFAULT_SITE_CONFIG.sedes;
+        for (const s of incomingSedes) {
+          await useSiteConfigStore.getState().upsertSede(s);
+        }
         setImportStatus({
           kind: "ok",
           products: parsed.products.length,
-          sedes: cfg.sedes?.length ?? 0,
+          sedes: incomingSedes.length,
         });
       } catch (err) {
         setImportStatus({
@@ -121,14 +125,18 @@ export default function AdminDatosPage() {
     reader.readAsText(file);
   };
 
-  const handleResetAll = () => {
+  const handleResetAll = async () => {
     if (
       confirm(
-        "Vas a restaurar TODO a los valores por defecto (catálogo + configuración + sedes + banner). Esto es irreversible. ¿Continuar?"
+        "Vas a restaurar TODO a los valores por defecto (catálogo + configuración + sedes + banner). Esto se aplica a la base de datos. ¿Continuar?"
       )
     ) {
-      resetCatalog();
-      resetConfig();
+      try {
+        await resetCatalog();
+        await resetConfig();
+      } catch (err) {
+        alert("Error al restaurar: " + (err as Error).message);
+      }
     }
   };
 

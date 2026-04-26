@@ -41,23 +41,28 @@ export default function AdminSedesPage() {
     }
   };
 
-  const handleSave = () => {
-    // Sincronizar con el store
-    const validSedes = draftSedes.filter((s) => s.name.trim());
-    // Eliminar las que ya no están
-    sedes.forEach((existing) => {
-      if (!validSedes.some((s) => s.id === existing.id)) {
-        removeSede(existing.id);
+  const handleSave = async () => {
+    try {
+      const validSedes = draftSedes.filter((s) => s.name.trim());
+      // Eliminar las que ya no están
+      for (const existing of sedes) {
+        if (!validSedes.some((s) => s.id === existing.id)) {
+          await removeSede(existing.id);
+        }
       }
-    });
-    // Upsert las restantes
-    validSedes.forEach((s) => upsertSede(s));
-    update({
-      hoursWeek: draftHoursWeek.trim(),
-      hoursWeekend: draftHoursWeekend.trim(),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1800);
+      // Upsert las restantes
+      for (const s of validSedes) {
+        await upsertSede(s);
+      }
+      await update({
+        hoursWeek: draftHoursWeek.trim(),
+        hoursWeekend: draftHoursWeekend.trim(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    } catch (err) {
+      alert("Error guardando sedes: " + (err as Error).message);
+    }
   };
 
   return (

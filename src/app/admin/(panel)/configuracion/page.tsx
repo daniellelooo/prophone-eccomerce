@@ -18,7 +18,7 @@ export default function AdminConfiguracionPage() {
   const [draftIG, setDraftIG] = useState(instagramUrl);
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const sanitizedWA = draftWA.replace(/\D/g, "");
     if (sanitizedWA.length < 10) {
       alert(
@@ -26,13 +26,17 @@ export default function AdminConfiguracionPage() {
       );
       return;
     }
-    update({
-      whatsappNumber: sanitizedWA,
-      whatsappDefaultMessage: draftMsg.trim(),
-      instagramUrl: draftIG.trim(),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1800);
+    try {
+      await update({
+        whatsappNumber: sanitizedWA,
+        whatsappDefaultMessage: draftMsg.trim(),
+        instagramUrl: draftIG.trim(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    } catch (err) {
+      alert("Error: " + (err as Error).message);
+    }
   };
 
   return (

@@ -49,8 +49,8 @@ export default function AdminPanelLayout({
     setAuthChecked(true);
   }, [router]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.replace("/admin");
   };
 

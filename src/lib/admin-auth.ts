@@ -1,58 +1,67 @@
 "use client";
 
+import { getSupabaseBrowserClient } from "./supabase/client";
+
 /**
- * Autenticación simulada para el panel admin.
+ * Autenticación admin via Supabase Auth.
  *
- * Credenciales hardcodeadas para la demo.
- * Cuando exista backend → reemplazar por NextAuth / sesión real, manteniendo
- * la misma API (login/logout/isAuthed) para no tocar componentes.
+ * - El usuario "admin" se crea desde el portal Supabase o vía SQL durante
+ *   la fase de seed (ver migración 005). Cualquier usuario autenticado en
+ *   el proyecto Supabase tiene permisos completos sobre las tablas (RLS).
+ * - El cliente Supabase persiste la sesión en cookies/localStorage por
+ *   defecto, así que `isAuthed()` consulta la sesión actual.
  */
 
-const STORAGE_KEY = "prophone-admin-session";
-const VALID_USER = "admin";
-const VALID_PASS = "prophone2026";
-
 export type AdminCredentials = {
-  username: string;
+  username: string; // email en Supabase Auth
   password: string;
 };
 
-export function login(creds: AdminCredentials): boolean {
-  if (creds.username === VALID_USER && creds.password === VALID_PASS) {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ user: VALID_USER, ts: Date.now() })
-      );
-    } catch {
-      /* noop */
-    }
-    return true;
-  }
-  return false;
+export async function login(creds: AdminCredentials): Promise<boolean> {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: creds.username,
+    password: creds.password,
+  });
+  return !error;
 }
 
-export function logout(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* noop */
-  }
+export async function logout(): Promise<void> {
+  const supabase = getSupabaseBrowserClient();
+  await supabase.auth.signOut();
 }
 
+/**
+ * Sync — devuelve si hay sesión persistida en el cliente.
+ * Usa esto después del primer render; antes es false en SSR.
+ */
 export function isAuthed(): boolean {
   if (typeof window === "undefined") return false;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    // Supabase guarda la sesión en localStorage como sb-<ref>-auth-token
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    const ref = url.replace(/^https?:\/\//, "").split(".")[0];
+    const key = `sb-${ref}-auth-token`;
+    const raw = localStorage.getItem(key);
     if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    return parsed?.user === VALID_USER;
+    const session = JSON.parse(raw);
+    if (!session?.access_token) return false;
+    // Validar expiración
+    const expiresAt = session?.expires_at;
+    if (expiresAt && Date.now() / 1000 > expiresAt) return false;
+    return true;
   } catch {
     return false;
   }
 }
 
+export async function getCurrentUserEmail(): Promise<string | null> {
+  const supabase = getSupabaseBrowserClient();
+  const { data } = await supabase.auth.getUser();
+  return data.user?.email ?? null;
+}
+
 export const ADMIN_CREDENTIAL_HINT = {
-  user: VALID_USER,
-  pass: VALID_PASS,
+  user: "daniellelo063@gmail.com",
+  pass: "prophone2026",
 };

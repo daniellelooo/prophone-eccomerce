@@ -65,13 +65,17 @@ export default function AdminProductosPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => {
+            onClick={async () => {
               if (
                 confirm(
-                  "¿Restaurar el catálogo a los valores por defecto?\n\nEsto descarta todas las ediciones hechas en el panel admin (productos creados, eliminados o modificados)."
+                  "¿Restaurar el catálogo a los valores por defecto?\n\nEsto borra todo lo editado en Supabase y vuelve al catálogo de fábrica del código."
                 )
               ) {
-                resetCatalog();
+                try {
+                  await resetCatalog();
+                } catch (err) {
+                  alert("Error al restaurar: " + (err as Error).message);
+                }
               }
             }}
             className="inline-flex items-center gap-2 bg-white border border-neutral-200 text-neutral-700 px-3 py-2.5 rounded-xl text-xs font-semibold hover:border-neutral-400 transition"
@@ -328,8 +332,12 @@ export default function AdminProductosPage() {
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  removeProduct(confirmDelete);
+                onClick={async () => {
+                  try {
+                    await removeProduct(confirmDelete);
+                  } catch (err) {
+                    alert("Error al eliminar: " + (err as Error).message);
+                  }
                   setConfirmDelete(null);
                 }}
                 className="flex-1 bg-[#CC0000] hover:bg-[#A00000] text-white py-2.5 rounded-xl text-sm font-semibold transition"

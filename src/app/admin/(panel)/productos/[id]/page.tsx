@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useCatalogStore } from "@/lib/catalog-store";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   type Product,
   type ProductCategory,
@@ -138,26 +139,37 @@ export default function ProductEditorPage() {
   const addVariant = () =>
     setDraft((d) => ({ ...d, variants: [...d.variants, emptyVariant()] }));
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
-    const readers = Array.from(files).map(
-      (f) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(f);
-        })
+    const supabase = getSupabaseBrowserClient();
+    const productId = draft.id || `nuevo-${Date.now()}`;
+    const uploads = await Promise.all(
+      Array.from(files).map(async (f) => {
+        const ext = f.name.split(".").pop() || "jpg";
+        const path = `${productId}/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+        const { error } = await supabase.storage
+          .from("product-images")
+          .upload(path, f, { cacheControl: "3600", upsert: false });
+        if (error) {
+          console.error("[upload] failed", error);
+          alert(`Error subiendo ${f.name}: ${error.message}`);
+          return null;
+        }
+        const { data } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(path);
+        return data.publicUrl;
+      })
     );
-    Promise.all(readers).then((dataUrls) => {
-      setDraft((d) => {
-        const newImages = [...d.images, ...dataUrls];
-        return {
-          ...d,
-          images: newImages,
-          image: d.image || newImages[0] || "",
-        };
-      });
+    const urls = uploads.filter((u): u is string => Boolean(u));
+    if (urls.length === 0) return;
+    setDraft((d) => {
+      const newImages = [...d.images, ...urls];
+      return {
+        ...d,
+        images: newImages,
+        image: d.image || newImages[0] || "",
+      };
     });
   };
 
@@ -175,7 +187,7 @@ export default function ProductEditorPage() {
   const setPrimaryImage = (idx: number) =>
     setDraft((d) => ({ ...d, image: d.images[idx] ?? d.image }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validaciones mínimas
     const cleanName = draft.name.trim();
     if (!cleanName) {
@@ -228,7 +240,12 @@ export default function ProductEditorPage() {
       })),
     };
 
-    upsert(sanitized);
+    try {
+      await upsert(sanitized);
+    } catch (err) {
+      alert("Error al guardar: " + (err as Error).message);
+      return;
+    }
     setSaved(true);
     if (isCreating) {
       router.replace(`/admin/productos/${sanitized.id}`);

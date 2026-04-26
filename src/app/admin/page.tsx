@@ -22,15 +22,20 @@ export default function AdminLoginPage() {
     }
   }, [router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const ok = login({ username: user, password: pass });
-    if (ok) {
-      router.replace("/admin/productos");
-    } else {
-      setError("Usuario o contraseña incorrectos.");
+    try {
+      const ok = await login({ username: user, password: pass });
+      if (ok) {
+        router.replace("/admin/productos");
+      } else {
+        setError("Usuario o contraseña incorrectos.");
+        setSubmitting(false);
+      }
+    } catch {
+      setError("Error de conexión. Reintenta en un segundo.");
       setSubmitting(false);
     }
   };
@@ -75,15 +80,16 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-neutral-300 mb-1.5">
-                Usuario
+                Email
               </label>
               <input
+                type="email"
                 value={user}
                 onChange={(e) => setUser(e.target.value)}
                 required
                 autoFocus
                 className="w-full bg-[#0C1014] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/50 focus:border-[#CC0000]/50 transition"
-                placeholder="admin"
+                placeholder="tu@correo.com"
               />
             </div>
             <div>
@@ -121,15 +127,15 @@ export default function AdminLoginPage() {
             </p>
             <div className="bg-[#0C1014] rounded-xl px-3 py-2.5 font-mono text-xs text-neutral-400 space-y-1">
               <p>
-                user: <span className="text-neutral-200">{ADMIN_CREDENTIAL_HINT.user}</span>
+                email: <span className="text-neutral-200">{ADMIN_CREDENTIAL_HINT.user}</span>
               </p>
               <p>
                 pass: <span className="text-neutral-200">{ADMIN_CREDENTIAL_HINT.pass}</span>
               </p>
             </div>
             <p className="text-[10px] text-neutral-600 mt-3 leading-relaxed">
-              Auth simulada (localStorage). Cuando exista backend se reemplaza
-              por sesión real sin tocar UI.
+              Sesión real con Supabase Auth. Cambia tu contraseña desde el
+              portal Supabase cuando sea producción.
             </p>
           </div>
         </div>

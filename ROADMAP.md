@@ -92,6 +92,48 @@
 
 ---
 
+## Fase D — Backend real con Supabase + Vercel
+
+> Estado: D1 + D2 completos · D3 (deploy Vercel) en curso.
+
+### D1 · Setup Supabase
+- [x] Proyecto creado: `prophone-medellin` en `sa-east-1` (id `uzfrjinlblhbaffqpfto`).
+- [x] Schema (5 tablas): `products`, `product_images`, `variants`, `sedes`, `site_config`.
+- [x] Trigger `touch_updated_at` con `search_path = public` (security advisor fix).
+- [x] RLS activo en las 5 tablas: público lee, autenticados escriben (modelo single-admin).
+- [x] Storage bucket `product-images` (público, 10 MB, png/jpeg/webp/avif/gif).
+- [x] Seed inicial: 35 productos, 63 variantes, 61 imágenes, 4 sedes, 7 keys site_config.
+- [x] Admin user creado (`daniellelo063@gmail.com` / `prophone2026`).
+- [x] Tipos TS regenerados desde el schema → `src/lib/database.types.ts`.
+- [x] `.env.local` con URL + anon key (gitignored).
+
+### D2 · Migración del código
+- [x] `@supabase/supabase-js` + `@supabase/ssr` instalados.
+- [x] Cliente browser singleton: `src/lib/supabase/client.ts`.
+- [x] Mappers DB ↔ tipos UI: `src/lib/supabase/mappers.ts` (zero cambio en componentes consumidores).
+- [x] `catalog-store.ts` reescrito: hidratación async desde Supabase, write-through en upsert/remove/setAll/reset, mismo API público.
+- [x] `site-config-store.ts` reescrito: igual, con sedes en tabla aparte.
+- [x] `CatalogHydrator` dispara hidratación al montar.
+- [x] `admin-auth.ts` reescrito con Supabase Auth (`signInWithPassword`, `signOut`, sesión persistida).
+- [x] Login `/admin` ahora pide email (no usuario hardcoded).
+- [x] Subida de imágenes en `/admin/productos/[id]`: ahora va a Supabase Storage, devuelve URL pública.
+- [x] Páginas admin actualizadas para `await` los métodos del store.
+- [x] Build OK, smoke test 200 en 9 rutas.
+
+### D3 · Deploy Vercel — pendiente
+- [ ] Crear proyecto Vercel desde el repo de GitHub.
+- [ ] Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- [ ] Preview deploys automáticos en cada push.
+- [ ] Production deploy en `master`.
+- [ ] (Opcional) Conectar dominio cuando lo tengas.
+
+### Decisiones de diseño / advisors conocidos
+- RLS "always true" para `authenticated` en write — intencional para el modelo single-admin del MVP. Cuando haya múltiples roles, agregar tabla `profiles` con `role` y filtrar `using (role = 'admin')`.
+- Storage bucket público con SELECT amplio — necesario para servir las imágenes a anónimos. URLs son privadas (random path), no se pueden enumerar fácilmente.
+- HaveIBeenPwned password check desactivado — activar desde Supabase Dashboard cuando se quiera (Auth → Settings → Password security).
+
+---
+
 ## Fase 0 — Plan y herramientas
 
 - [x] Roadmap.md creado
