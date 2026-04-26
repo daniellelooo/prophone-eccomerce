@@ -171,22 +171,30 @@
 
 ## Fase 3 — Panel admin (frontend, sin backend)
 
-> Persistencia: `localStorage` por ahora. Cuando exista backend, intercambiar el adapter.
+> Persistencia: catálogo y configuración en `localStorage` vía Zustand persist.
+> Cuando exista backend, los stores se reemplazan por fetch / server actions sin tocar UI.
 
-- [ ] Ruta `/admin` con login simulado (usuario/clave en variable de entorno o constante por ahora).
-- [ ] Layout admin con sidebar (Productos, Pedidos, Promociones, Sedes, Configuración).
-- [ ] **Productos**:
-  - [ ] Tabla con búsqueda, filtros por categoría/condición.
-  - [ ] Crear / editar / archivar producto.
-  - [ ] Editor de variantes (matriz almacenamiento × color × condición → precio + stock).
-  - [ ] Subida de imágenes (drag & drop, almacenadas como base64 en localStorage por ahora).
-  - [ ] Reordenar imágenes de galería.
-  - [ ] Toggle `isFeatured`, `isNew`, `inStock`.
-- [ ] **Pedidos** (mock — los actuales viven en WhatsApp; mostrar lista en localStorage de los enviados).
-- [ ] **Promociones**: badges, descuentos por porcentaje, texto del banner superior.
-- [ ] **Sedes**: editar las 4 sedes (nombre, dirección, horario, mapa).
-- [ ] **Configuración**: número de WhatsApp, redes sociales, textos del home.
-- [ ] Importar/exportar catálogo a JSON (preparar el camino a backend).
+- [x] Ruta `/admin` con login simulado (`admin` / `prophone2026` hardcoded en `src/lib/admin-auth.ts`).
+- [x] Layout admin con sidebar (Productos, Promociones, Sedes, Configuración, Datos JSON) en route group `(panel)` y guard de auth.
+- [x] **Productos**:
+  - [x] Tabla con búsqueda, filtros por categoría, KPIs.
+  - [x] Crear / editar / eliminar producto (modal de confirmación al eliminar).
+  - [x] Editor de variantes (storage / RAM / size / condición / precio / notas / stock).
+  - [x] Subida de imágenes (input file multi-select → base64 en localStorage), badge "Portada", reorganizar primaria, eliminar.
+  - [x] Toggle `isFeatured`, `isNew`, badge custom (en editor + en tabla de promociones).
+  - [x] Botón "Restaurar defaults" en la tabla.
+- [x] **Promociones**: editor del banner ticker (toggle visible, ítems editables con preview), tabla masiva de flags isFeatured/isNew/badge por producto.
+- [x] **Sedes**: editar lista de sedes (nombre, área, detalle), agregar/eliminar, horarios separados (semana / fin de semana).
+- [x] **Configuración**: número de WhatsApp (validado, formato wa.me), mensaje por defecto, URL Instagram, link de prueba al WA.
+- [x] **Datos**: exportar/importar JSON con `{ products, siteConfig }`, validación al importar, KPIs de tamaño localStorage, restaurar defaults total.
+- [ ] Pedidos (mock) — fuera de alcance. Los pedidos siguen yendo por WhatsApp.
+
+### Public sync con stores
+- [x] `src/lib/catalog-store.ts` con persist + skipHydration.
+- [x] `src/lib/site-config-store.ts` con persist + skipHydration.
+- [x] `CatalogHydrator` rehidrata ambos en mount (root layout).
+- [x] Public consumers migrados: home featured + sedes + ticker, catálogo, búsqueda, ficha de producto, SearchModal, Footer (sedes + horarios + WA + IG), Navbar (WA), BottomNav (WA), PriceTicker (banner items + visibilidad).
+- [x] Chrome público (Navbar, Footer, PriceTicker, BottomNav) oculto en `/admin`.
 
 ---
 

@@ -19,6 +19,7 @@ import ProductCard from "@/components/ProductCard";
 import AnimatedSection from "@/components/AnimatedSection";
 import { formatPrice } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 const CAROUSEL_IMAGES = [
   "/SaveClip.App_669968396_17969893659022618_2634456334907307944_n.jpg",
@@ -38,8 +39,7 @@ const MOBILE_IMAGES = [
   "/IPADAIRHORIZONTAL.jpg",
 ];
 
-const WA_URL =
-  "https://wa.me/573148941200?text=Hola%2C%20quiero%20información%20sobre%20iPhones";
+// WA_URL ahora se computa dentro de HomePage usando el store de site-config.
 
 function MobileCarousel() {
   const [current, setCurrent] = useState(0);
@@ -143,6 +143,13 @@ function HeroCarousel() {
 export default function HomePage() {
   const products = useCatalogStore((s) => s.products);
   const featuredProducts = products.filter((p) => p.isFeatured).slice(0, 4);
+  const sedes = useSiteConfigStore((s) => s.sedes);
+  const hoursWeek = useSiteConfigStore((s) => s.hoursWeek);
+  const hoursWeekend = useSiteConfigStore((s) => s.hoursWeekend);
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
+  const instagramUrl = useSiteConfigStore((s) => s.instagramUrl);
+  const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
 
   return (
     <>
@@ -567,7 +574,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-5 md:px-12">
           <AnimatedSection className="mb-7">
             <h2 className="text-2xl md:text-5xl font-bold tracking-tight text-neutral-900 mb-1">
-              Nuestras 4 Sedes
+              Nuestras {sedes.length} Sedes
             </h2>
             <p className="text-neutral-500 text-sm">
               Visítanos y llévate tu equipo hoy mismo · Medellín e Itagüí
@@ -576,14 +583,9 @@ export default function HomePage() {
 
           {/* 2-col on mobile, 4-col on desktop */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            {[
-              { name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Local 206" },
-              { name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Locales 098 / 099" },
-              { name: "Super Centro de la Moda", area: "Itagüí", detail: "Local 118" },
-              { name: "Pasaje Roberesco", area: "Centro, Medellín", detail: "Local 105" },
-            ].map((sede, i) => (
+            {sedes.map((sede, i) => (
               <AnimatedSection
-                key={`${sede.name}-${sede.detail}`}
+                key={sede.id}
                 delay={i * 0.08}
                 className="bg-white rounded-2xl p-4 md:p-6 border border-neutral-200 flex flex-col"
               >
@@ -598,7 +600,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-xs text-neutral-400 mt-5">
-            Lunes–Sábado 10am–7:30pm · Domingos y festivos 11am–5pm
+            {hoursWeek} · {hoursWeekend}
           </p>
         </div>
       </section>
@@ -623,7 +625,7 @@ export default function HomePage() {
               Hablar por WhatsApp
             </a>
             <a
-              href="https://www.instagram.com/prophone_medellin/"
+              href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="border border-white/20 text-white px-8 py-4 rounded-full text-sm font-bold hover:bg-white/5 active:scale-95 transition-all"

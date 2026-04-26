@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Menu, X, Search } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import SearchModal from "@/components/SearchModal";
 
 export default function Navbar() {
@@ -16,6 +17,9 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCount = useCartStore((s) => s.itemCount());
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
+  const waUrl = getWhatsappUrl(whatsappNumber, whatsappMsg);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -130,7 +134,7 @@ export default function Navbar() {
             </button>
 
             <a
-              href="https://wa.me/573148941200?text=Hola%2C%20me%20interesa%20un%20producto%20de%20Prophone%20Medell%C3%ADn"
+              href={waUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:flex bg-[#CC0000] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#A00000] active:scale-95 transition-all duration-200"
@@ -174,7 +178,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <a
-                href="https://wa.me/573148941200?text=Hola%2C%20me%20interesa%20un%20producto%20de%20Prophone%20Medell%C3%ADn"
+                href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 bg-[#CC0000] text-white px-5 py-3 rounded-full text-sm font-medium text-center"

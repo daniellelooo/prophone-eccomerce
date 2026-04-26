@@ -4,16 +4,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MapPin, Phone } from "lucide-react";
-
-const SEDES = [
-  { name: "C.C. Monterrey – Local 206", area: "El Poblado, Medellín" },
-  { name: "C.C. Monterrey – Locales 098/099", area: "El Poblado, Medellín" },
-  { name: "Super Centro de la Moda – Local 118", area: "Itagüí" },
-  { name: "Pasaje Roberesco – Local 105", area: "Centro, Medellín" },
-];
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 export default function Footer() {
   const pathname = usePathname();
+  const sedes = useSiteConfigStore((s) => s.sedes);
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const instagramUrl = useSiteConfigStore((s) => s.instagramUrl);
+  const hoursWeek = useSiteConfigStore((s) => s.hoursWeek);
+  const hoursWeekend = useSiteConfigStore((s) => s.hoursWeekend);
+  const waUrl = getWhatsappUrl(whatsappNumber);
+  const waLabel = whatsappNumber.startsWith("57")
+    ? `+${whatsappNumber.slice(0, 2)} ${whatsappNumber.slice(2, 5)} ${whatsappNumber.slice(5, 8)} ${whatsappNumber.slice(8)}`
+    : whatsappNumber;
+  const igHandle = (() => {
+    try {
+      const u = new URL(instagramUrl);
+      return `@${u.pathname.replace(/\//g, "")}`;
+    } catch {
+      return "@prophone_medellin";
+    }
+  })();
+
   if (pathname?.startsWith("/admin")) return null;
 
   return (
@@ -33,7 +45,7 @@ export default function Footer() {
             <span className="font-bold text-neutral-900 text-base">Prophone</span>
           </div>
           <a
-            href="https://wa.me/573148941200"
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 bg-[#CC0000] text-white px-4 py-2 rounded-full text-xs font-semibold"
@@ -64,22 +76,22 @@ export default function Footer() {
             </p>
             <div className="flex flex-col gap-2 mb-5">
               <a
-                href="https://wa.me/573148941200"
+                href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
               >
                 <Phone size={14} className="text-[#CC0000]" />
-                +57 314 894 12 00
+                {waLabel}
               </a>
             </div>
             <a
-              href="https://www.instagram.com/prophone_medellin/"
+              href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-neutral-600 hover:text-[#CC0000] transition-colors font-medium"
             >
-              @prophone_medellin
+              {igHandle}
             </a>
           </div>
 
@@ -102,11 +114,14 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-neutral-900 mb-4">Nuestras Sedes</h4>
             <ul className="space-y-3">
-              {SEDES.map((sede) => (
-                <li key={sede.name} className="flex items-start gap-2">
+              {sedes.map((sede) => (
+                <li key={sede.id} className="flex items-start gap-2">
                   <MapPin size={13} className="text-[#CC0000] mt-0.5 flex-shrink-0" />
                   <div>
-                    <span className="text-xs text-neutral-700 block leading-snug">{sede.name}</span>
+                    <span className="text-xs text-neutral-700 block leading-snug">
+                      {sede.name}
+                      {sede.detail ? ` – ${sede.detail}` : ""}
+                    </span>
                     <span className="text-xs text-neutral-500">{sede.area}</span>
                   </div>
                 </li>
@@ -132,11 +147,14 @@ export default function Footer() {
 
           {/* Sedes compact */}
           <div className="grid grid-cols-2 gap-2 mb-6">
-            {SEDES.map((sede) => (
-              <div key={sede.name} className="flex items-start gap-1.5 bg-white rounded-xl p-3 border border-neutral-100">
+            {sedes.map((sede) => (
+              <div key={sede.id} className="flex items-start gap-1.5 bg-white rounded-xl p-3 border border-neutral-100">
                 <MapPin size={12} className="text-[#CC0000] mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-[11px] font-semibold text-neutral-800 leading-tight">{sede.name}</p>
+                  <p className="text-[11px] font-semibold text-neutral-800 leading-tight">
+                    {sede.name}
+                    {sede.detail ? ` – ${sede.detail}` : ""}
+                  </p>
                   <p className="text-[10px] text-neutral-500">{sede.area}</p>
                 </div>
               </div>
@@ -144,7 +162,7 @@ export default function Footer() {
           </div>
 
           <p className="text-xs text-neutral-400 mb-2">
-            Lun–Sáb 10am–7:30pm · Dom y festivos 11am–5pm
+            {hoursWeek} · {hoursWeekend}
           </p>
         </div>
 

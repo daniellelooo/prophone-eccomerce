@@ -5,15 +5,16 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Home, ShoppingBag, Search, LayoutGrid, MessageCircle } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import SearchModal from "@/components/SearchModal";
-
-const WA_URL =
-  "https://wa.me/573148941200?text=Hola%2C%20me%20interesa%20un%20producto%20de%20Prophone";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCount = useCartStore((s) => s.itemCount());
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
+  const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Ocultar la barra durante el checkout (compite con el formulario) y en /admin
