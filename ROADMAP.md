@@ -1,0 +1,316 @@
+# Prophone Medellín — Roadmap del prototipo
+
+> Documento vivo. Marca con `[x]` lo que se vaya completando.
+> Objetivo: llegar a un prototipo lo bastante sólido como para convencer a los dueños de Prophone de adquirirlo.
+> Fecha de creación: 2026-04-26.
+
+---
+
+## Decisiones tomadas con el cliente (2026-04-26)
+
+- **Frontend primero**, backend y BD después.
+- **Imágenes reales** desde apple.com/co e iphone-related en mac-center.com. **No inventar** información que no se encuentre.
+- **No incluir**: plan canje (trade-in), reseñas con sistema, pasarela de pagos real, integración real con Banco de Bogotá, cálculo de envíos, página de cuenta de usuario, marketing/SEO técnico, operación/backoffice contable, confianza específica de reseller (origen, distribuidor autorizado), performance avanzado.
+- **Sí incluir ahora**:
+  - Variantes con precios diferentes (basado en lista de precios del cliente).
+  - MacBooks como categoría real.
+  - Galería de producto con zoom.
+  - Panel admin (frontend, sin backend).
+  - Estados de carga / skeletons.
+  - Página 404 tematizada.
+  - Búsqueda con autocompletado.
+  - Minibuscador en navbar móvil.
+  - UX móvil completa (bottom nav, sticky CTA, etc.).
+- **MCP**: usar Playwright en lugar de Puppeteer.
+
+---
+
+## Lista de precios de referencia del cliente
+
+### iPhone NUEVO (1 año garantía Apple)
+
+| Modelo | Almacenamiento | Precio | Notas |
+|---|---|---|---|
+| iPhone 17 Pro Max | 256 GB | 5.100.000 | AS-IS sim física |
+| iPhone 17 Pro Max | 1 TB | 6.800.000 | Naranja |
+| iPhone 17 Pro Max | 512 GB | 6.200.000 | Naranja |
+| iPhone 17 Pro Max | 256 GB | 5.400.000 | Todos los colores + parlante Anker |
+| iPhone 16 | 128 GB | 2.950.000 | |
+| iPhone 15 | 512 GB | 2.920.000 | sim física |
+| iPhone 14 | 128 GB | 2.250.000 | Mega descuentos |
+
+### iPhone EXHIBICIÓN (3.5 meses garantía)
+
+| Modelo | Almacenamiento | Precio | Notas |
+|---|---|---|---|
+| iPhone 17 Pro Max | 256 GB | 4.750.000 | |
+| iPhone 17 Pro | 512 GB | 4.600.000 | |
+| iPhone 17 Pro | 256 GB | 4.400.000 | |
+| iPhone 17 | 256 GB | 3.050.000 | |
+| iPhone Air | 512 GB | 3.760.000 | |
+| iPhone Air | 256 GB | 3.280.000 | |
+| iPhone 16 Pro Max | 512 GB | 3.500.000 | |
+| iPhone 16 Pro Max | 256 GB | 3.350.000 | |
+| iPhone 16 Pro | 256 GB | 2.950.000 | |
+| iPhone 16 Pro | 128 GB | 2.850.000 | |
+| iPhone 16 Plus | 128 GB | 2.450.000 | Precios bomba |
+| iPhone 16 | 128 GB | 2.200.000 | |
+| iPhone 15 Pro Max | 1 TB | 3.050.000 | |
+| iPhone 15 Pro Max | 256 GB | 2.700.000 | |
+| iPhone 15 Pro | 512 GB | 2.400.000 | |
+| iPhone 15 Pro | 256 GB | 2.250.000 | |
+| iPhone 15 Pro | 128 GB | 2.150.000 | Batería 100% |
+| iPhone 15 | 256 GB | 2.050.000 | |
+| iPhone 15 | 128 GB | 1.750.000 | |
+| iPhone 15 Plus | 128 GB | 1.800.000 | |
+| iPhone 14 Pro Max | 512 GB | 2.450.000 | |
+| iPhone 14 Pro Max | 256 GB | 2.350.000 | |
+| iPhone 14 Pro Max | 128 GB | 2.100.000 | |
+| iPhone 14 Pro | 256 GB | 2.050.000 | |
+| iPhone 14 | 256 GB | 1.500.000 | |
+| iPhone 14 | 128 GB | 1.400.000 | |
+| iPhone 13 Pro Max | 256 GB | 2.280.000 | Batería 100% |
+| iPhone 13 Pro Max | 128 GB | 1.850.000 | Batería 100% |
+| iPhone 13 Pro | 256 GB | 1.750.000 | |
+| iPhone 13 Pro | 128 GB | 1.600.000 | |
+| iPhone 13 | 256 GB | 1.350.000 | Batería 100% |
+| iPhone 13 | 128 GB | 1.250.000 | Batería 100% |
+
+### MacBook NUEVA (1 año garantía Apple)
+
+| Modelo | Configuración | Precio | Notas |
+|---|---|---|---|
+| MacBook Pro M5 14" | 16 / 1TB | 8.600.000 | |
+| MacBook Pro M5 14" | 16 / 512GB | 7.700.000 | |
+| MacBook Pro M4 14" | 24 / 512GB | 8.400.000 | |
+| MacBook Pro M3 14" | 8 / 1TB | 4.300.000 | AS IS |
+| MacBook Air M5 13" | 16 / 1TB | 5.700.000 | |
+| MacBook Air M5 13" | 16 / 512GB | 4.900.000 | |
+| MacBook Air M4 15" | 16 / 256GB | 4.750.000 | Preventa |
+| MacBook Air M1 13" | 8 / 256GB | 2.700.000 | Open box, batería 100%, 0 ciclos |
+| MacBook Neo | 8 / 256GB | 2.850.000 | |
+
+---
+
+## Fase 0 — Plan y herramientas
+
+- [x] Roadmap.md creado
+- [ ] MCP Playwright instalado y funcionando
+- [ ] Tipos extendidos: variantes con precio, condición (`nuevo` | `exhibicion` | `as-is` | `open-box`), batería, sim, color, sede.
+
+---
+
+## Fase 1 — Datos y catálogo (PRIORIDAD ALTA)
+
+### 1.1 Modelo de datos (`src/lib/products.ts`)
+
+- [ ] Reescribir `Product.type` para soportar variantes:
+  - [ ] `condition: "nuevo" | "exhibicion" | "as-is" | "open-box" | "preventa"`
+  - [ ] `variants: { storage?, ram?, color?, simType?, batteryHealth?, price, sku, inStock, notes? }[]`
+  - [ ] `warranty: "1-año-apple" | "3.5-meses-prophone" | "sin-garantia"` derivada de la condición
+  - [ ] `category` ampliada con `"macbook"` real
+- [ ] `formatPrice` ya existe — bien.
+- [ ] Helper `getMinPrice(product)` y `getPriceRange(product)`.
+
+### 1.2 Datos reales
+
+- [ ] Cargar todo el iPhone NUEVO y EXHIBICIÓN de la lista de precios.
+- [ ] Cargar todos los MacBook de la lista de precios.
+- [ ] Imágenes oficiales descargadas/linkadas desde apple.com/co (sin hotlink frágil de `lh3.googleusercontent.com`).
+  - [ ] iPhone 17 / 17 Pro / 17 Pro Max / Air
+  - [ ] iPhone 16 / 16 Plus / 16 Pro / 16 Pro Max
+  - [ ] iPhone 15 / 15 Plus / 15 Pro / 15 Pro Max
+  - [ ] iPhone 14 / 14 Pro / 14 Pro Max
+  - [ ] iPhone 13 / 13 Pro / 13 Pro Max
+  - [ ] MacBook Pro M5 / M4 / M3 14"
+  - [ ] MacBook Air M5 13" / M4 15" / M1 13"
+- [ ] Imágenes guardadas en `public/products/` con naming consistente (`iphone-16-pro-max-front.webp`, etc.).
+- [ ] `next.config.ts` con `images.remotePatterns` si se siguen usando dominios externos; o quitar `unoptimized`.
+
+### 1.3 Catálogo
+
+- [ ] Página `/catalogo`: filtros adicionales — condición (Nuevo / Exhibición / Open Box), almacenamiento, rango de precio, color.
+- [ ] Mostrar precio "desde" cuando hay varias variantes.
+- [ ] Badge según condición ("Exhibición", "AS IS", "Batería 100%", etc.).
+
+---
+
+## Fase 2 — Ficha de producto + galería con zoom
+
+- [ ] Galería con miniaturas verticales/horizontales (responsive).
+- [ ] **Zoom** al hover (desktop) y pinch-to-zoom + tap-to-fullscreen (móvil).
+- [ ] Lightbox / modal para ver imagen ampliada.
+- [ ] Selector de variante (almacenamiento + condición + color) que actualiza precio y stock en tiempo real.
+- [ ] Botón "Agregar al carrito" deshabilitado si no hay stock en la variante seleccionada.
+- [ ] Breadcrumbs.
+- [ ] Sticky add-to-cart en móvil.
+- [ ] Sección "También te puede interesar" (productos relacionados por categoría).
+
+---
+
+## Fase 3 — Panel admin (frontend, sin backend)
+
+> Persistencia: `localStorage` por ahora. Cuando exista backend, intercambiar el adapter.
+
+- [ ] Ruta `/admin` con login simulado (usuario/clave en variable de entorno o constante por ahora).
+- [ ] Layout admin con sidebar (Productos, Pedidos, Promociones, Sedes, Configuración).
+- [ ] **Productos**:
+  - [ ] Tabla con búsqueda, filtros por categoría/condición.
+  - [ ] Crear / editar / archivar producto.
+  - [ ] Editor de variantes (matriz almacenamiento × color × condición → precio + stock).
+  - [ ] Subida de imágenes (drag & drop, almacenadas como base64 en localStorage por ahora).
+  - [ ] Reordenar imágenes de galería.
+  - [ ] Toggle `isFeatured`, `isNew`, `inStock`.
+- [ ] **Pedidos** (mock — los actuales viven en WhatsApp; mostrar lista en localStorage de los enviados).
+- [ ] **Promociones**: badges, descuentos por porcentaje, texto del banner superior.
+- [ ] **Sedes**: editar las 4 sedes (nombre, dirección, horario, mapa).
+- [ ] **Configuración**: número de WhatsApp, redes sociales, textos del home.
+- [ ] Importar/exportar catálogo a JSON (preparar el camino a backend).
+
+---
+
+## Fase 4 — UX móvil
+
+- [ ] **Bottom nav fija** en móvil: Inicio, Catálogo, Buscar, Carrito, WhatsApp.
+- [ ] Sticky "Comprar" + "WhatsApp" en ficha de producto.
+- [ ] Carrito drawer revisado: muestre subtotal, envío estimado, CTA grande.
+- [ ] Pull-to-refresh visual donde aplique.
+- [ ] Sheets/modales animados con Framer Motion.
+
+---
+
+## Fase 5 — Búsqueda
+
+- [ ] Página `/buscar` con resultados live.
+- [ ] **Minibuscador en navbar** (desktop y móvil):
+  - [ ] Modal/dropdown que se abre con `Cmd/Ctrl+K` y con tap del icono.
+  - [ ] Autocompletado por nombre, categoría y feature.
+  - [ ] Resaltado de coincidencias.
+  - [ ] Búsquedas recientes (localStorage).
+  - [ ] Sugerencias populares.
+- [ ] Estado vacío con sugerencias y CTA a WhatsApp.
+
+---
+
+## Fase 6 — Estados de carga + 404
+
+- [ ] `loading.tsx` por ruta (catálogo, ficha, carrito, checkout).
+- [ ] Skeletons consistentes para tarjetas de producto y galería.
+- [ ] Spinners suaves donde haya transición.
+- [ ] **Página 404 tematizada**: mascota/iPhone caído, CTA a catálogo y WhatsApp.
+- [ ] `error.tsx` para errores no controlados.
+
+---
+
+## Fase 7 — Pulido y polish
+
+- [ ] Estados vacíos del catálogo cuando no hay resultados.
+- [ ] Animaciones de entrada/salida en filtros.
+- [ ] Transiciones de página (View Transitions API o motion).
+- [ ] Dark mode (opcional, se evalúa).
+- [ ] Revisión de accesibilidad básica (alt, focus, aria-label, contraste).
+
+---
+
+## Fuera de alcance por ahora (cliente lo aplazó)
+
+> Cuando llegue el momento, retomar de aquí.
+
+### Pagos y operación legal
+- Pasarela real (Wompi / Mercado Pago / ePayco / PayU): PSE, Nequi, Daviplata, Bancolombia QR.
+- Cuotas con tarjeta + simulador.
+- Integración real con Banco de Bogotá, Addi, Sistecrédito, Mercado Crédito.
+- Envíos reales (Servientrega, Coordinadora, Interrapidísimo) con tracking.
+- Pickup en sede como opción de envío.
+- Cupones / códigos de descuento.
+- IVA discriminado.
+- Facturación electrónica DIAN.
+- Política de retracto 5 días hábiles visible.
+- Confirmación por email + factura PDF.
+
+### Cuenta de usuario
+- Registro / login (email, Google, Apple Sign-In).
+- Mis pedidos, tracking, factura.
+- Direcciones y métodos de pago guardados.
+- Lista de deseos.
+- Programa de puntos / referidos.
+
+### Confianza y conversión avanzada
+- Página "Sobre nosotros" con NIT, fotos del equipo y de las 4 sedes.
+- Verificador de IMEI público.
+- Sello de garantía Apple / autorización oficial.
+- Reseñas Google embebidas (aclarado: no se construye sistema de reseñas propio).
+- Política de devoluciones, garantía y privacidad (páginas legales — Habeas Data Ley 1581).
+- T&C, tratamiento de datos, banner de cookies.
+- FAQ extenso.
+- Página de Garantía con proceso paso a paso.
+- Trust bar fijo.
+
+### SEO y marketing
+- `metadata` por página (title, description, OG, Twitter card).
+- Schema.org `Product`, `Offer`, `BreadcrumbList`, `Organization`, `LocalBusiness`, `Review`, `AggregateRating`.
+- Sitemap.xml y robots.txt dinámicos.
+- Open Graph images por producto.
+- Blog / artículos.
+- Píxel Meta, GA4, GTM, TikTok Pixel, Hotjar/Clarity.
+- Google Merchant Center feed.
+- Catálogo de Meta sincronizado para Instagram Shopping.
+- WhatsApp Business API con catálogo.
+- Email marketing (Mailchimp / Klaviyo) con popup y abandono de carrito.
+- Notificaciones push y "avísame cuando vuelva a stock".
+
+### Backoffice contable
+- Roles: admin, vendedor por sede, contabilidad.
+- Exportar pedidos a Excel/CSV.
+- Integración con Siigo o Alegra.
+- Inventario sincronizado con POS.
+- Reportes (ventas por sede, producto top, conversión, ticket promedio).
+- Gestión de promociones programadas (Black Friday, día sin IVA).
+
+### Confianza específica reseller Apple
+- Aclaración: ¿distribuidor autorizado, reseller independiente o importador?
+- Diferencia entre garantía Apple internacional y garantía Prophone.
+- Origen del equipo (USA, Hong Kong, Colombia oficial).
+- Eventos en sede y citas agendables.
+
+### Plataforma técnica
+- `next.config.ts` con `images.remotePatterns` correcto + quitar `unoptimized`.
+- Variables de entorno (`.env.local`) para WA, número, API keys.
+- Tests Playwright en flujos críticos.
+- Despliegue en Vercel con dominio `prophone.com.co`, redirects www.
+- Sentry, Vercel Analytics, uptime.
+- Backups y plan de recuperación.
+
+### Productos avanzados
+- Equipos seminuevos / reacondicionados con grado A/B/C, historial de batería, IMEI verificable.
+- Comparador de modelos (iPhone 15 vs 16 vs 16 Pro).
+- AppleCare como upsell.
+- Plan canje (trade-in) — **descartado por el cliente**.
+- Sistema de reseñas propio — **descartado por el cliente**.
+- Preguntas y respuestas estilo Mercado Libre.
+- Badges dinámicos ("Quedan 2", "X personas viendo").
+- Multi-idioma.
+- PWA instalable.
+
+---
+
+## Orden sugerido de ataque
+
+1. **Fase 0** — instalar Playwright MCP, tipar las variantes.
+2. **Fase 1.1 + 1.2** — modelo de datos nuevo + carga real de la lista de precios + descarga de imágenes Apple.
+3. **Fase 2** — ficha de producto con galería + zoom + selector de variantes.
+4. **Fase 6** — `loading.tsx` y 404 (rápido y vistoso para la demo).
+5. **Fase 5** — búsqueda + minibuscador (alta percepción de "producto serio").
+6. **Fase 4** — UX móvil (bottom nav, sticky CTA).
+7. **Fase 1.3** — filtros avanzados de catálogo.
+8. **Fase 3** — panel admin (lo más grande, último).
+9. **Fase 7** — pulido final.
+
+---
+
+## Cómo trabajar este documento
+
+- Marcar `[x]` apenas algo quede mergeado.
+- Si surge algo nuevo, anotarlo bajo la fase correspondiente con fecha.
+- Si se corre algo de "Fuera de alcance" hacia "en curso", moverlo arriba.
+- Cuando se cierre una fase entera, escribir una línea de resumen al final de esa sección con la fecha.

@@ -13,12 +13,15 @@ export default function CartPage() {
   const cartTotal = total();
 
   const whatsappMessage = items
-    .map(
-      (item) =>
-        `• ${item.product.name} (x${item.quantity}) - ${formatPrice(
-          item.product.price * item.quantity
-        )}`
-    )
+    .map((item) => {
+      const variantInfo = [item.variant.storage, item.variant.notes]
+        .filter(Boolean)
+        .join(" · ");
+      const suffix = variantInfo ? ` (${variantInfo})` : "";
+      return `• ${item.product.name}${suffix} x${item.quantity} - ${formatPrice(
+        item.variant.price * item.quantity
+      )}`;
+    })
     .join("\n");
 
   const whatsappUrl = `https://wa.me/573148941200?text=${encodeURIComponent(
@@ -70,7 +73,7 @@ export default function CartPage() {
               <AnimatePresence mode="popLayout">
                 {items.map((item) => (
                   <motion.div
-                    key={item.product.id}
+                    key={item.variant.sku}
                     layout
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -96,22 +99,23 @@ export default function CartPage() {
                       >
                         {item.product.name}
                       </Link>
-                      <div className="flex gap-3 text-sm text-neutral-500 mt-0.5">
-                        {item.selectedStorage && (
-                          <span>{item.selectedStorage}</span>
-                        )}
-                        {item.selectedColor && (
-                          <span>{item.selectedColor}</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-sm text-neutral-500 mt-0.5">
+                        {item.variant.storage && <span>{item.variant.storage}</span>}
+                        {item.variant.ram && <span>{item.variant.ram} RAM</span>}
+                        {item.variant.size && <span>{item.variant.size}</span>}
+                        {item.selectedColor && <span>{item.selectedColor}</span>}
+                        {item.variant.notes && (
+                          <span className="text-neutral-400">{item.variant.notes}</span>
                         )}
                       </div>
                       <p className="text-base font-bold text-neutral-900 mt-2">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.variant.price * item.quantity)}
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end gap-3">
                       <button
-                        onClick={() => removeItem(item.product.id)}
+                        onClick={() => removeItem(item.variant.sku)}
                         className="text-neutral-300 hover:text-red-400 transition-colors"
                       >
                         <Trash2 size={16} />
@@ -119,7 +123,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-2 bg-neutral-100 rounded-full px-2 py-1">
                         <button
                           onClick={() =>
-                            updateQuantity(item.product.id, item.quantity - 1)
+                            updateQuantity(item.variant.sku, item.quantity - 1)
                           }
                           className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
                         >
@@ -130,7 +134,7 @@ export default function CartPage() {
                         </span>
                         <button
                           onClick={() =>
-                            updateQuantity(item.product.id, item.quantity + 1)
+                            updateQuantity(item.variant.sku, item.quantity + 1)
                           }
                           className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
                         >
@@ -162,14 +166,16 @@ export default function CartPage() {
                 <div className="space-y-3 mb-5">
                   {items.map((item) => (
                     <div
-                      key={item.product.id}
+                      key={item.variant.sku}
                       className="flex justify-between text-sm text-neutral-600"
                     >
                       <span className="truncate mr-2">
-                        {item.product.name} ×{item.quantity}
+                        {item.product.name}
+                        {item.variant.storage ? ` ${item.variant.storage}` : ""} ×
+                        {item.quantity}
                       </span>
                       <span className="font-medium text-neutral-900 flex-shrink-0">
-                        {formatPrice(item.product.price * item.quantity)}
+                        {formatPrice(item.variant.price * item.quantity)}
                       </span>
                     </div>
                   ))}

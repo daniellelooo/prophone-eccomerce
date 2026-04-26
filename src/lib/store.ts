@@ -2,13 +2,14 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Product } from "./products";
+import type { Product, Variant } from "./products";
+import { getDefaultVariant } from "./products";
 
 export type CartItem = {
   product: Product;
+  variant: Variant;
   quantity: number;
   selectedColor?: string;
-  selectedStorage?: string;
 };
 
 type CartStore = {
@@ -16,10 +17,10 @@ type CartStore = {
   isOpen: boolean;
   addItem: (
     product: Product,
-    options?: { color?: string; storage?: string }
+    options?: { variant?: Variant; color?: string }
   ) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (sku: string) => void;
+  updateQuantity: (sku: string, quantity: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -35,14 +36,17 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
 
       addItem: (product, options) => {
+        const variant = options?.variant ?? getDefaultVariant(product);
+        if (!variant) return;
+
         set((state) => {
           const existing = state.items.find(
-            (item) => item.product.id === product.id
+            (item) => item.variant.sku === variant.sku
           );
           if (existing) {
             return {
               items: state.items.map((item) =>
-                item.product.id === product.id
+                item.variant.sku === variant.sku
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
               ),
@@ -54,9 +58,9 @@ export const useCartStore = create<CartStore>()(
               ...state.items,
               {
                 product,
+                variant,
                 quantity: 1,
                 selectedColor: options?.color,
-                selectedStorage: options?.storage,
               },
             ],
             isOpen: true,
@@ -64,20 +68,20 @@ export const useCartStore = create<CartStore>()(
         });
       },
 
-      removeItem: (productId) => {
+      removeItem: (sku) => {
         set((state) => ({
-          items: state.items.filter((item) => item.product.id !== productId),
+          items: state.items.filter((item) => item.variant.sku !== sku),
         }));
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (sku, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId);
+          get().removeItem(sku);
           return;
         }
         set((state) => ({
           items: state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
+            item.variant.sku === sku ? { ...item, quantity } : item
           ),
         }));
       },
@@ -89,13 +93,13 @@ export const useCartStore = create<CartStore>()(
 
       total: () =>
         get().items.reduce(
-          (sum, item) => sum + item.product.price * item.quantity,
+          (sum, item) => sum + item.variant.price * item.quantity,
           0
         ),
 
       itemCount: () =>
         get().items.reduce((sum, item) => sum + item.quantity, 0),
     }),
-    { name: "prophone-cart" }
+    { name: "prophone-cart-v2" }
   )
 );

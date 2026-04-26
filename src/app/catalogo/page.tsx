@@ -1,11 +1,26 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/lib/products";
+import {
+  products,
+  categories,
+  getMinPrice,
+  conditionLabels,
+  type ProductCondition,
+} from "@/lib/products";
+
+const CONDITION_FILTERS: { id: "todas" | ProductCondition; label: string }[] = [
+  { id: "todas", label: "Todas" },
+  { id: "nuevo", label: conditionLabels.nuevo },
+  { id: "exhibicion", label: conditionLabels.exhibicion },
+  { id: "open-box", label: conditionLabels["open-box"] },
+  { id: "as-is", label: conditionLabels["as-is"] },
+  { id: "preventa", label: conditionLabels.preventa },
+];
 
 function CatalogoContent() {
   const searchParams = useSearchParams();
@@ -14,23 +29,32 @@ function CatalogoContent() {
   const [activeCategory, setActiveCategory] = useState(
     categories.find((c) => c.id === initialCat)?.id ?? "todos"
   );
+  const [activeCondition, setActiveCondition] = useState<
+    "todas" | ProductCondition
+  >("todas");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("featured");
 
-  const filtered = products
-    .filter((p) => {
-      const matchCat = activeCategory === "todos" || p.category === activeCategory;
-      const matchSearch =
-        search === "" ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.shortDescription.toLowerCase().includes(search.toLowerCase());
-      return matchCat && matchSearch;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") return a.price - b.price;
-      if (sortBy === "price-desc") return b.price - a.price;
-      return 0;
-    });
+  const filtered = useMemo(() => {
+    return products
+      .filter((p) => {
+        const matchCat =
+          activeCategory === "todos" || p.category === activeCategory;
+        const matchSearch =
+          search === "" ||
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.shortDescription.toLowerCase().includes(search.toLowerCase());
+        const matchCondition =
+          activeCondition === "todas" ||
+          p.variants.some((v) => v.condition === activeCondition);
+        return matchCat && matchSearch && matchCondition;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-asc") return getMinPrice(a) - getMinPrice(b);
+        if (sortBy === "price-desc") return getMinPrice(b) - getMinPrice(a);
+        return 0;
+      });
+  }, [activeCategory, activeCondition, search, sortBy]);
 
   return (
     <>
@@ -46,7 +70,7 @@ function CatalogoContent() {
               Catálogo
             </h1>
             <p className="text-sm md:text-xl text-neutral-500">
-              iPhone, iPad, Watch y accesorios con garantía oficial
+              iPhone, iPad, Watch, MacBook y accesorios — nuevos y exhibición
             </p>
           </motion.div>
         </div>
@@ -55,7 +79,7 @@ function CatalogoContent() {
       {/* Sticky filter bar */}
       <section className="sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 py-3">
         <div className="max-w-7xl mx-auto flex flex-col gap-3">
-          {/* Category pills — horizontal scroll */}
+          {/* Category pills */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
             {categories.map((cat) => (
               <button
@@ -72,7 +96,24 @@ function CatalogoContent() {
             ))}
           </div>
 
-          {/* Search + sort row */}
+          {/* Condition pills */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {CONDITION_FILTERS.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setActiveCondition(c.id)}
+                className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 ${
+                  activeCondition === c.id
+                    ? "bg-[#CC0000] text-white shadow-sm"
+                    : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Search + sort */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search

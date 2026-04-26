@@ -5,7 +5,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/store";
-import { type Product, formatPrice } from "@/lib/products";
+import {
+  type Product,
+  formatPrice,
+  getMinPrice,
+  hasMultipleVariants,
+} from "@/lib/products";
 
 type Props = {
   product: Product;
@@ -14,6 +19,8 @@ type Props = {
 
 export default function ProductCard({ product, index = 0 }: Props) {
   const addItem = useCartStore((s) => s.addItem);
+  const minPrice = getMinPrice(product);
+  const showFromLabel = hasMultipleVariants(product);
 
   return (
     <motion.div
@@ -55,7 +62,12 @@ export default function ProductCard({ product, index = 0 }: Props) {
 
         <div className="flex items-center justify-between mt-auto">
           <p className="text-sm font-bold text-neutral-900">
-            {formatPrice(product.price)}
+            {showFromLabel && (
+              <span className="text-[10px] font-medium text-neutral-400 mr-1">
+                Desde
+              </span>
+            )}
+            {formatPrice(minPrice)}
           </p>
           <button
             onClick={() => addItem(product)}

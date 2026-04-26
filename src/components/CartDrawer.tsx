@@ -13,12 +13,15 @@ export default function CartDrawer() {
   const cartTotal = total();
 
   const whatsappMessage = items
-    .map(
-      (item) =>
-        `• ${item.product.name} (x${item.quantity}) - ${formatPrice(
-          item.product.price * item.quantity
-        )}`
-    )
+    .map((item) => {
+      const variantInfo = [item.variant.storage, item.variant.notes]
+        .filter(Boolean)
+        .join(" · ");
+      const suffix = variantInfo ? ` (${variantInfo})` : "";
+      return `• ${item.product.name}${suffix} x${item.quantity} - ${formatPrice(
+        item.variant.price * item.quantity
+      )}`;
+    })
     .join("\n");
 
   const whatsappUrl = `https://wa.me/573001234567?text=${encodeURIComponent(
@@ -92,7 +95,7 @@ export default function CartDrawer() {
                 <div className="space-y-4">
                   {items.map((item) => (
                     <motion.div
-                      key={item.product.id}
+                      key={item.variant.sku}
                       layout
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -113,9 +116,16 @@ export default function CartDrawer() {
                         <p className="font-medium text-neutral-900 text-sm truncate">
                           {item.product.name}
                         </p>
-                        {item.selectedStorage && (
+                        {(item.variant.storage || item.variant.ram || item.variant.size) && (
                           <p className="text-xs text-neutral-500 mt-0.5">
-                            {item.selectedStorage}
+                            {[item.variant.size, item.variant.ram, item.variant.storage]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </p>
+                        )}
+                        {item.variant.notes && (
+                          <p className="text-xs text-neutral-400">
+                            {item.variant.notes}
                           </p>
                         )}
                         {item.selectedColor && (
@@ -124,12 +134,12 @@ export default function CartDrawer() {
                           </p>
                         )}
                         <p className="text-sm font-semibold text-neutral-900 mt-1">
-                          {formatPrice(item.product.price * item.quantity)}
+                          {formatPrice(item.variant.price * item.quantity)}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity - 1)
+                              updateQuantity(item.variant.sku, item.quantity - 1)
                             }
                             className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
                           >
@@ -140,14 +150,14 @@ export default function CartDrawer() {
                           </span>
                           <button
                             onClick={() =>
-                              updateQuantity(item.product.id, item.quantity + 1)
+                              updateQuantity(item.variant.sku, item.quantity + 1)
                             }
                             className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
                           >
                             <Plus size={12} />
                           </button>
                           <button
-                            onClick={() => removeItem(item.product.id)}
+                            onClick={() => removeItem(item.variant.sku)}
                             className="ml-auto text-neutral-400 hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={14} />

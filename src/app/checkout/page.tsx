@@ -70,10 +70,20 @@ export default function CheckoutPage() {
 
   const handleConfirm = () => {
     const orderLines = items
-      .map(
-        (item) =>
-          `• ${item.product.name}${item.selectedStorage ? ` (${item.selectedStorage})` : ""} x${item.quantity} → ${formatPrice(item.product.price * item.quantity)}`
-      )
+      .map((item) => {
+        const variantInfo = [
+          item.variant.size,
+          item.variant.ram ? `${item.variant.ram} RAM` : undefined,
+          item.variant.storage,
+          item.variant.notes,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        const suffix = variantInfo ? ` (${variantInfo})` : "";
+        return `• ${item.product.name}${suffix} x${item.quantity} → ${formatPrice(
+          item.variant.price * item.quantity
+        )}`;
+      })
       .join("\n");
 
     const msg = `🛒 *Nuevo pedido - Prophone Medellín*
@@ -376,33 +386,45 @@ ${orderLines}
                 Tu pedido ({items.length})
               </h2>
               <div className="space-y-4 mb-5">
-                {items.map((item) => (
-                  <div key={item.product.id} className="flex gap-3 items-center">
-                    <div className="w-14 h-14 bg-neutral-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden p-2">
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.name}
-                        width={56}
-                        height={56}
-                        className="object-contain w-full h-full"
-                        unoptimized
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-900 truncate">
-                        {item.product.name}
-                      </p>
-                      {item.selectedStorage && (
-                        <p className="text-xs text-neutral-500">
-                          {item.selectedStorage}
+                {items.map((item) => {
+                  const variantInfo = [
+                    item.variant.size,
+                    item.variant.ram ? `${item.variant.ram} RAM` : undefined,
+                    item.variant.storage,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
+                  return (
+                    <div key={item.variant.sku} className="flex gap-3 items-center">
+                      <div className="w-14 h-14 bg-neutral-50 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden p-2">
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          width={56}
+                          height={56}
+                          className="object-contain w-full h-full"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-neutral-900 truncate">
+                          {item.product.name}
                         </p>
-                      )}
-                      <p className="text-sm font-semibold text-neutral-900">
-                        {formatPrice(item.product.price)} ×{item.quantity}
-                      </p>
+                        {variantInfo && (
+                          <p className="text-xs text-neutral-500">{variantInfo}</p>
+                        )}
+                        {item.variant.notes && (
+                          <p className="text-xs text-neutral-400">
+                            {item.variant.notes}
+                          </p>
+                        )}
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {formatPrice(item.variant.price)} ×{item.quantity}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="border-t border-neutral-100 pt-4">
                 <div className="flex justify-between font-bold text-neutral-900">
