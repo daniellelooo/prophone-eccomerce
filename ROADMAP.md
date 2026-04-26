@@ -192,34 +192,35 @@
 
 ## Fase 4 — UX móvil
 
-- [ ] **Bottom nav fija** en móvil: Inicio, Catálogo, Buscar, Carrito, WhatsApp.
-- [ ] Sticky "Comprar" + "WhatsApp" en ficha de producto.
+- [x] **Bottom nav fija** en móvil: Inicio · Catálogo · Buscar · Carrito (con badge) · WhatsApp. Oculta en `/checkout`. Respeta `safe-area-inset-bottom` (iPhone notch).
+- [x] Sticky CTA en ficha de producto móvil: precio + condición + "Agregar al carrito" + WhatsApp icon, flotando sobre el BottomNav.
 - [ ] Carrito drawer revisado: muestre subtotal, envío estimado, CTA grande.
 - [ ] Pull-to-refresh visual donde aplique.
-- [ ] Sheets/modales animados con Framer Motion.
+- [x] Sheets/modales animados con Framer Motion (search modal, lightbox de galería, drawer de carrito).
 
 ---
 
 ## Fase 5 — Búsqueda
 
-- [ ] Página `/buscar` con resultados live.
-- [ ] **Minibuscador en navbar** (desktop y móvil):
-  - [ ] Modal/dropdown que se abre con `Cmd/Ctrl+K` y con tap del icono.
-  - [ ] Autocompletado por nombre, categoría y feature.
-  - [ ] Resaltado de coincidencias.
-  - [ ] Búsquedas recientes (localStorage).
-  - [ ] Sugerencias populares.
-- [ ] Estado vacío con sugerencias y CTA a WhatsApp.
+- [x] Página `/buscar` con resultados live (filtros por categoría + sort por relevancia/precio).
+- [x] **Minibuscador en navbar** (desktop y móvil):
+  - [x] Modal/dropdown que se abre con `Cmd/Ctrl+K` y con tap del icono.
+  - [x] Autocompletado por nombre, descripción corta, familia y categoría.
+  - [x] Resaltado de coincidencias (mark amarillo).
+  - [x] Búsquedas recientes (localStorage, máx 5).
+  - [x] Sugerencias populares (5 chips fijos).
+- [x] Estado vacío con sugerencias y CTA a WhatsApp con la búsqueda fallida pre-rellenada.
 
 ---
 
 ## Fase 6 — Estados de carga + 404
 
-- [ ] `loading.tsx` por ruta (catálogo, ficha, carrito, checkout).
-- [ ] Skeletons consistentes para tarjetas de producto y galería.
-- [ ] Spinners suaves donde haya transición.
-- [ ] **Página 404 tematizada**: mascota/iPhone caído, CTA a catálogo y WhatsApp.
-- [ ] `error.tsx` para errores no controlados.
+- [x] `loading.tsx` por ruta (catálogo, ficha, búsqueda).
+- [x] Skeletons consistentes (`ProductCardSkeleton` + `ProductGridSkeleton`).
+- [x] **Página 404 tematizada**: ilustración 404 con etiqueta "Página agotada" rojo Prophone, CTAs Inicio/Catálogo/Buscar y enlace a WhatsApp.
+- [x] `error.tsx` global con icono de alerta, ref `error.digest` y botón Reintentar (`reset()`).
+- [ ] Spinners suaves donde haya transición (parcial — se delega al sistema de loading.tsx).
+- [ ] `loading.tsx` para `/carrito` y `/checkout` (no es crítico — son páginas client-side rápidas).
 
 ---
 

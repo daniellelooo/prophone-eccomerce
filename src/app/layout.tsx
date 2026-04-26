@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import PriceTicker from "@/components/PriceTicker";
+import BottomNav from "@/components/BottomNav";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -43,12 +44,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={outfit.variable}>
-      <body className="min-h-screen bg-[#f9f9f9] text-neutral-900 antialiased">
+      <body className="min-h-screen bg-[#f9f9f9] text-neutral-900 antialiased pb-[68px] md:pb-0">
         <PriceTicker />
         <Navbar />
         <CartDrawer />
         <main>{children}</main>
         <Footer />
+        <BottomNav />
       </body>
     </html>
   );

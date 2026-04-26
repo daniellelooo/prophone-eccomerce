@@ -86,7 +86,7 @@ export default function ProductPage() {
 
   return (
     <div className="pt-16 min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 pb-28 md:pb-8">
         <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-10">
           <Link
             href="/"
@@ -308,6 +308,48 @@ export default function ProductPage() {
               </div>
             )}
           </motion.div>
+        </div>
+      </div>
+
+      {/* Sticky CTA móvil — flota arriba del BottomNav */}
+      <div className="md:hidden fixed left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-neutral-200 px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]" style={{ bottom: "68px" }}>
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-shrink-0">
+            <p className="text-[10px] text-neutral-400 uppercase tracking-wider leading-none">
+              {selectedVariant ? conditionLabels[selectedVariant.condition] : ""}
+            </p>
+            <p className="text-base font-bold text-neutral-900 leading-tight">
+              {formatPrice(selectedVariant?.price ?? 0)}
+            </p>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={!selectedVariant?.inStock}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-2xl font-semibold text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+              added ? "bg-green-500 text-white" : "bg-[#CC0000] text-white"
+            }`}
+          >
+            {added ? (
+              <>
+                <Check size={15} /> Agregado
+              </>
+            ) : (
+              <>
+                <ShoppingBag size={15} /> Agregar
+              </>
+            )}
+          </button>
+          <a
+            href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 w-11 h-11 rounded-2xl bg-[#25D366] text-white flex items-center justify-center active:scale-95 transition"
+            aria-label="WhatsApp"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413z"/>
+            </svg>
+          </a>
         </div>
       </div>
     </div>
