@@ -4,12 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, Search } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import SearchModal from "@/components/SearchModal";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCount = useCartStore((s) => s.itemCount());
 
@@ -17,6 +19,18 @@ export default function Navbar() {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Atajo Cmd/Ctrl+K abre el buscador (estándar)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const navLinks = [
@@ -69,6 +83,26 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100/80 hover:bg-neutral-200/70 transition-colors text-neutral-500 text-xs"
+              aria-label="Buscar"
+            >
+              <Search size={14} />
+              <span>Buscar…</span>
+              <kbd className="bg-white/80 text-neutral-500 text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                ⌘K
+              </kbd>
+            </button>
+
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="md:hidden p-2 rounded-full hover:bg-neutral-100 transition-colors"
+              aria-label="Buscar"
+            >
+              <Search size={20} className="text-neutral-700" />
+            </button>
+
             <button
               onClick={toggleCart}
               className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors"
@@ -146,6 +180,8 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }
