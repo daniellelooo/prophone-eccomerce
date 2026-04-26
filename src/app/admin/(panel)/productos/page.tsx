@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, ExternalLink, Pencil, Tag } from "lucide-react";
+import { Search, Plus, ExternalLink, Pencil, Tag, Trash2 } from "lucide-react";
 import { useCatalogStore } from "@/lib/catalog-store";
 import {
   formatPrice,
@@ -17,10 +17,13 @@ import {
 
 export default function AdminProductosPage() {
   const products = useCatalogStore((s) => s.products);
+  const removeProduct = useCatalogStore((s) => s.remove);
+  const resetCatalog = useCatalogStore((s) => s.reset);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<"todos" | ProductCategory>(
     "todos"
   );
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -60,14 +63,30 @@ export default function AdminProductosPage() {
             Gestiona el catálogo: precios, variantes, stock y condición.
           </p>
         </div>
-        <button
-          disabled
-          title="Disponible en C2"
-          className="inline-flex items-center gap-2 bg-[#CC0000] text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition opacity-50 cursor-not-allowed"
-        >
-          <Plus size={15} />
-          Crear producto
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (
+                confirm(
+                  "¿Restaurar el catálogo a los valores por defecto?\n\nEsto descarta todas las ediciones hechas en el panel admin (productos creados, eliminados o modificados)."
+                )
+              ) {
+                resetCatalog();
+              }
+            }}
+            className="inline-flex items-center gap-2 bg-white border border-neutral-200 text-neutral-700 px-3 py-2.5 rounded-xl text-xs font-semibold hover:border-neutral-400 transition"
+            title="Restaurar catálogo a defaults"
+          >
+            Restaurar defaults
+          </button>
+          <Link
+            href="/admin/productos/nuevo"
+            className="inline-flex items-center gap-2 bg-[#CC0000] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#A00000] active:scale-95 transition"
+          >
+            <Plus size={15} />
+            Crear producto
+          </Link>
+        </div>
       </motion.div>
 
       {/* KPIs */}
@@ -231,16 +250,25 @@ export default function AdminProductosPage() {
                           target="_blank"
                           className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition"
                           aria-label="Ver en sitio público"
+                          title="Ver en sitio público"
                         >
                           <ExternalLink size={14} />
                         </Link>
-                        <button
-                          disabled
-                          title="Editor disponible en C2"
-                          className="p-2 text-neutral-300 rounded-lg cursor-not-allowed"
+                        <Link
+                          href={`/admin/productos/${p.id}`}
+                          className="p-2 text-neutral-500 hover:text-[#0071E3] hover:bg-blue-50 rounded-lg transition"
                           aria-label="Editar"
+                          title="Editar"
                         >
                           <Pencil size={14} />
+                        </Link>
+                        <button
+                          onClick={() => setConfirmDelete(p.id)}
+                          className="p-2 text-neutral-500 hover:text-[#CC0000] hover:bg-red-50 rounded-lg transition"
+                          aria-label="Eliminar"
+                          title="Eliminar"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>
@@ -263,8 +291,55 @@ export default function AdminProductosPage() {
       </div>
 
       <p className="text-[11px] text-neutral-400">
-        Edición inline + editor completo + crear nuevo + eliminar — disponibles en C2.
+        Cambios persisten en el navegador (localStorage). &ldquo;Restaurar
+        defaults&rdquo; vuelve al catálogo de fábrica.
       </p>
+
+      {/* Modal de confirmación de eliminación */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-4">
+              <Trash2 size={20} className="text-[#CC0000]" />
+            </div>
+            <h3 className="text-lg font-bold text-neutral-900 mb-2">
+              Eliminar producto
+            </h3>
+            <p className="text-sm text-neutral-500 mb-6 leading-relaxed">
+              Vas a eliminar{" "}
+              <strong className="text-neutral-900">
+                {products.find((p) => p.id === confirmDelete)?.name}
+              </strong>{" "}
+              del catálogo. Esto se reflejará en el sitio público en este
+              navegador. Puedes restaurar todo con &ldquo;Restaurar
+              defaults&rdquo;.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-2.5 rounded-xl text-sm font-semibold transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  removeProduct(confirmDelete);
+                  setConfirmDelete(null);
+                }}
+                className="flex-1 bg-[#CC0000] hover:bg-[#A00000] text-white py-2.5 rounded-xl text-sm font-semibold transition"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
