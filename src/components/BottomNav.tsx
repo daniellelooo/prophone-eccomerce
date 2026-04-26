@@ -16,8 +16,9 @@ export default function BottomNav() {
   const itemCount = useCartStore((s) => s.itemCount());
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Ocultar la barra durante el checkout para que no compita con el formulario
-  const hide = pathname?.startsWith("/checkout");
+  // Ocultar la barra durante el checkout (compite con el formulario) y en /admin
+  const hide =
+    pathname?.startsWith("/checkout") || pathname?.startsWith("/admin");
 
   // Bloquear el scroll del body al abrir search ya lo maneja SearchModal
   useEffect(() => {

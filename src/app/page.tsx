@@ -17,9 +17,8 @@ import {
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import AnimatedSection from "@/components/AnimatedSection";
-import { products, formatPrice } from "@/lib/products";
-
-const featuredProducts = products.filter((p) => p.isFeatured).slice(0, 4);
+import { formatPrice } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 
 const CAROUSEL_IMAGES = [
   "/SaveClip.App_669968396_17969893659022618_2634456334907307944_n.jpg",
@@ -142,6 +141,9 @@ function HeroCarousel() {
 }
 
 export default function HomePage() {
+  const products = useCatalogStore((s) => s.products);
+  const featuredProducts = products.filter((p) => p.isFeatured).slice(0, 4);
+
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────────────── */}

@@ -6,12 +6,12 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import {
-  products,
   categories,
   getMinPrice,
   conditionLabels,
   type ProductCondition,
 } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 
 const CONDITION_FILTERS: { id: "todas" | ProductCondition; label: string }[] = [
   { id: "todas", label: "Todas" },
@@ -25,6 +25,7 @@ const CONDITION_FILTERS: { id: "todas" | ProductCondition; label: string }[] = [
 function CatalogoContent() {
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("cat") ?? "todos";
+  const products = useCatalogStore((s) => s.products);
 
   const [activeCategory, setActiveCategory] = useState(
     categories.find((c) => c.id === initialCat)?.id ?? "todos"
@@ -54,7 +55,7 @@ function CatalogoContent() {
         if (sortBy === "price-desc") return getMinPrice(b) - getMinPrice(a);
         return 0;
       });
-  }, [activeCategory, activeCondition, search, sortBy]);
+  }, [products, activeCategory, activeCondition, search, sortBy]);
 
   return (
     <>

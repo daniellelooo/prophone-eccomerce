@@ -5,12 +5,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products, categories, getMinPrice } from "@/lib/products";
+import { categories, getMinPrice } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 
 function BuscarContent() {
   const params = useSearchParams();
   const router = useRouter();
   const initialQ = params.get("q") ?? "";
+  const products = useCatalogStore((s) => s.products);
   const [query, setQuery] = useState(initialQ);
   const [activeCategory, setActiveCategory] = useState("todos");
   const [sortBy, setSortBy] = useState("relevance");
@@ -47,7 +49,7 @@ function BuscarContent() {
       return aExact - bExact;
     });
     return list;
-  }, [query, activeCategory, sortBy]);
+  }, [products, query, activeCategory, sortBy]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

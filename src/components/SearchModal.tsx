@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Clock, Search, Sparkles, X } from "lucide-react";
-import { products, formatPrice, getMinPrice, hasMultipleVariants } from "@/lib/products";
+import { formatPrice, getMinPrice, hasMultipleVariants } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 
 const RECENT_KEY = "prophone:recent-searches";
 const MAX_RECENT = 5;
@@ -30,6 +31,7 @@ export default function SearchModal({ open, onClose }: Props) {
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const products = useCatalogStore((s) => s.products);
 
   // Reset query cuando el modal se abre — patrón "derivar state de props" en React 19
   // (sin setState en effect; React lo detecta y rerendea sincrónicamente).
@@ -72,7 +74,7 @@ export default function SearchModal({ open, onClose }: Props) {
         return haystack.includes(q);
       })
       .slice(0, 6);
-  }, [query]);
+  }, [products, query]);
 
   const persistRecent = (term: string) => {
     const trimmed = term.trim();

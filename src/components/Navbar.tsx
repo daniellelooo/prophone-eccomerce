@@ -3,12 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Menu, X, Search } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import SearchModal from "@/components/SearchModal";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -32,6 +34,9 @@ export default function Navbar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // El navbar público no aparece en /admin (tiene su propio shell)
+  if (pathname?.startsWith("/admin")) return null;
 
   const navLinks = [
     { href: "/catalogo?cat=iphone", label: "iPhone" },

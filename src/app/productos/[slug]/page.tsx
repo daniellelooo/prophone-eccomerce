@@ -13,18 +13,20 @@ import {
   Check,
 } from "lucide-react";
 import {
-  getProductBySlug,
   formatPrice,
   conditionLabels,
   conditionWarranty,
   type ProductCondition,
 } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 import { useCartStore } from "@/lib/store";
 import ProductGallery from "@/components/ProductGallery";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
-  const product = getProductBySlug(params.slug);
+  const product = useCatalogStore((s) =>
+    s.products.find((p) => p.slug === params.slug)
+  );
 
   if (!product) notFound();
 

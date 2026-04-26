@@ -1,3 +1,7 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 const TICKER_ITEMS = [
   "Reseller Apple · Medellín, Colombia",
   "iPhone 14 128GB — $2.200.000",
@@ -12,6 +16,9 @@ const TICKER_ITEMS = [
 const SEPARATOR = "·";
 
 export default function PriceTicker() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/admin")) return null;
+
   const content = TICKER_ITEMS.join(`   ${SEPARATOR}   `);
   const doubled = `${content}   ${SEPARATOR}   ${content}   ${SEPARATOR}   `;
 
