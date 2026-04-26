@@ -120,12 +120,14 @@
 - [x] Páginas admin actualizadas para `await` los métodos del store.
 - [x] Build OK, smoke test 200 en 9 rutas.
 
-### D3 · Deploy Vercel — pendiente
-- [ ] Crear proyecto Vercel desde el repo de GitHub.
-- [ ] Env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- [ ] Preview deploys automáticos en cada push.
-- [ ] Production deploy en `master`.
-- [ ] (Opcional) Conectar dominio cuando lo tengas.
+### D3 · Deploy Vercel
+- [x] Proyecto creado: `daniels-projects-88f6b79e/prophone-medellin`.
+- [x] GitHub repo conectado (`daniellelooo/prophone-eccomerce`) → auto-deploy en cada push a `master`.
+- [x] Env vars `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` configuradas para Production y Development.
+- [x] Production deploy: https://prophone-medellin.vercel.app
+- [x] Smoke test 200 en /, /catalogo, /buscar, /productos/iphone-16-pro, /admin.
+- [ ] Env vars para Preview (omitido — Vercel pide rama específica; se setea desde el dashboard cuando se necesite).
+- [ ] Dominio custom `prophone.com.co` cuando esté disponible.
 
 ### Decisiones de diseño / advisors conocidos
 - RLS "always true" para `authenticated` en write — intencional para el modelo single-admin del MVP. Cuando haya múltiples roles, agregar tabla `profiles` con `role` y filtrar `using (role = 'admin')`.
