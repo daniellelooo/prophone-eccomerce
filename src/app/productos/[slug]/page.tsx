@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -21,6 +20,7 @@ import {
   type ProductCondition,
 } from "@/lib/products";
 import { useCartStore } from "@/lib/store";
+import ProductGallery from "@/components/ProductGallery";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
@@ -107,29 +107,19 @@ export default function ProductPage() {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          {/* Image */}
+          {/* Galería con zoom + lightbox */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="sticky top-24"
+            className="lg:sticky lg:top-24"
           >
-            <div className="relative aspect-square bg-neutral-50 rounded-3xl flex items-center justify-center p-12 overflow-hidden">
-              {product.badge && (
-                <span className="absolute top-6 left-6 bg-[#0071E3] text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-                  {product.badge}
-                </span>
-              )}
-              <Image
-                src={product.image}
-                alt={product.name}
-                width={500}
-                height={500}
-                className="w-full h-full object-contain drop-shadow-2xl"
-                priority
-                unoptimized
-              />
-            </div>
+            <ProductGallery
+              key={product.slug}
+              images={product.images.length > 0 ? product.images : [product.image]}
+              alt={product.name}
+              badge={product.badge}
+            />
           </motion.div>
 
           {/* Info */}

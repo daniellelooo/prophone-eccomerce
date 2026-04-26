@@ -156,13 +156,15 @@
 
 ## Fase 2 — Ficha de producto + galería con zoom
 
-- [ ] Galería con miniaturas verticales/horizontales (responsive).
-- [ ] **Zoom** al hover (desktop) y pinch-to-zoom + tap-to-fullscreen (móvil).
-- [ ] Lightbox / modal para ver imagen ampliada.
-- [ ] Selector de variante (almacenamiento + condición + color) que actualiza precio y stock en tiempo real.
-- [ ] Botón "Agregar al carrito" deshabilitado si no hay stock en la variante seleccionada.
-- [ ] Breadcrumbs.
-- [ ] Sticky add-to-cart en móvil.
+- [x] Galería con miniaturas (`ProductGallery.tsx`).
+- [x] **Zoom** al hover (desktop) — escala 1.8x con origen siguiendo el cursor.
+- [x] Carrusel con swipe horizontal y dots en móvil.
+- [x] Lightbox a pantalla completa (Esc cierra, flechas navegan, contador, AnimatePresence).
+- [x] Selector de Condición (Nuevo / Exhibición / Open box / AS-IS / Preventa) que cambia variantes disponibles.
+- [x] Selector de Configuración (almacenamiento / RAM / tamaño) que actualiza precio en tiempo real.
+- [x] Botón "Agregar al carrito" deshabilitado si la variante no tiene stock.
+- [x] Breadcrumbs (ya existían — verificados).
+- [ ] Sticky add-to-cart en móvil (parte de Fase 4 — UX móvil).
 - [ ] Sección "También te puede interesar" (productos relacionados por categoría).
 
 ---
