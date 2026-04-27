@@ -53,7 +53,7 @@ function MobileCarousel() {
 
   return (
     <div className="w-full">
-      <div className="relative w-full aspect-[16/9] overflow-hidden">
+      <div className="relative w-full aspect-[5/4] overflow-hidden">
         <AnimatePresence initial={false}>
           <motion.div
             key={current}
@@ -102,7 +102,7 @@ function HeroCarousel() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl lg:rounded-3xl aspect-[4/3] lg:aspect-[4/5]">
+    <div className="relative w-full overflow-hidden rounded-2xl lg:rounded-3xl aspect-[4/3] lg:aspect-[4/3] max-w-md lg:max-w-lg lg:mx-auto">
       <AnimatePresence initial={false}>
         <motion.div
           key={current}
@@ -154,7 +154,7 @@ export default function HomePage() {
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section className="bg-white pt-24 pb-10 md:pb-0 md:min-h-[92vh] md:flex md:items-center">
+      <section className="bg-white pt-24 pb-10 md:pb-12 md:min-h-[72vh] md:flex md:items-center">
         <div className="max-w-7xl mx-auto w-full">
           {/* Mobile: image on top, text below. Desktop: side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-16 items-center">
@@ -180,7 +180,7 @@ export default function HomePage() {
             </motion.div>
 
             {/* Text — order-2 on mobile (bottom), order-1 on desktop (left) */}
-            <div className="order-2 lg:order-1 px-5 md:px-12 pt-7 pb-4 lg:py-24">
+            <div className="order-2 lg:order-1 px-5 md:px-12 pt-7 pb-4 lg:py-12">
               <motion.h1
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}

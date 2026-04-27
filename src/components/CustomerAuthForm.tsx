@@ -57,14 +57,17 @@ export default function CustomerAuthForm({
         phone: phone.trim() || undefined,
       });
       if (r.ok) {
-        // Si la confirmación de email está desactivada en Supabase, queda
-        // logeado al instante. Si no, mostramos mensaje de "revisa tu correo".
+        // El trigger auto_confirm_user_email_trigger en Supabase confirma
+        // el email automáticamente, así que el login posterior funciona.
         const auto = await loginCustomer(email.trim(), password);
         if (auto.ok) {
           onSuccess?.();
         } else {
+          // Caso borde: signup OK pero login falla (probablemente porque el
+          // email ya existía). El usuario va al modo login con el email
+          // pre-rellenado.
           setInfo(
-            "Cuenta creada. Revisa tu correo para confirmar el registro y luego inicia sesión."
+            "Cuenta creada. Inicia sesión con tu email y contraseña."
           );
           setMode("login");
         }
@@ -316,11 +319,20 @@ function translateAuthError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("invalid") && m.includes("credentials"))
     return "Email o contraseña incorrectos.";
-  if (m.includes("user already registered"))
+  if (
+    m.includes("user already registered") ||
+    m.includes("already") ||
+    m.includes("exists")
+  )
     return "Ya existe una cuenta con ese correo. Inicia sesión.";
-  if (m.includes("password") && m.includes("6"))
+  if (
+    (m.includes("password") && m.includes("6")) ||
+    m.includes("weak password")
+  )
     return "La contraseña debe tener al menos 6 caracteres.";
-  if (m.includes("email") && m.includes("invalid"))
-    return "El correo no es válido.";
+  if (m.includes("email_address_invalid") || m.includes("invalid email"))
+    return "El correo no es válido. Usa un email real (gmail, hotmail, etc).";
+  if (m.includes("rate limit"))
+    return "Muchos intentos en poco tiempo. Espera un minuto y reintenta.";
   return message;
 }

@@ -69,8 +69,13 @@ export default function AdminPanelLayout({
   }, [router]);
 
   const handleLogout = async () => {
-    await logout();
-    router.replace("/admin");
+    try {
+      await logout();
+    } finally {
+      // Forzar navegación incluso si signOut falló o el listener no se
+      // disparó (suele ocurrir si la cookie ya estaba expirada).
+      window.location.href = "/admin";
+    }
   };
 
   if (!authChecked) {

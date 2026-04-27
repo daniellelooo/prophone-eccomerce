@@ -77,8 +77,11 @@ export default function CuentaPage() {
   }, []);
 
   const handleLogout = async () => {
-    await logoutCustomer();
-    router.replace("/");
+    try {
+      await logoutCustomer();
+    } finally {
+      window.location.href = "/";
+    }
   };
 
   const handleProfileSave = async () => {
