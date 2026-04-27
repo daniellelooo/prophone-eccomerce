@@ -1,0 +1,32 @@
+- main [ref=e2]:
+  - generic [ref=e4]:
+    - link "Volver al sitio público" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - img [ref=e6]
+      - text: Volver al sitio público
+    - generic [ref=e8]:
+      - generic [ref=e9]:
+        - img "Prophone" [ref=e10]
+        - generic [ref=e11]:
+          - paragraph [ref=e12]: Panel
+          - paragraph [ref=e13]: Prophone Admin
+      - heading "Iniciar sesión" [level=1] [ref=e14]
+      - paragraph [ref=e15]: Acceso al gestor de catálogo, promociones y configuración.
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - generic [ref=e18]: Email
+          - textbox "tu@correo.com" [active] [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]: Contraseña
+          - textbox "••••••••" [ref=e22]
+        - button "Entrar" [ref=e23]:
+          - img [ref=e24]
+          - text: Entrar
+      - generic [ref=e27]:
+        - paragraph [ref=e28]:
+          - img [ref=e29]
+          - text: Demo credentials
+        - generic [ref=e32]:
+          - paragraph [ref=e33]: "email: daniellelo063@gmail.com"
+          - paragraph [ref=e34]: "pass: prophone2026"
+        - paragraph [ref=e35]: Sesión real con Supabase Auth. Cambia tu contraseña desde el portal Supabase cuando sea producción.

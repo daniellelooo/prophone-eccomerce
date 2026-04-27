@@ -5,11 +5,11 @@ import { getSupabaseBrowserClient } from "./supabase/client";
 /**
  * Autenticación admin via Supabase Auth.
  *
- * - El usuario "admin" se crea desde el portal Supabase o vía SQL durante
- *   la fase de seed (ver migración 005). Cualquier usuario autenticado en
- *   el proyecto Supabase tiene permisos completos sobre las tablas (RLS).
- * - El cliente Supabase persiste la sesión en cookies/localStorage por
- *   defecto, así que `isAuthed()` consulta la sesión actual.
+ * - El cliente `@supabase/ssr` persiste la sesión en cookies (no en
+ *   localStorage), así que `isAuthed()` consulta `supabase.auth.getSession()`
+ *   directamente. Es async — cualquier consumidor debe `await`.
+ * - Cualquier usuario autenticado en el proyecto Supabase tiene permisos
+ *   completos sobre las tablas (RLS abierto a `authenticated`).
  */
 
 export type AdminCredentials = {
@@ -32,27 +32,16 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Sync — devuelve si hay sesión persistida en el cliente.
- * Usa esto después del primer render; antes es false en SSR.
+ * Devuelve true si hay una sesión válida vigente.
+ * Async — Supabase `@supabase/ssr` persiste en cookies y verificar la sesión
+ * requiere consultar el cliente.
  */
-export function isAuthed(): boolean {
+export async function isAuthed(): Promise<boolean> {
   if (typeof window === "undefined") return false;
-  try {
-    // Supabase guarda la sesión en localStorage como sb-<ref>-auth-token
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const ref = url.replace(/^https?:\/\//, "").split(".")[0];
-    const key = `sb-${ref}-auth-token`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return false;
-    const session = JSON.parse(raw);
-    if (!session?.access_token) return false;
-    // Validar expiración
-    const expiresAt = session?.expires_at;
-    if (expiresAt && Date.now() / 1000 > expiresAt) return false;
-    return true;
-  } catch {
-    return false;
-  }
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return false;
+  return true;
 }
 
 export async function getCurrentUserEmail(): Promise<string | null> {

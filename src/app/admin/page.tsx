@@ -17,9 +17,13 @@ export default function AdminLoginPage() {
 
   // Si ya hay sesión, mandar al panel directamente
   useEffect(() => {
-    if (isAuthed()) {
-      router.replace("/admin/productos");
-    }
+    let cancelled = false;
+    isAuthed().then((ok) => {
+      if (!cancelled && ok) router.replace("/admin/productos");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -15,7 +15,8 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { isAuthed, logout } from "@/lib/admin-auth";
+import { logout } from "@/lib/admin-auth";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV = [
   { href: "/admin/productos", label: "Productos", icon: Box },
@@ -36,17 +37,35 @@ export default function AdminPanelLayout({
   const [authed, setAuthed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Guard: lee la sesión de localStorage una vez al montar y redirige si no hay.
-  // setState dentro de useEffect aquí es legítimo — sincronizamos con un
-  // external system (localStorage). Se reemplaza cuando exista backend real.
+  // Guard: consulta la sesión de Supabase (cookies) y escucha cambios en vivo.
+  // setState dentro de useEffect es legítimo: sincroniza con el cliente
+  // Supabase (sistema externo).
   useEffect(() => {
-    if (isAuthed()) {
+    const supabase = getSupabaseBrowserClient();
+    let cancelled = false;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (data.session) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAuthed(true);
+      } else {
+        router.replace("/admin");
+      }
+      setAuthChecked(true);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) return;
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAuthed(true);
-    } else {
-      router.replace("/admin");
-    }
-    setAuthChecked(true);
+      setAuthed(!!session);
+      if (!session) router.replace("/admin");
+    });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, [router]);
 
   const handleLogout = async () => {
