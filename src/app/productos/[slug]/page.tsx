@@ -21,6 +21,7 @@ import {
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useCartStore } from "@/lib/store";
 import ProductGallery from "@/components/ProductGallery";
+import RelatedProducts from "@/components/RelatedProducts";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
@@ -311,6 +312,9 @@ export default function ProductPage() {
             )}
           </motion.div>
         </div>
+
+        {/* Productos relacionados */}
+        <RelatedProducts current={product} />
       </div>
 
       {/* Sticky CTA móvil — flota arriba del BottomNav */}

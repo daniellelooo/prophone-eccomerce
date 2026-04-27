@@ -3,18 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, ShoppingBag, Search, LayoutGrid, MessageCircle } from "lucide-react";
+import { Home, ShoppingBag, Search, LayoutGrid, User } from "lucide-react";
 import { useCartStore } from "@/lib/store";
-import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import SearchModal from "@/components/SearchModal";
 
 export default function BottomNav() {
   const pathname = usePathname();
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCount = useCartStore((s) => s.itemCount());
-  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
-  const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
-  const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Ocultar la barra durante el checkout (compite con el formulario) y en /admin
@@ -73,13 +69,11 @@ export default function BottomNav() {
       badge: itemCount,
     },
     {
-      key: "wa",
-      label: "WhatsApp",
-      icon: <MessageCircle size={20} />,
-      href: WA_URL,
-      target: "_blank",
-      rel: "noopener noreferrer",
-      accent: true,
+      key: "cuenta",
+      label: "Cuenta",
+      icon: <User size={20} />,
+      href: "/cuenta",
+      active: isActive((p) => p.startsWith("/cuenta")),
     },
   ];
 

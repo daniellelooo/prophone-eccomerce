@@ -92,6 +92,62 @@
 
 ---
 
+## Fase E — Cuenta de cliente · Filtros · FAQs · Pulido
+
+> Sesión 2026-04-27 · todo deployado.
+
+### E0 · Bug fix login admin
+- [x] `isAuthed()` ahora consulta `supabase.auth.getSession()` (no localStorage) y se suscribe a `onAuthStateChange`. El cliente `@supabase/ssr` persiste en cookies; la función original devolvía siempre false → loop a /admin.
+- [x] Normalización del usuario admin en `auth.users`: tokens vacíos en lugar de NULL.
+
+### E1 · Filtros catálogo + estados vacíos + animaciones
+- [x] Filtros avanzados colapsables: almacenamiento (chips), rango precio (min/max), color (swatches).
+- [x] Botón "Filtros" con badge del nº activos + "Limpiar todo".
+- [x] Estado vacío rico: copy contextual + CTA "Limpiar filtros" + WhatsApp pre-rellenado con la búsqueda.
+- [x] Grid con `motion.div layout` + `AnimatePresence popLayout` para entrada/salida de cards.
+
+### E2 · "También te puede interesar"
+- [x] `RelatedProducts` con estrategia: misma `family` → misma `category` → `isFeatured`. Sort por proximidad de precio. 4 items por defecto.
+
+### E3 · Carrito drawer revisado + loadings
+- [x] Drawer: subtotal con conteo de unidades, envío gratis explícito, total destacado, CTA grande con monto.
+- [x] `src/app/carrito/loading.tsx` y `src/app/checkout/loading.tsx` con skeletons consistentes.
+
+### E4 · FAQs (`/faqs`)
+- [x] 5 categorías (garantía/postventa, envíos, pagos, productos, sobre Prophone) con 18 preguntas.
+- [x] Acordeón animado, links a `checkcoverage.apple.com`, CTA WhatsApp final.
+- [x] Linkeada en footer.
+
+### E5 · Cuenta de cliente
+- [x] DB: tablas `profiles`, `customer_addresses`, `orders`, `order_items` con RLS (cliente ve sus pedidos, admin ve todo, invitados pueden insertar pedidos sin user_id).
+- [x] Trigger `handle_new_user` crea profile al registrar.
+- [x] `src/lib/customer-auth.ts`: register / login / logout / resetPassword / getCurrentProfile.
+- [x] `CustomerAuthForm` (login + register + reset) con i18n de errores.
+- [x] `/cuenta`: si no hay sesión muestra el form; si hay, muestra header con avatar inicial + tabs "Mis pedidos" y "Datos personales". Listado de órdenes con status coloreado, items con miniatura, dirección de envío.
+- [x] Navbar y BottomNav: ítem "Mi cuenta" (icono User).
+- [x] Si el user es `is_admin`, aparece atajo "Panel admin →" en su /cuenta.
+
+### E6 · Checkout persistido a DB
+- [x] Pre-rellena nombre/email/teléfono cuando hay sesión.
+- [x] Banner sugiriendo iniciar sesión a invitados.
+- [x] `createOrder()` inserta orden + items en Supabase, devuelve `order_number` (`PRO-YYYYMMDD-HHMMSS-XXXX`).
+- [x] Tras WhatsApp se llama `markOrderWhatsappSent`.
+- [x] Pantalla de éxito muestra el número de pedido y CTA "Ver mis pedidos" si hay sesión.
+
+### E7 · Accesibilidad
+- [x] Pasada de `focus-visible:ring` en botones interactivos.
+- [x] `aria-label` / `aria-hidden` (iconos decorativos) / `aria-pressed` (chips) / `aria-selected` (tabs) / `role="tablist"` / `role="alert"` en feedback.
+- [x] `aria-expanded` + `aria-controls` en disclosures (filtros avanzados, FAQ acordeón).
+- [x] Inputs sensibles con `autocomplete` adecuado.
+
+### E8 · Deploy
+- [x] Migración SQL aplicada (`006_orders_and_profiles`).
+- [x] Tipos TS regenerados.
+- [x] Build OK con 16 rutas (incluye `/cuenta` y `/faqs`).
+- [x] Push a `master` → auto-deploy en Vercel.
+
+---
+
 ## Fase D — Backend real con Supabase + Vercel
 
 > Estado: D1 + D2 completos · D3 (deploy Vercel) en curso.

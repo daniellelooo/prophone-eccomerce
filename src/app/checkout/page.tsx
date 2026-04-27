@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ChevronRight, ArrowLeft, CheckCircle2, User } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
+import { getCurrentProfile, type CustomerProfile } from "@/lib/customer-auth";
+import { createOrder, markOrderWhatsappSent } from "@/lib/orders";
 
 type FormData = {
   nombre: string;
@@ -35,7 +38,11 @@ const DEPARTAMENTOS = [
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const cartTotal = total();
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const [step, setStep] = useState<"form" | "confirm" | "done">("form");
+  const [profile, setProfile] = useState<CustomerProfile | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<FormData>({
     nombre: "",
     apellido: "",
@@ -46,6 +53,27 @@ export default function CheckoutPage() {
     direccion: "",
     notas: "",
   });
+
+  // Pre-rellenar datos si hay sesión
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentProfile().then((p) => {
+      if (cancelled || !p) return;
+       
+      setProfile(p);
+      const [first, ...rest] = (p.fullName || "").split(" ");
+      setForm((prev) => ({
+        ...prev,
+        nombre: prev.nombre || first || "",
+        apellido: prev.apellido || rest.join(" "),
+        email: prev.email || p.email,
+        telefono: prev.telefono || p.phone,
+      }));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -68,7 +96,32 @@ export default function CheckoutPage() {
     setStep("confirm");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+
+    // 1) Crear orden en Supabase
+    const created = await createOrder({
+      userId: profile?.id ?? null,
+      customerName: `${form.nombre} ${form.apellido}`.trim(),
+      customerEmail: form.email || profile?.email,
+      customerPhone: form.telefono,
+      shippingDepartment: form.departamento,
+      shippingCity: form.ciudad,
+      shippingAddress: form.direccion,
+      notes: form.notas,
+      items,
+    });
+
+    if (!created.ok) {
+      alert(
+        "No se pudo registrar el pedido en nuestra base de datos: " +
+          created.error +
+          "\n\nTe enviaremos por WhatsApp de todas formas."
+      );
+    }
+
+    // 2) Construir mensaje WhatsApp con order_number
     const orderLines = items
       .map((item) => {
         const variantInfo = [
@@ -86,7 +139,10 @@ export default function CheckoutPage() {
       })
       .join("\n");
 
-    const msg = `🛒 *Nuevo pedido - Prophone Medellín*
+    const orderRef = created.ok ? created.order.orderNumber : "";
+    const msg = `🛒 *Nuevo pedido - Prophone Medellín*${
+      orderRef ? `\n*Pedido:* ${orderRef}` : ""
+    }
 
 *Cliente:* ${form.nombre} ${form.apellido}
 *Teléfono:* ${form.telefono}
@@ -100,11 +156,15 @@ ${orderLines}
 
 ¡Gracias! 🙏`;
 
-    window.open(
-      `https://wa.me/573148941200?text=${encodeURIComponent(msg)}`,
-      "_blank"
-    );
+    window.open(getWhatsappUrl(whatsappNumber, msg), "_blank");
+
+    if (created.ok) {
+      setOrderNumber(created.order.orderNumber);
+      void markOrderWhatsappSent(created.order.id);
+    }
+
     clearCart();
+    setSubmitting(false);
     setStep("done");
   };
 
@@ -123,15 +183,37 @@ ${orderLines}
           <h2 className="text-2xl font-bold text-neutral-900 mb-3">
             ¡Pedido enviado!
           </h2>
-          <p className="text-neutral-500 mb-8">
-            Tu pedido fue enviado por WhatsApp. Uno de nuestros asesores te
-            contactará pronto para confirmar y coordinar el pago y envío.
+          {orderNumber && (
+            <div className="bg-neutral-50 rounded-xl px-4 py-3 mb-6 inline-block">
+              <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-bold mb-0.5">
+                Número de pedido
+              </p>
+              <p className="text-sm font-mono font-bold text-neutral-900">
+                {orderNumber}
+              </p>
+            </div>
+          )}
+          <p className="text-neutral-500 mb-8 text-sm leading-relaxed">
+            Tu pedido fue registrado y enviado por WhatsApp. Un asesor te
+            contactará pronto para confirmar el pago y envío.
+            {profile && (
+              <>
+                {" "}Puedes seguir su estado en{" "}
+                <Link
+                  href="/cuenta"
+                  className="text-[#CC0000] font-semibold hover:underline"
+                >
+                  Mi cuenta
+                </Link>
+                .
+              </>
+            )}
           </p>
           <Link
-            href="/"
-            className="bg-[#CC0000] text-white px-8 py-3 rounded-full font-medium hover:bg-[#A00000] transition-colors inline-block"
+            href={profile ? "/cuenta" : "/"}
+            className="bg-[#CC0000] text-white px-8 py-3 rounded-full font-medium hover:bg-[#A00000] transition-colors inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2"
           >
-            Volver al inicio
+            {profile ? "Ver mis pedidos" : "Volver al inicio"}
           </Link>
         </motion.div>
       </div>
@@ -164,9 +246,30 @@ ${orderLines}
           </span>
         </div>
 
-        <h1 className="text-4xl font-bold tracking-tight text-neutral-900 mb-10">
+        <h1 className="text-4xl font-bold tracking-tight text-neutral-900 mb-4">
           {step === "form" ? "Datos de envío" : "Confirma tu pedido"}
         </h1>
+
+        {!profile && step === "form" && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 mb-6 flex items-start gap-3">
+            <User size={16} className="text-blue-600 mt-0.5 shrink-0" aria-hidden />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-blue-900">
+                ¿Querés ver tu pedido luego?
+              </p>
+              <p className="text-blue-800 text-xs leading-relaxed mt-0.5">
+                <Link
+                  href="/cuenta"
+                  className="underline font-semibold hover:text-blue-950"
+                >
+                  Inicia sesión o crea una cuenta
+                </Link>{" "}
+                para ver el historial de tus compras y agilizar el próximo
+                checkout. También puedes seguir como invitado.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Menu, X, Search } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, User } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import SearchModal from "@/components/SearchModal";
@@ -112,9 +112,18 @@ export default function Navbar() {
               <Search size={20} className="text-neutral-700" />
             </button>
 
+            <Link
+              href="/cuenta"
+              className="p-2 rounded-full hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
+              aria-label="Mi cuenta"
+              title="Mi cuenta"
+            >
+              <User size={20} className="text-neutral-700" />
+            </Link>
+
             <button
               onClick={toggleCart}
-              className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors"
+              className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
               aria-label="Carrito"
             >
               <ShoppingBag size={20} className="text-neutral-700" />

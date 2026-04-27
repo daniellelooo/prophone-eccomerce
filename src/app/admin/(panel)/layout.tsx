@@ -47,7 +47,7 @@ export default function AdminPanelLayout({
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+         
         setAuthed(true);
       } else {
         router.replace("/admin");
@@ -57,7 +57,7 @@ export default function AdminPanelLayout({
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setAuthed(!!session);
       if (!session) router.replace("/admin");
     });

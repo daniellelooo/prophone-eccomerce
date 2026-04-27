@@ -1,5 +1,5 @@
-// AUTO-GENERATED — regenerar con `npx supabase gen types typescript --project-id <id>`
-// o vía MCP de Supabase.
+// AUTO-GENERATED — regenerar con MCP Supabase generate_typescript_types.
+// No editar a mano.
 
 export type Json =
   | string
@@ -15,6 +15,161 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_addresses: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          department: string
+          full_name: string
+          id: string
+          is_default: boolean
+          label: string | null
+          notes: string | null
+          phone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          department: string
+          full_name: string
+          id?: string
+          is_default?: boolean
+          label?: string | null
+          notes?: string | null
+          phone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          department?: string
+          full_name?: string
+          id?: string
+          is_default?: boolean
+          label?: string | null
+          notes?: string | null
+          phone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          unit_price_cop: number
+          variant_label: string | null
+          variant_sku: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          unit_price_cop: number
+          variant_label?: string | null
+          variant_sku?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          unit_price_cop?: number
+          variant_label?: string | null
+          variant_sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          id: string
+          notes: string | null
+          order_number: string
+          payment_method: string | null
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_cop: number
+          shipping_department: string | null
+          status: string
+          subtotal_cop: number
+          total_cop: number
+          updated_at: string
+          user_id: string | null
+          whatsapp_sent: boolean
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_cop?: number
+          shipping_department?: string | null
+          status?: string
+          subtotal_cop: number
+          total_cop: number
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_sent?: boolean
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string | null
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_cop?: number
+          shipping_department?: string | null
+          status?: string
+          subtotal_cop?: number
+          total_cop?: number
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_sent?: boolean
+        }
+        Relationships: []
+      }
       product_images: {
         Row: {
           created_at: string
@@ -100,6 +255,33 @@ export type Database = {
           short_description?: string
           slug?: string
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          is_admin: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_admin?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_admin?: boolean
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -172,30 +172,49 @@ export default function CartDrawer() {
 
             {items.length > 0 && (
               <div className="px-6 py-5 border-t border-neutral-100 space-y-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-neutral-600">Subtotal</span>
-                  <span className="font-semibold text-neutral-900">
-                    {formatPrice(cartTotal)}
-                  </span>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center justify-between text-neutral-600">
+                    <span>
+                      Subtotal{" "}
+                      <span className="text-neutral-400">
+                        ({items.reduce((s, i) => s + i.quantity, 0)} unidad
+                        {items.reduce((s, i) => s + i.quantity, 0) === 1 ? "" : "es"})
+                      </span>
+                    </span>
+                    <span className="font-medium text-neutral-900">
+                      {formatPrice(cartTotal)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-neutral-600">
+                    <span>Envío estándar</span>
+                    <span className="font-medium text-green-600">Gratis</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-neutral-100">
+                    <span className="font-bold text-neutral-900">Total</span>
+                    <span className="font-bold text-neutral-900 text-lg">
+                      {formatPrice(cartTotal)}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs text-neutral-400">
-                  El precio final puede variar. Te confirmaremos por WhatsApp.
+                <p className="text-[11px] text-neutral-400 leading-snug">
+                  El precio final se confirma por WhatsApp. Envío gratis a toda Colombia.
                 </p>
+                <Link
+                  href="/checkout"
+                  onClick={closeCart}
+                  className="flex items-center justify-center gap-2 w-full bg-[#CC0000] text-white py-4 rounded-2xl font-bold text-base hover:bg-[#A00000] active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2"
+                  aria-label={`Finalizar compra · Total ${formatPrice(cartTotal)}`}
+                >
+                  Finalizar compra · {formatPrice(cartTotal)}
+                </Link>
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-[#1ebe5d] active:scale-98 transition-all"
+                  className="flex items-center justify-center gap-2 w-full bg-white border border-neutral-200 hover:border-[#25D366] hover:text-[#25D366] text-neutral-700 py-2.5 rounded-2xl font-semibold text-xs transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366]"
                 >
-                  Pedir por WhatsApp
+                  o pide por WhatsApp
                 </a>
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
-                  className="flex items-center justify-center gap-2 w-full bg-[#0071E3] text-white py-3.5 rounded-2xl font-semibold text-sm hover:bg-[#0051a2] active:scale-98 transition-all"
-                >
-                  Finalizar compra
-                </Link>
               </div>
             )}
           </motion.aside>
