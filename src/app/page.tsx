@@ -53,7 +53,7 @@ function MobileCarousel() {
 
   return (
     <div className="w-full">
-      <div className="relative w-full aspect-[5/4] overflow-hidden">
+      <div className="relative w-full aspect-[16/9] overflow-hidden bg-[#F5F5F7]">
         <AnimatePresence initial={false}>
           <motion.div
             key={current}
@@ -67,7 +67,7 @@ function MobileCarousel() {
               src={MOBILE_IMAGES[current]}
               alt={`Prophone ${current + 1}`}
               fill
-              className="object-cover"
+              className="object-contain"
               priority={current === 0}
             />
           </motion.div>
@@ -102,7 +102,7 @@ function HeroCarousel() {
   }, []);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-2xl lg:rounded-3xl aspect-[4/3] lg:aspect-[4/3] max-w-md lg:max-w-lg lg:mx-auto">
+    <div className="relative w-full overflow-hidden rounded-2xl lg:rounded-3xl aspect-[4/5] max-w-sm lg:max-w-md lg:mx-auto bg-[#F5F5F7]">
       <AnimatePresence initial={false}>
         <motion.div
           key={current}
@@ -116,7 +116,7 @@ function HeroCarousel() {
             src={CAROUSEL_IMAGES[current]}
             alt={`Prophone Medellín ${current + 1}`}
             fill
-            className="object-cover"
+            className="object-contain"
             priority={current === 0}
           />
         </motion.div>
