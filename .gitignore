@@ -42,3 +42,5 @@ next-env.d.ts
 
 # playwright runtime artifacts
 /.playwright-mcp/
+# screenshots de pruebas locales
+/0*-*.png
