@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import AnimatedSection from "@/components/AnimatedSection";
+import CategoryShowcase from "@/components/CategoryShowcase";
 import { formatPrice } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
@@ -253,6 +254,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── COMPRA POR LÍNEA ──────────────────────────────────────── */}
+      <CategoryShowcase />
 
       {/* ── PRECIOS DESTACADOS ────────────────────────────────────── */}
       <section className="py-14 md:py-24 bg-[#F5F5F7]">
