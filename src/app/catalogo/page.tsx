@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, Suspense } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
@@ -48,6 +48,11 @@ function CatalogoContent() {
   const [activeCategory, setActiveCategory] = useState(
     categories.find((c) => c.id === initialCat)?.id ?? "todos"
   );
+
+  useEffect(() => {
+    const cat = searchParams.get("cat") ?? "todos";
+    setActiveCategory(categories.find((c) => c.id === cat)?.id ?? "todos");
+  }, [searchParams]);
   const [activeCondition, setActiveCondition] = useState<
     "todas" | ProductCondition
   >("todas");
