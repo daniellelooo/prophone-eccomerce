@@ -16,12 +16,15 @@ import {
   formatPrice,
   conditionLabels,
   conditionWarranty,
+  getImageColor,
+  getImageUrl,
   type ProductCondition,
 } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useCartStore } from "@/lib/store";
 import ProductGallery from "@/components/ProductGallery";
 import RelatedProducts from "@/components/RelatedProducts";
+import ProductDetails from "@/components/ProductDetails";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
@@ -63,6 +66,23 @@ export default function ProductPage() {
   const [selectedColor, setSelectedColor] = useState(
     product.colors[0]?.name ?? ""
   );
+
+  // Imágenes filtradas por color: si hay imágenes asociadas al color
+  // seleccionado, sólo muestra esas; si no, muestra las genéricas (sin
+  // color asignado) y, como último recurso, todas.
+  const galleryImages = useMemo(() => {
+    if (product.images.length === 0)
+      return product.image ? [product.image] : [""];
+    const matchingColor = selectedColor
+      ? product.images.filter((img) => getImageColor(img) === selectedColor)
+      : [];
+    if (matchingColor.length > 0) return matchingColor.map(getImageUrl);
+    const genericOnes = product.images.filter(
+      (img) => !getImageColor(img)
+    );
+    if (genericOnes.length > 0) return genericOnes.map(getImageUrl);
+    return product.images.map(getImageUrl);
+  }, [product.images, product.image, selectedColor]);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
@@ -118,9 +138,9 @@ export default function ProductPage() {
             className="lg:sticky lg:top-24"
           >
             <ProductGallery
-              key={product.slug}
-              images={product.images.length > 0 ? product.images : [product.image]}
-              alt={product.name}
+              key={`${product.slug}-${selectedColor}`}
+              images={galleryImages}
+              alt={`${product.name}${selectedColor ? ` ${selectedColor}` : ""}`}
               badge={product.badge}
             />
           </motion.div>
@@ -150,7 +170,32 @@ export default function ProductPage() {
                 {formatPrice(selectedVariant?.price ?? 0)}
               </p>
               {selectedVariant && (
-                <p className="text-xs text-neutral-500 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700">
+                    {conditionLabels[selectedVariant.condition]}
+                  </span>
+                  {(selectedVariant.size ||
+                    selectedVariant.ram ||
+                    selectedVariant.storage) && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-[#0071E3]">
+                      {[
+                        selectedVariant.size,
+                        selectedVariant.ram ? `${selectedVariant.ram} RAM` : undefined,
+                        selectedVariant.storage,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  )}
+                  {selectedVariant.notes && (
+                    <span className="inline-flex items-center text-[11px] text-neutral-500 italic">
+                      {selectedVariant.notes}
+                    </span>
+                  )}
+                </div>
+              )}
+              {selectedVariant && (
+                <p className="text-xs text-neutral-500 mt-2">
                   {conditionWarranty[selectedVariant.condition]}
                 </p>
               )}
@@ -183,38 +228,45 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* Variantes (almacenamiento / RAM / tamaño) */}
-            {variantsForCondition.length > 1 && (
-              <div>
-                <p className="text-sm font-semibold text-neutral-700 mb-3">
-                  Configuración
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  {variantsForCondition.map((v) => {
-                    const label = [v.size, v.ram, v.storage]
-                      .filter(Boolean)
-                      .join(" / ");
-                    return (
-                      <button
-                        key={v.sku}
-                        onClick={() => setSelectedSku(v.sku)}
-                        className={`flex flex-col items-start px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
-                          selectedSku === v.sku
-                            ? "border-[#0071E3] bg-blue-50 text-[#0071E3]"
-                            : "border-neutral-200 text-neutral-700 hover:border-neutral-400"
-                        }`}
-                      >
-                        <span>{label || "Estándar"}</span>
-                        <span className="text-[11px] opacity-70">
-                          {formatPrice(v.price)}
-                          {v.notes ? ` · ${v.notes}` : ""}
-                        </span>
-                      </button>
-                    );
-                  })}
+            {/* Variantes (almacenamiento / RAM / tamaño) — siempre visibles si hay
+                al menos una variante con storage/ram/size, aunque sea única,
+                para que se vea qué configuración exacta tiene la variante. */}
+            {variantsForCondition.length > 0 &&
+              variantsForCondition.some((v) => v.storage || v.ram || v.size) && (
+                <div>
+                  <p className="text-sm font-semibold text-neutral-700 mb-3">
+                    {variantsForCondition.length > 1
+                      ? "Configuración"
+                      : "Configuración disponible"}
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {variantsForCondition.map((v) => {
+                      const label = [v.size, v.ram, v.storage]
+                        .filter(Boolean)
+                        .join(" / ");
+                      const isOnly = variantsForCondition.length === 1;
+                      return (
+                        <button
+                          key={v.sku}
+                          onClick={() => setSelectedSku(v.sku)}
+                          disabled={isOnly}
+                          className={`flex flex-col items-start px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
+                            selectedSku === v.sku
+                              ? "border-[#0071E3] bg-blue-50 text-[#0071E3]"
+                              : "border-neutral-200 text-neutral-700 hover:border-neutral-400"
+                          } ${isOnly ? "cursor-default" : ""}`}
+                        >
+                          <span>{label || "Estándar"}</span>
+                          <span className="text-[11px] opacity-70">
+                            {formatPrice(v.price)}
+                            {v.notes ? ` · ${v.notes}` : ""}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Colors */}
             {product.colors.length > 0 && (
@@ -288,28 +340,8 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Features */}
-            {product.features.length > 0 && (
-              <div className="pt-2">
-                <h3 className="text-base font-semibold text-neutral-900 mb-4">
-                  Características destacadas
-                </h3>
-                <ul className="space-y-2.5">
-                  {product.features.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-2.5 text-sm text-neutral-600"
-                    >
-                      <Check
-                        size={15}
-                        className="text-[#0071E3] mt-0.5 flex-shrink-0"
-                      />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* Detalles del producto: specs, envío, garantía, pagos, ayuda */}
+            <ProductDetails product={product} variant={selectedVariant} />
           </motion.div>
         </div>
 

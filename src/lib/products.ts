@@ -44,6 +44,29 @@ export type Variant = {
   inStock: boolean;
 };
 
+/**
+ * Imagen de la galería del producto.
+ * - Forma rica: { url, color? } — si `color` está presente, sólo se muestra
+ *   cuando el cliente elige ese color.
+ * - Forma corta: string (solo URL) — equivale a una imagen genérica.
+ *
+ * El consumidor debe normalizar con `toImageObject(img)` antes de leer
+ * propiedades.
+ */
+export type ProductImage = string | { url: string; color?: string };
+
+export function toImageObject(img: ProductImage): { url: string; color?: string } {
+  return typeof img === "string" ? { url: img } : img;
+}
+
+export function getImageUrl(img: ProductImage): string {
+  return typeof img === "string" ? img : img.url;
+}
+
+export function getImageColor(img: ProductImage): string | undefined {
+  return typeof img === "string" ? undefined : img.color;
+}
+
 export type Product = {
   id: string;
   slug: string;
@@ -53,7 +76,7 @@ export type Product = {
   description: string;
   shortDescription: string;
   image: string;
-  images: string[];
+  images: ProductImage[];
   colors: { name: string; hex: string }[];
   features: string[];
   variants: Variant[];

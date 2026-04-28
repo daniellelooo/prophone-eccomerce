@@ -1,9 +1,10 @@
 import type { Database } from "@/lib/database.types";
-import type {
-  Product,
-  ProductCategory,
-  ProductCondition,
-  Variant,
+import {
+  toImageObject,
+  type Product,
+  type ProductCategory,
+  type ProductCondition,
+  type Variant,
 } from "@/lib/products";
 import type { Sede, SiteConfig } from "@/lib/site-config-store";
 import { DEFAULT_SITE_CONFIG } from "@/lib/site-config-store";
@@ -44,7 +45,9 @@ export function rowToProduct(
     description: p.description,
     shortDescription: p.short_description,
     image: p.image,
-    images: sortedImages.map((i) => i.url),
+    images: sortedImages.map((i) =>
+      i.color ? { url: i.url, color: i.color } : i.url
+    ),
     colors: (p.colors as { name: string; hex: string }[]) ?? [],
     features: (p.features as string[]) ?? [],
     variants: sortedVariants.map(rowToVariant),
@@ -121,10 +124,14 @@ export function productToRows(p: Product): {
       notes: v.notes ?? null,
       sort_order: i,
     })),
-    images: p.images.map((url, i) => ({
-      product_id: p.id,
-      url,
-      position: i,
-    })),
+    images: p.images.map((img, i) => {
+      const obj = toImageObject(img);
+      return {
+        product_id: p.id,
+        url: obj.url,
+        position: i,
+        color: obj.color ?? null,
+      };
+    }),
   };
 }

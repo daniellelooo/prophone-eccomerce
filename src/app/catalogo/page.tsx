@@ -168,13 +168,13 @@ function CatalogoContent() {
 
       {/* Sticky filter bar */}
       <section
-        className="sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 py-3"
+        className="sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 py-4"
         aria-label="Filtros del catálogo"
       >
         <div className="max-w-7xl mx-auto flex flex-col gap-3">
           {/* Category pills */}
           <div
-            className="flex gap-2 overflow-x-auto no-scrollbar"
+            className="flex gap-2.5 overflow-x-auto no-scrollbar"
             role="tablist"
             aria-label="Categorías"
           >
@@ -184,7 +184,7 @@ function CatalogoContent() {
                 onClick={() => setActiveCategory(cat.id)}
                 role="tab"
                 aria-selected={activeCategory === cat.id}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 ${
+                className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 ${
                   activeCategory === cat.id
                     ? "bg-neutral-900 text-white shadow-sm"
                     : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
@@ -207,7 +207,7 @@ function CatalogoContent() {
                 onClick={() => setActiveCondition(c.id)}
                 role="tab"
                 aria-selected={activeCondition === c.id}
-                className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
                   activeCondition === c.id
                     ? "bg-[#CC0000] text-white shadow-sm"
                     : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"
@@ -222,8 +222,8 @@ function CatalogoContent() {
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search
-                size={14}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
+                size={16}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400"
                 aria-hidden
               />
               <input
@@ -232,23 +232,23 @@ function CatalogoContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 aria-label="Buscar productos"
-                className="w-full pl-8 pr-4 py-2 bg-neutral-100 rounded-full text-xs text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                className="w-full pl-10 pr-4 py-2.5 bg-neutral-100 rounded-full text-sm text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
               />
             </div>
             <button
               onClick={() => setAdvancedOpen((v) => !v)}
               aria-expanded={advancedOpen}
               aria-controls="advanced-filters"
-              className={`relative flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
                 advancedOpen || activeFilterCount > 0
                   ? "bg-[#CC0000] text-white"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
-              <SlidersHorizontal size={12} aria-hidden />
+              <SlidersHorizontal size={14} aria-hidden />
               <span className="hidden sm:inline">Filtros</span>
               {activeFilterCount > 0 && (
-                <span className="bg-white/30 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+                <span className="bg-white/30 text-white text-[11px] font-bold rounded-full px-1.5 py-0.5 leading-none">
                   {activeFilterCount}
                 </span>
               )}
@@ -257,7 +257,7 @@ function CatalogoContent() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               aria-label="Ordenar por"
-              className="appearance-none bg-neutral-100 text-neutral-700 text-xs py-2 pl-3 pr-7 rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 shrink-0"
+              className="appearance-none bg-neutral-100 text-neutral-700 text-sm py-2.5 pl-4 pr-8 rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 shrink-0 cursor-pointer"
             >
               <option value="featured">Destacados</option>
               <option value="price-asc">Menor precio</option>

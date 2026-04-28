@@ -19,9 +19,11 @@ import {
 import { useCatalogStore } from "@/lib/catalog-store";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
+  toImageObject,
   type Product,
   type ProductCategory,
   type ProductCondition,
+  type ProductImage,
   type Variant,
   categories,
   conditionLabels,
@@ -164,28 +166,47 @@ export default function ProductEditorPage() {
     const urls = uploads.filter((u): u is string => Boolean(u));
     if (urls.length === 0) return;
     setDraft((d) => {
-      const newImages = [...d.images, ...urls];
+      const added: ProductImage[] = urls.map((u) => ({ url: u }));
+      const newImages = [...d.images, ...added];
       return {
         ...d,
         images: newImages,
-        image: d.image || newImages[0] || "",
+        image: d.image || urls[0] || "",
       };
     });
   };
 
   const removeImage = (idx: number) =>
     setDraft((d) => {
+      const removed = d.images[idx];
+      const removedUrl = removed ? toImageObject(removed).url : "";
       const newImages = d.images.filter((_, i) => i !== idx);
+      const fallback = newImages[0]
+        ? toImageObject(newImages[0]).url
+        : "";
       return {
         ...d,
         images: newImages,
-        image:
-          d.image === d.images[idx] ? newImages[0] ?? "" : d.image,
+        image: d.image === removedUrl ? fallback : d.image,
       };
     });
 
   const setPrimaryImage = (idx: number) =>
-    setDraft((d) => ({ ...d, image: d.images[idx] ?? d.image }));
+    setDraft((d) => ({
+      ...d,
+      image: d.images[idx] ? toImageObject(d.images[idx]).url : d.image,
+    }));
+
+  const setImageColor = (idx: number, color: string) =>
+    setDraft((d) => ({
+      ...d,
+      images: d.images.map((img, i) => {
+        if (i !== idx) return img;
+        const obj = toImageObject(img);
+        if (!color) return obj.url; // sin color → forma corta
+        return { url: obj.url, color };
+      }),
+    }));
 
   const handleSave = async () => {
     // Validaciones mínimas
@@ -222,9 +243,14 @@ export default function ProductEditorPage() {
       family: draft.family?.trim() || undefined,
       image:
         draft.image ||
-        draft.images[0] ||
+        (draft.images[0] ? toImageObject(draft.images[0]).url : "") ||
         "",
-      images: draft.images.length > 0 ? draft.images : draft.image ? [draft.image] : [],
+      images:
+        draft.images.length > 0
+          ? draft.images
+          : draft.image
+            ? [draft.image]
+            : [],
       badge: draft.badge?.trim() || undefined,
       colors: draft.colors.filter((c) => c.name.trim()),
       features: draft.features.filter((f) => f.trim()),
@@ -304,47 +330,87 @@ export default function ProductEditorPage() {
       </div>
 
       {/* Galería de imágenes */}
-      <Section title="Imágenes" desc="La primera imagen es la portada que aparece en el catálogo y en la galería del producto.">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {draft.images.map((src, i) => (
-            <div
-              key={`${src.slice(0, 30)}-${i}`}
-              className="relative group aspect-square rounded-xl bg-neutral-100 overflow-hidden border-2 border-transparent hover:border-neutral-300 transition"
-            >
-              <Image
-                src={src}
-                alt={`Imagen ${i + 1}`}
-                fill
-                className="object-contain p-3"
-                unoptimized
-              />
-              {draft.image === src && (
-                <span className="absolute top-1.5 left-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5">
-                  <Star size={9} className="fill-yellow-900" /> Portada
-                </span>
-              )}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                {draft.image !== src && (
-                  <button
-                    onClick={() => setPrimaryImage(i)}
-                    className="p-1.5 bg-white text-neutral-900 rounded-full hover:bg-yellow-100 transition"
-                    aria-label="Hacer portada"
-                    title="Hacer portada"
+      <Section
+        title="Imágenes"
+        desc="La primera imagen es la portada. Asocia cada imagen a un color para que el cliente vea fotos del color que selecciona."
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {draft.images.map((img, i) => {
+            const obj = toImageObject(img);
+            return (
+              <div
+                key={`${obj.url.slice(0, 30)}-${i}`}
+                className="relative group rounded-xl bg-white border border-neutral-200 overflow-hidden hover:border-neutral-300 transition flex flex-col"
+              >
+                <div className="relative aspect-square bg-neutral-100">
+                  <Image
+                    src={obj.url}
+                    alt={`Imagen ${i + 1}${obj.color ? ` ${obj.color}` : ""}`}
+                    fill
+                    className="object-contain p-3"
+                    unoptimized
+                  />
+                  {draft.image === obj.url && (
+                    <span className="absolute top-1.5 left-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-0.5">
+                      <Star size={9} className="fill-yellow-900" /> Portada
+                    </span>
+                  )}
+                  {obj.color && (
+                    <span className="absolute top-1.5 right-1.5 bg-white/90 backdrop-blur-sm text-neutral-700 text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 border border-neutral-200">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            draft.colors.find((c) => c.name === obj.color)
+                              ?.hex ?? "#888",
+                        }}
+                        aria-hidden
+                      />
+                      {obj.color}
+                    </span>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    {draft.image !== obj.url && (
+                      <button
+                        onClick={() => setPrimaryImage(i)}
+                        className="p-1.5 bg-white text-neutral-900 rounded-full hover:bg-yellow-100 transition"
+                        aria-label="Hacer portada"
+                        title="Hacer portada"
+                      >
+                        <Star size={13} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="p-1.5 bg-white text-[#CC0000] rounded-full hover:bg-red-50 transition"
+                      aria-label="Eliminar imagen"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+                {/* Selector de color */}
+                <div className="px-2 py-2 border-t border-neutral-100 bg-neutral-50">
+                  <label className="block text-[9px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+                    Asociar color
+                  </label>
+                  <select
+                    value={obj.color ?? ""}
+                    onChange={(e) => setImageColor(i, e.target.value)}
+                    className="w-full text-xs px-1.5 py-1 bg-white border border-neutral-200 rounded focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
                   >
-                    <Star size={13} />
-                  </button>
-                )}
-                <button
-                  onClick={() => removeImage(i)}
-                  className="p-1.5 bg-white text-[#CC0000] rounded-full hover:bg-red-50 transition"
-                  aria-label="Eliminar imagen"
-                  title="Eliminar"
-                >
-                  <Trash2 size={13} />
-                </button>
+                    <option value="">— Genérica —</option>
+                    {draft.colors.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

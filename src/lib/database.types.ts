@@ -172,6 +172,7 @@ export type Database = {
       }
       product_images: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           position: number
@@ -179,6 +180,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           position?: number
@@ -186,6 +188,7 @@ export type Database = {
           url: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           position?: number

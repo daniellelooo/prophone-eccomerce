@@ -6,7 +6,7 @@
  * Uso: npx tsx scripts/generate-seed-sql.ts > /tmp/seed.sql
  */
 
-import { products } from "../src/lib/products";
+import { products, getImageUrl } from "../src/lib/products";
 
 const esc = (s: string) => s.replace(/'/g, "''");
 const json = (v: unknown) => `'${JSON.stringify(v).replace(/'/g, "''")}'::jsonb`;
@@ -52,8 +52,8 @@ console.log("");
 // Product images
 const imageRows: string[] = [];
 products.forEach((p) => {
-  p.images.forEach((url, i) => {
-    imageRows.push(`(${txt(p.id)}, ${txt(url)}, ${i})`);
+  p.images.forEach((img, i) => {
+    imageRows.push(`(${txt(p.id)}, ${txt(getImageUrl(img))}, ${i})`);
   });
 });
 if (imageRows.length > 0) {
