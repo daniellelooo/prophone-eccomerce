@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     let cancelled = false;
     isAuthed().then((ok) => {
-      if (!cancelled && ok) router.replace("/admin/productos");
+      if (!cancelled && ok) router.replace("/admin/dashboard");
     });
     return () => {
       cancelled = true;
@@ -33,7 +33,7 @@ export default function AdminLoginPage() {
     try {
       const ok = await login({ username: user, password: pass });
       if (ok) {
-        router.replace("/admin/productos");
+        router.replace("/admin/dashboard");
       } else {
         setError("Usuario o contraseña incorrectos.");
         setSubmitting(false);

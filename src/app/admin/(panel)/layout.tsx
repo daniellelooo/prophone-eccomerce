@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  BarChart3,
   Box,
   ExternalLink,
   LogOut,
@@ -20,6 +21,7 @@ import { logout } from "@/lib/admin-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV = [
+  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/productos", label: "Productos", icon: Box },
   { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
