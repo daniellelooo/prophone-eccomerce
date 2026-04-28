@@ -10,7 +10,8 @@ export default function PriceTicker() {
   const items = useSiteConfigStore((s) => s.bannerItems);
   const enabled = useSiteConfigStore((s) => s.bannerEnabled);
 
-  if (pathname?.startsWith("/admin")) return null;
+  const allowed = pathname === "/" || pathname === "/catalogo";
+  if (!allowed) return null;
   if (!enabled || items.length === 0) return null;
 
   const content = items.join(`   ${SEPARATOR}   `);
