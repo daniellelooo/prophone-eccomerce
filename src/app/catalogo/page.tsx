@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
@@ -41,18 +41,22 @@ function uniqueColors(products: Product[]): { name: string; hex: string }[] {
 
 function CatalogoContent() {
   const searchParams = useSearchParams();
-  const initialCat = searchParams.get("cat") ?? "todos";
+  const router = useRouter();
   const products = useCatalogStore((s) => s.products);
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
 
-  const [activeCategory, setActiveCategory] = useState(
-    categories.find((c) => c.id === initialCat)?.id ?? "todos"
-  );
-
-  useEffect(() => {
-    const cat = searchParams.get("cat") ?? "todos";
-    setActiveCategory(categories.find((c) => c.id === cat)?.id ?? "todos");
-  }, [searchParams]);
+  // Categoría activa derivada de la URL — no se guarda en useState.
+  // Así, navegar desde el navbar (`/catalogo?cat=ipad`) actualiza el filtro
+  // sin necesidad de un useEffect de sincronización.
+  const catParam = searchParams.get("cat") ?? "todos";
+  const activeCategory =
+    categories.find((c) => c.id === catParam)?.id ?? "todos";
+  const setActiveCategory = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id === "todos") params.delete("cat");
+    else params.set("cat", id);
+    router.replace(params.toString() ? `?${params.toString()}` : "?");
+  };
   const [activeCondition, setActiveCondition] = useState<
     "todas" | ProductCondition
   >("todas");

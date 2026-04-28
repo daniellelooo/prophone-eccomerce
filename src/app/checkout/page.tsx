@@ -12,6 +12,7 @@ import {
   CreditCard,
   MessageCircle,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
@@ -43,6 +44,24 @@ const DEPARTAMENTOS = [
   "Otro",
 ];
 
+// Email RFC-lite (suficiente para checkout, no PII validation paranoica).
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** Normaliza un teléfono colombiano: deja solo dígitos y quita el +57 inicial. */
+function normalizeCoPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("57") && digits.length === 12) return digits.slice(2);
+  return digits;
+}
+
+/** Móvil colombiano: 10 dígitos empezando por 3. Acepta opcional +57. */
+function isValidCoPhone(raw: string): boolean {
+  const digits = normalizeCoPhone(raw);
+  return /^3\d{9}$/.test(digits);
+}
+
+type FormErrors = Partial<Record<keyof FormData, string>>;
+
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore();
   const cartTotal = total();
@@ -51,6 +70,8 @@ export default function CheckoutPage() {
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>({
     nombre: "",
     apellido: "",
@@ -88,19 +109,53 @@ export default function CheckoutPage() {
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
     >
   ) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Limpia el error del campo mientras el usuario corrige.
+    setErrors((prev) =>
+      prev[name as keyof FormData] ? { ...prev, [name]: undefined } : prev
+    );
   };
 
-  const isValid =
-    form.nombre &&
-    form.apellido &&
-    form.telefono &&
-    form.ciudad &&
-    form.direccion;
+  /** Valida el formulario y devuelve el mapa de errores (vacío si todo OK). */
+  const validateForm = (): FormErrors => {
+    const e: FormErrors = {};
+    if (!form.nombre.trim()) e.nombre = "Ingresa tu nombre.";
+    if (!form.apellido.trim()) e.apellido = "Ingresa tu apellido.";
+
+    if (!form.telefono.trim()) {
+      e.telefono = "Ingresa tu teléfono.";
+    } else if (!isValidCoPhone(form.telefono)) {
+      e.telefono = "Debe ser un celular colombiano de 10 dígitos (ej. 300 000 0000).";
+    }
+
+    // Email es opcional, pero si lo escriben tiene que ser válido.
+    if (form.email.trim() && !EMAIL_REGEX.test(form.email.trim())) {
+      e.email = "El correo no parece válido.";
+    }
+
+    if (!form.ciudad.trim()) e.ciudad = "Ingresa tu ciudad.";
+
+    if (!form.direccion.trim()) {
+      e.direccion = "Ingresa tu dirección.";
+    } else if (form.direccion.trim().length < 8) {
+      e.direccion = "La dirección parece muy corta — incluye calle, número y barrio.";
+    }
+
+    return e;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    const errs = validateForm();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      // Lleva el foco al primer campo con error para no perder tiempo del usuario.
+      const first = Object.keys(errs)[0];
+      const el = document.querySelector<HTMLElement>(`[name="${first}"]`);
+      el?.focus();
+      return;
+    }
     setStep("confirm");
   };
 
@@ -110,7 +165,7 @@ export default function CheckoutPage() {
       userId: profile?.id ?? null,
       customerName: `${form.nombre} ${form.apellido}`.trim(),
       customerEmail: form.email || profile?.email,
-      customerPhone: form.telefono,
+      customerPhone: normalizeCoPhone(form.telefono),
       shippingDepartment: form.departamento,
       shippingCity: form.ciudad,
       shippingAddress: form.direccion,
@@ -123,13 +178,12 @@ export default function CheckoutPage() {
   const handlePayWompi = async () => {
     if (submitting) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const created = await ensureOrder();
       if (!created.ok) {
-        alert(
-          "No se pudo registrar el pedido: " +
-            created.error +
-            "\n\nIntenta de nuevo o usa la opción de WhatsApp."
+        setSubmitError(
+          `No pudimos registrar tu pedido (${created.error}). Intenta de nuevo o usa la opción de WhatsApp.`
         );
         setSubmitting(false);
         return;
@@ -144,10 +198,10 @@ export default function CheckoutPage() {
         error?: string;
       };
       if (!res.ok || !json.url) {
-        alert(
-          "No se pudo iniciar el pago: " +
-            (json.error ?? `HTTP ${res.status}`) +
-            "\n\nUsa la opción de WhatsApp como alternativa."
+        setSubmitError(
+          `No pudimos iniciar el pago en línea (${
+            json.error ?? `HTTP ${res.status}`
+          }). Puedes coordinar por WhatsApp como alternativa.`
         );
         setSubmitting(false);
         return;
@@ -155,7 +209,11 @@ export default function CheckoutPage() {
       // No clearCart todavía — el carrito se vacía al regresar a /checkout/resultado.
       window.location.href = json.url;
     } catch (err) {
-      alert("Error inesperado: " + (err as Error).message);
+      setSubmitError(
+        `Error inesperado al procesar el pago: ${
+          (err as Error).message
+        }. Revisa tu conexión e intenta de nuevo.`
+      );
       setSubmitting(false);
     }
   };
@@ -164,13 +222,12 @@ export default function CheckoutPage() {
   const handlePayWhatsapp = async () => {
     if (submitting) return;
     setSubmitting(true);
+    setSubmitError(null);
 
     const created = await ensureOrder();
     if (!created.ok) {
-      alert(
-        "No se pudo registrar el pedido en nuestra base de datos: " +
-          created.error +
-          "\n\nTe enviaremos por WhatsApp de todas formas."
+      setSubmitError(
+        `No pudimos guardar el pedido en la base de datos (${created.error}), pero te llevaremos a WhatsApp para coordinar igual.`
       );
     }
 
@@ -337,70 +394,60 @@ ${orderLines}
                   className="bg-white rounded-3xl p-8 shadow-sm space-y-6"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                        Nombre *
-                      </label>
-                      <input
-                        name="nombre"
-                        value={form.nombre}
-                        onChange={handleChange}
-                        required
-                        placeholder="Juan"
-                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                        Apellido *
-                      </label>
-                      <input
-                        name="apellido"
-                        value={form.apellido}
-                        onChange={handleChange}
-                        required
-                        placeholder="Pérez"
-                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
-                      />
-                    </div>
+                    <Field
+                      name="nombre"
+                      label="Nombre *"
+                      value={form.nombre}
+                      onChange={handleChange}
+                      placeholder="Juan"
+                      error={errors.nombre}
+                      required
+                    />
+                    <Field
+                      name="apellido"
+                      label="Apellido *"
+                      value={form.apellido}
+                      onChange={handleChange}
+                      placeholder="Pérez"
+                      error={errors.apellido}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Field
+                      name="telefono"
+                      label="WhatsApp / Teléfono *"
+                      value={form.telefono}
+                      onChange={handleChange}
+                      placeholder="300 000 0000"
+                      type="tel"
+                      hint="Celular colombiano de 10 dígitos."
+                      error={errors.telefono}
+                      required
+                    />
+                    <Field
+                      name="email"
+                      label="Correo electrónico"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder="correo@ejemplo.com"
+                      type="email"
+                      hint="Opcional — para enviarte el comprobante."
+                      error={errors.email}
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                        WhatsApp / Teléfono *
-                      </label>
-                      <input
-                        name="telefono"
-                        value={form.telefono}
-                        onChange={handleChange}
-                        required
-                        placeholder="300 000 0000"
-                        type="tel"
-                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                        Correo electrónico
-                      </label>
-                      <input
-                        name="email"
-                        value={form.email}
-                        onChange={handleChange}
-                        placeholder="correo@ejemplo.com"
-                        type="email"
-                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                      <label
+                        htmlFor="departamento"
+                        className="block text-sm font-medium text-neutral-700 mb-1.5"
+                      >
                         Departamento *
                       </label>
                       <select
+                        id="departamento"
                         name="departamento"
                         value={form.departamento}
                         onChange={handleChange}
@@ -414,40 +461,36 @@ ${orderLines}
                         ))}
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                        Ciudad / Municipio *
-                      </label>
-                      <input
-                        name="ciudad"
-                        value={form.ciudad}
-                        onChange={handleChange}
-                        required
-                        placeholder="Medellín"
-                        className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-                      Dirección de entrega *
-                    </label>
-                    <input
-                      name="direccion"
-                      value={form.direccion}
+                    <Field
+                      name="ciudad"
+                      label="Ciudad / Municipio *"
+                      value={form.ciudad}
                       onChange={handleChange}
+                      placeholder="Medellín"
+                      error={errors.ciudad}
                       required
-                      placeholder="Calle 10 # 43-20, Apto 501"
-                      className="w-full px-4 py-3 rounded-xl border border-neutral-200 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000] focus:border-transparent transition-all"
                     />
                   </div>
 
+                  <Field
+                    name="direccion"
+                    label="Dirección de entrega *"
+                    value={form.direccion}
+                    onChange={handleChange}
+                    placeholder="Calle 10 # 43-20, Apto 501"
+                    error={errors.direccion}
+                    required
+                  />
+
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                    <label
+                      htmlFor="notas"
+                      className="block text-sm font-medium text-neutral-700 mb-1.5"
+                    >
                       Notas adicionales
                     </label>
                     <textarea
+                      id="notas"
                       name="notas"
                       value={form.notas}
                       onChange={handleChange}
@@ -459,8 +502,7 @@ ${orderLines}
 
                   <button
                     type="submit"
-                    disabled={!isValid}
-                    className="w-full bg-[#CC0000] text-white py-4 rounded-2xl font-semibold text-base hover:bg-[#A00000] active:scale-98 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full bg-[#CC0000] text-white py-4 rounded-2xl font-semibold text-base hover:bg-[#A00000] active:scale-98 transition-all"
                   >
                     Continuar al resumen
                   </button>
@@ -505,7 +547,10 @@ ${orderLines}
                       ))}
                     </div>
                     <button
-                      onClick={() => setStep("form")}
+                      onClick={() => {
+                        setSubmitError(null);
+                        setStep("form");
+                      }}
                       className="mt-5 text-sm text-[#CC0000] hover:underline"
                     >
                       Editar datos
@@ -522,6 +567,20 @@ ${orderLines}
                         {formatPrice(cartTotal)}
                       </strong>
                     </p>
+
+                    {submitError && (
+                      <div
+                        role="alert"
+                        className="mb-4 flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-800 rounded-xl p-3 text-xs leading-relaxed"
+                      >
+                        <AlertTriangle
+                          size={14}
+                          className="shrink-0 mt-0.5"
+                          aria-hidden
+                        />
+                        <p>{submitError}</p>
+                      </div>
+                    )}
 
                     {/* Pagar online con Wompi */}
                     <button
@@ -657,6 +716,77 @@ ${orderLines}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ----------------------- subcomponentes ----------------------- */
+
+type FieldProps = {
+  name: keyof FormData;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  type?: string;
+  hint?: string;
+  error?: string;
+  required?: boolean;
+};
+
+/**
+ * Input controlado con label, hint y mensaje de error inline.
+ * Borde rojo y aria-invalid cuando hay error — accesible para lectores de pantalla.
+ */
+function Field({
+  name,
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  hint,
+  error,
+  required,
+}: FieldProps) {
+  const id = `field-${name}`;
+  const hintId = hint ? `${id}-hint` : undefined;
+  const errorId = error ? `${id}-error` : undefined;
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-neutral-700 mb-1.5"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        type={type}
+        required={required}
+        aria-invalid={!!error}
+        aria-describedby={
+          [errorId, hintId].filter(Boolean).join(" ") || undefined
+        }
+        className={`w-full px-4 py-3 rounded-xl border text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
+          error
+            ? "border-red-300 focus:ring-red-400 bg-red-50/40"
+            : "border-neutral-200 focus:ring-[#CC0000]"
+        }`}
+      />
+      {error ? (
+        <p id={errorId} className="text-[11px] text-red-600 mt-1.5 leading-snug">
+          {error}
+        </p>
+      ) : hint ? (
+        <p id={hintId} className="text-[11px] text-neutral-400 mt-1.5">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

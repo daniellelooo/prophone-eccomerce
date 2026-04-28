@@ -11,6 +11,11 @@ import { buildCheckoutUrl } from "@/lib/wompi";
  * Wompi. La orden ya debe existir en la DB (la crea el cliente con
  * createOrder antes de llamar a este endpoint).
  *
+ * Verificación de dueño (defense-in-depth además de RLS):
+ *   - Si order.user_id NO es null → requiere sesión y user.id === order.user_id
+ *   - Si order.user_id es null (guest checkout) → permite (cualquiera con el
+ *     orderId puede completar el pago, ese es el modelo de guest checkout)
+ *
  * También marca la orden como `payment_provider='wompi'` y
  * `payment_status='pending'` para reflejar que se inició el flujo de
  * pago — si el cliente abandona, queda visible en el panel admin.
@@ -65,6 +70,17 @@ export async function POST(request: Request) {
       { error: "Orden no encontrada o sin acceso" },
       { status: 404 }
     );
+  }
+
+  // Verificación explícita de dueño para órdenes con user_id.
+  if (order.user_id) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user || userData.user.id !== order.user_id) {
+      return NextResponse.json(
+        { error: "No tienes permiso para iniciar el pago de esta orden." },
+        { status: 403 }
+      );
+    }
   }
 
   // Construir URL de redirect-url absoluta a partir del request.

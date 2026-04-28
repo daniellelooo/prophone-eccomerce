@@ -11,7 +11,8 @@ import {
   MapPin,
   Settings,
   Sparkles,
-  Database,
+  ShoppingBag,
+  Users,
   Menu,
   X,
 } from "lucide-react";
@@ -20,10 +21,11 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV = [
   { href: "/admin/productos", label: "Productos", icon: Box },
+  { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
+  { href: "/admin/clientes", label: "Clientes", icon: Users },
   { href: "/admin/promociones", label: "Promociones", icon: Sparkles },
   { href: "/admin/sedes", label: "Sedes", icon: MapPin },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
-  { href: "/admin/datos", label: "Datos (JSON)", icon: Database },
 ];
 
 export default function AdminPanelLayout({
