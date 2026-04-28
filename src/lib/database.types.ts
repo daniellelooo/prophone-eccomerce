@@ -117,6 +117,12 @@ export type Database = {
           notes: string | null
           order_number: string
           payment_method: string | null
+          payment_method_type: string | null
+          payment_paid_at: string | null
+          payment_provider: string | null
+          payment_reference: string | null
+          payment_status: string | null
+          payment_transaction_id: string | null
           shipping_address: string | null
           shipping_city: string | null
           shipping_cop: number
@@ -137,6 +143,12 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method?: string | null
+          payment_method_type?: string | null
+          payment_paid_at?: string | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          payment_transaction_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_cop?: number
@@ -157,6 +169,12 @@ export type Database = {
           notes?: string | null
           order_number?: string
           payment_method?: string | null
+          payment_method_type?: string | null
+          payment_paid_at?: string | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
+          payment_transaction_id?: string | null
           shipping_address?: string | null
           shipping_city?: string | null
           shipping_cop?: number
@@ -395,7 +413,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_payment_event: {
+        Args: {
+          p_method_type: string
+          p_paid_at: string
+          p_payment_status: string
+          p_provider?: string
+          p_reference: string
+          p_transaction_id: string
+        }
+        Returns: {
+          new_status: string
+          order_id: string
+          order_number: string
+          prev_status: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

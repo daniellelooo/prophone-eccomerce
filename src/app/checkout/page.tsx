@@ -4,7 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ArrowLeft, CheckCircle2, User } from "lucide-react";
+import {
+  ChevronRight,
+  ArrowLeft,
+  CheckCircle2,
+  User,
+  CreditCard,
+  MessageCircle,
+  Lock,
+} from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
@@ -96,12 +104,9 @@ export default function CheckoutPage() {
     setStep("confirm");
   };
 
-  const handleConfirm = async () => {
-    if (submitting) return;
-    setSubmitting(true);
-
-    // 1) Crear orden en Supabase
-    const created = await createOrder({
+  /** Crea la orden en Supabase. Compartido por ambos métodos de pago. */
+  const ensureOrder = async () => {
+    return createOrder({
       userId: profile?.id ?? null,
       customerName: `${form.nombre} ${form.apellido}`.trim(),
       customerEmail: form.email || profile?.email,
@@ -112,7 +117,55 @@ export default function CheckoutPage() {
       notes: form.notas,
       items,
     });
+  };
 
+  /** Confirmar y pagar online vía Wompi (Web Checkout redirect). */
+  const handlePayWompi = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const created = await ensureOrder();
+      if (!created.ok) {
+        alert(
+          "No se pudo registrar el pedido: " +
+            created.error +
+            "\n\nIntenta de nuevo o usa la opción de WhatsApp."
+        );
+        setSubmitting(false);
+        return;
+      }
+      const res = await fetch("/api/wompi/checkout-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: created.order.id }),
+      });
+      const json = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !json.url) {
+        alert(
+          "No se pudo iniciar el pago: " +
+            (json.error ?? `HTTP ${res.status}`) +
+            "\n\nUsa la opción de WhatsApp como alternativa."
+        );
+        setSubmitting(false);
+        return;
+      }
+      // No clearCart todavía — el carrito se vacía al regresar a /checkout/resultado.
+      window.location.href = json.url;
+    } catch (err) {
+      alert("Error inesperado: " + (err as Error).message);
+      setSubmitting(false);
+    }
+  };
+
+  /** Coordinar pago por WhatsApp (efectivo, transferencia, Nequi…). */
+  const handlePayWhatsapp = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+
+    const created = await ensureOrder();
     if (!created.ok) {
       alert(
         "No se pudo registrar el pedido en nuestra base de datos: " +
@@ -121,7 +174,6 @@ export default function CheckoutPage() {
       );
     }
 
-    // 2) Construir mensaje WhatsApp con order_number
     const orderLines = items
       .map((item) => {
         const variantInfo = [
@@ -460,18 +512,81 @@ ${orderLines}
                     </button>
                   </div>
 
-                  <p className="text-sm text-neutral-500 bg-white rounded-2xl p-4 shadow-sm">
-                    📱 Al confirmar, te redirigiremos a WhatsApp con el resumen
-                    de tu pedido. Un asesor te contactará para coordinar el pago
-                    (transferencia, Nequi, PSE) y confirmar el envío.
-                  </p>
+                  <div className="bg-white rounded-3xl p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-neutral-900 mb-1">
+                      Elige cómo pagar
+                    </h3>
+                    <p className="text-xs text-neutral-500 mb-5">
+                      Total a pagar:{" "}
+                      <strong className="text-neutral-900 text-sm">
+                        {formatPrice(cartTotal)}
+                      </strong>
+                    </p>
 
-                  <button
-                    onClick={handleConfirm}
-                    className="w-full bg-[#25D366] text-white py-4 rounded-2xl font-bold text-base hover:bg-[#1ebe5d] active:scale-98 transition-all"
-                  >
-                    Confirmar y enviar por WhatsApp
-                  </button>
+                    {/* Pagar online con Wompi */}
+                    <button
+                      onClick={handlePayWompi}
+                      disabled={submitting}
+                      className="w-full text-left bg-[#0C1014] hover:bg-black text-white p-5 rounded-2xl transition-all active:scale-[0.99] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 mb-3"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                          <CreditCard size={18} aria-hidden />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm flex items-center gap-2">
+                            Pagar con tarjeta o PSE
+                            <span className="text-[9px] uppercase tracking-wider bg-[#CC0000] text-white px-1.5 py-0.5 rounded-full">
+                              Recomendado
+                            </span>
+                          </p>
+                          <p className="text-[11px] text-neutral-400 mt-0.5">
+                            Visa · Mastercard · PSE · Nequi · Bancolombia QR
+                          </p>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className="text-neutral-500 shrink-0"
+                          aria-hidden
+                        />
+                      </div>
+                      <p className="text-[11px] text-neutral-400 flex items-center gap-1.5 pt-2 border-t border-white/10">
+                        <Lock size={11} aria-hidden /> Pago seguro vía Wompi
+                      </p>
+                    </button>
+
+                    {/* Coordinar por WhatsApp */}
+                    <button
+                      onClick={handlePayWhatsapp}
+                      disabled={submitting}
+                      className="w-full text-left bg-white border border-neutral-200 hover:border-[#25D366] text-neutral-900 p-5 rounded-2xl transition-all active:scale-[0.99] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
+                          <MessageCircle size={18} aria-hidden />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm">
+                            Coordinar por WhatsApp
+                          </p>
+                          <p className="text-[11px] text-neutral-500 mt-0.5">
+                            Pago contraentrega · efectivo · transferencia
+                          </p>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className="text-neutral-300 shrink-0"
+                          aria-hidden
+                        />
+                      </div>
+                    </button>
+
+                    {submitting && (
+                      <p className="text-xs text-neutral-400 mt-4 text-center animate-pulse">
+                        Procesando…
+                      </p>
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
