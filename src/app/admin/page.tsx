@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Lock, ArrowLeft, KeyRound } from "lucide-react";
-import { ADMIN_CREDENTIAL_HINT, isAuthed, login } from "@/lib/admin-auth";
+import { Lock, ArrowLeft } from "lucide-react";
+import { isAuthed, login } from "@/lib/admin-auth";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -125,23 +125,6 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-7 pt-5 border-t border-white/10">
-            <p className="text-[11px] text-neutral-500 flex items-center gap-1.5 mb-2">
-              <KeyRound size={11} /> Demo credentials
-            </p>
-            <div className="bg-[#0C1014] rounded-xl px-3 py-2.5 font-mono text-xs text-neutral-400 space-y-1">
-              <p>
-                email: <span className="text-neutral-200">{ADMIN_CREDENTIAL_HINT.user}</span>
-              </p>
-              <p>
-                pass: <span className="text-neutral-200">{ADMIN_CREDENTIAL_HINT.pass}</span>
-              </p>
-            </div>
-            <p className="text-[10px] text-neutral-600 mt-3 leading-relaxed">
-              Sesión real con Supabase Auth. Cambia tu contraseña desde el
-              portal Supabase cuando sea producción.
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>

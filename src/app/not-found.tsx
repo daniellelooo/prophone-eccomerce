@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Home, Search, ShoppingBag } from "lucide-react";
-
-const WA_URL =
-  "https://wa.me/573148941200?text=Hola%2C%20me%20interesa%20un%20producto%20de%20Prophone";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 export default function NotFound() {
+  const { whatsappNumber, whatsappDefaultMessage } = useSiteConfigStore();
+  const waUrl = getWhatsappUrl(whatsappNumber, whatsappDefaultMessage);
+
   return (
     <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center px-6 py-24">
       <motion.div
@@ -89,7 +90,7 @@ export default function NotFound() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.45, delay: 0.85 }}
-          href={WA_URL}
+          href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-[#25D366] font-semibold hover:underline"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Package, ArrowLeft, CheckCircle, Clock, Truck } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/products";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 type OrderItem = {
   product_name: string;
@@ -53,6 +54,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function SeguimientoPage() {
+  const { whatsappNumber, whatsappDefaultMessage } = useSiteConfigStore();
   const [orderNumber, setOrderNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -258,9 +260,14 @@ export default function SeguimientoPage() {
 
             <p className="text-center text-xs text-neutral-400 pb-4">
               ¿Tienes dudas?{" "}
-              <Link href="/" className="text-[#CC0000] hover:underline">
+              <a
+                href={getWhatsappUrl(whatsappNumber, whatsappDefaultMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#CC0000] hover:underline"
+              >
                 Contáctanos por WhatsApp
-              </Link>
+              </a>
             </p>
           </div>
         )}

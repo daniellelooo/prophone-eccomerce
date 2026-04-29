@@ -49,8 +49,3 @@ export async function getCurrentUserEmail(): Promise<string | null> {
   const { data } = await supabase.auth.getUser();
   return data.user?.email ?? null;
 }
-
-export const ADMIN_CREDENTIAL_HINT = {
-  user: "daniellelo063@gmail.com",
-  pass: "prophone2026",
-};
