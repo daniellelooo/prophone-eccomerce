@@ -71,6 +71,7 @@ function emptyVariant(): Variant {
     price: 0,
     notes: "",
     inStock: true,
+    stockQuantity: 1,
   };
 }
 
@@ -263,6 +264,8 @@ export default function ProductEditorPage() {
         color: v.color?.trim() || undefined,
         notes: v.notes?.trim() || undefined,
         price: Number(v.price) || 0,
+        stockQuantity: Math.max(0, Number(v.stockQuantity ?? 1)),
+        inStock: Math.max(0, Number(v.stockQuantity ?? 1)) > 0,
       })),
     };
 
@@ -607,7 +610,17 @@ export default function ProductEditorPage() {
                     placeholder="2950000"
                   />
                 </Field>
-                <Field label="Notas" className="md:col-span-3">
+                <Field label="Stock" className="md:col-span-1">
+                  <Input
+                    type="number"
+                    value={String(v.stockQuantity ?? 1)}
+                    onChange={(val) =>
+                      updateVariant(v.sku, { stockQuantity: Math.max(0, Number(val) || 0) })
+                    }
+                    placeholder="1"
+                  />
+                </Field>
+                <Field label="Notas" className="md:col-span-2">
                   <Input
                     value={v.notes ?? ""}
                     onChange={(val) => updateVariant(v.sku, { notes: val })}

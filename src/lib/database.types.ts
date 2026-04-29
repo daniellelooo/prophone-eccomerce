@@ -287,6 +287,7 @@ export type Database = {
           id: string
           is_admin: boolean
           phone: string | null
+          role: string
           updated_at: string
         }
         Insert: {
@@ -295,6 +296,7 @@ export type Database = {
           id: string
           is_admin?: boolean
           phone?: string | null
+          role?: string
           updated_at?: string
         }
         Update: {
@@ -303,6 +305,7 @@ export type Database = {
           id?: string
           is_admin?: boolean
           phone?: string | null
+          role?: string
           updated_at?: string
         }
         Relationships: []
@@ -431,6 +434,14 @@ export type Database = {
           order_number: string
           prev_status: string
         }[]
+      }
+      register_local_sale: {
+        Args: { p_sku: string; p_qty: number; p_notes?: string }
+        Returns: undefined
+      }
+      set_variant_stock: {
+        Args: { p_sku: string; p_qty: number }
+        Returns: undefined
       }
     }
     Enums: {

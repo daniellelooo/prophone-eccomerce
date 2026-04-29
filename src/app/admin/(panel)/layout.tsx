@@ -14,6 +14,7 @@ import {
   Sparkles,
   ShoppingBag,
   Users,
+  UserCog,
   Menu,
   X,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const NAV = [
   { href: "/admin/productos", label: "Productos", icon: Box },
   { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
+  { href: "/admin/usuarios", label: "Usuarios", icon: UserCog },
   { href: "/admin/promociones", label: "Promociones", icon: Sparkles },
   { href: "/admin/sedes", label: "Sedes", icon: MapPin },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
