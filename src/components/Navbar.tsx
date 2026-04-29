@@ -5,9 +5,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Menu, X, Search, User } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, User, Heart } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
+import { useWishlistStore } from "@/lib/wishlist-store";
 import SearchModal from "@/components/SearchModal";
 
 export default function Navbar() {
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCount = useCartStore((s) => s.itemCount());
+  const wishlistCount = useWishlistStore((s) => s.slugs.length);
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
   const waUrl = getWhatsappUrl(whatsappNumber, whatsappMsg);
@@ -119,6 +121,28 @@ export default function Navbar() {
               title="Mi cuenta"
             >
               <User size={20} className="text-neutral-700" />
+            </Link>
+
+            <Link
+              href="/wishlist"
+              className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
+              aria-label="Favoritos"
+              title="Favoritos"
+            >
+              <Heart size={20} className="text-neutral-700" />
+              <AnimatePresence>
+                {wishlistCount > 0 && (
+                  <motion.span
+                    key="wish-badge"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-[#CC0000] text-white text-[10px] font-bold rounded-full flex items-center justify-center min-w-[18px] min-h-[18px] px-[3px]"
+                  >
+                    {wishlistCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </Link>
 
             <button

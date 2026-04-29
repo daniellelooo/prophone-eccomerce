@@ -11,6 +11,7 @@ import {
   Truck,
   ArrowLeft,
   Check,
+  Heart,
 } from "lucide-react";
 import {
   formatPrice,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useCartStore } from "@/lib/store";
+import { useWishlistStore } from "@/lib/wishlist-store";
 import ProductGallery from "@/components/ProductGallery";
 import RelatedProducts from "@/components/RelatedProducts";
 import ProductDetails from "@/components/ProductDetails";
@@ -85,6 +87,8 @@ export default function ProductPage() {
   }, [product.images, product.image, selectedColor]);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const toggleWishlist = useWishlistStore((s) => s.toggle);
+  const isWished = useWishlistStore((s) => s.has(product.slug));
 
   const handleAddToCart = () => {
     if (!selectedVariant) return;
@@ -315,6 +319,17 @@ export default function ProductPage() {
                     <ShoppingBag size={18} /> Agregar al carrito
                   </>
                 )}
+              </button>
+              <button
+                onClick={() => toggleWishlist(product.slug)}
+                title={isWished ? "Quitar de favoritos" : "Guardar en favoritos"}
+                className={`shrink-0 w-14 flex items-center justify-center rounded-2xl border-2 transition-all active:scale-95 ${
+                  isWished
+                    ? "border-[#CC0000] bg-red-50 text-[#CC0000]"
+                    : "border-neutral-200 text-neutral-400 hover:border-[#CC0000] hover:text-[#CC0000]"
+                }`}
+              >
+                <Heart size={20} className={isWished ? "fill-[#CC0000]" : ""} />
               </button>
               <a
                 href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
