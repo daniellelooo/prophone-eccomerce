@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { UserPlus, RefreshCw, Shield, ShoppingBag, Package, User } from "lucide-react";
+import { UserPlus, RefreshCw, Shield, ShoppingBag, Package, User, Eye, EyeOff, Copy, Check } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Profile = {
@@ -39,11 +39,15 @@ export default function UsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
-  // Invite form
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("vendedor");
-  const [inviting, setInviting] = useState(false);
-  const [inviteMsg, setInviteMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // Create user form
+  const [fullName, setFullName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [createRole, setCreateRole] = useState("vendedor");
+  const [creating, setCreating] = useState(false);
+  const [createMsg, setCreateMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const supabase = getSupabaseBrowserClient();
 
@@ -72,29 +76,47 @@ export default function UsuariosPage() {
     setSaving(null);
   };
 
-  const handleInvite = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) return;
-    setInviting(true);
-    setInviteMsg(null);
+    if (!createEmail.trim() || !createPassword.trim()) return;
+    setCreating(true);
+    setCreateMsg(null);
     try {
       const res = await fetch("/api/admin/invite-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+        body: JSON.stringify({
+          email: createEmail.trim(),
+          password: createPassword.trim(),
+          full_name: fullName.trim(),
+          role: createRole,
+        }),
       });
       const json = await res.json();
       if (res.ok) {
-        setInviteMsg({ ok: true, text: `Invitación enviada a ${inviteEmail}` });
-        setInviteEmail("");
+        setCreateMsg({
+          ok: true,
+          text: `Usuario creado: ${createEmail.trim()}`,
+        });
+        setFullName("");
+        setCreateEmail("");
+        setCreatePassword("");
         load();
       } else {
-        setInviteMsg({ ok: false, text: json.error ?? "Error al invitar" });
+        setCreateMsg({ ok: false, text: json.error ?? "Error al crear usuario" });
       }
     } catch {
-      setInviteMsg({ ok: false, text: "Error de red" });
+      setCreateMsg({ ok: false, text: "Error de red" });
     }
-    setInviting(false);
+    setCreating(false);
+  };
+
+  const copyCredentials = () => {
+    const text = `Usuario: ${createEmail}\nContraseña: ${createPassword}`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const staffProfiles = profiles.filter((p) => p.role !== "cliente");
@@ -124,42 +146,93 @@ export default function UsuariosPage() {
         </button>
       </div>
 
-      {/* Invitar usuario */}
+      {/* Crear usuario */}
       <div className="bg-white rounded-2xl border border-neutral-200 p-5">
         <h2 className="text-sm font-bold text-neutral-800 mb-4 flex items-center gap-2">
           <UserPlus size={15} className="text-[#CC0000]" />
-          Invitar nuevo usuario
+          Crear nuevo usuario
         </h2>
-        <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="correo@ejemplo.com"
-            required
-            className="flex-1 px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
-          />
-          <select
-            value={inviteRole}
-            onChange={(e) => setInviteRole(e.target.value)}
-            className="px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 bg-white"
-          >
-            <option value="vendedor">Vendedor</option>
-            <option value="gestor_inventario">Gestor de inventario</option>
-            <option value="admin">Admin</option>
-          </select>
-          <button
-            type="submit"
-            disabled={inviting}
-            className="px-5 py-2.5 bg-[#CC0000] text-white rounded-xl text-sm font-semibold hover:bg-[#A00000] transition disabled:opacity-50"
-          >
-            {inviting ? "Enviando…" : "Invitar"}
-          </button>
+        <form onSubmit={handleCreate} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Nombre completo"
+              className="px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+            />
+            <input
+              type="email"
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              required
+              className="px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="relative sm:col-span-2">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={createPassword}
+                onChange={(e) => setCreatePassword(e.target.value)}
+                placeholder="Contraseña (mín. 8 caracteres)"
+                required
+                minLength={8}
+                className="w-full pr-10 px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 transition"
+              >
+                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
+            <select
+              value={createRole}
+              onChange={(e) => setCreateRole(e.target.value)}
+              className="px-3 py-2.5 rounded-xl border border-neutral-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 bg-white"
+            >
+              <option value="vendedor">Vendedor</option>
+              <option value="gestor_inventario">Gestor de inventario</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={creating}
+              className="px-5 py-2.5 bg-[#CC0000] text-white rounded-xl text-sm font-semibold hover:bg-[#A00000] transition disabled:opacity-50"
+            >
+              {creating ? "Creando…" : "Crear usuario"}
+            </button>
+            {createEmail && createPassword && !createMsg?.ok && (
+              <button
+                type="button"
+                onClick={copyCredentials}
+                className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-800 border border-neutral-200 px-3 py-2 rounded-xl transition"
+              >
+                {copied ? <Check size={13} className="text-green-600" /> : <Copy size={13} />}
+                {copied ? "¡Copiado!" : "Copiar credenciales"}
+              </button>
+            )}
+          </div>
         </form>
-        {inviteMsg && (
-          <p className={`mt-3 text-sm font-medium ${inviteMsg.ok ? "text-green-600" : "text-red-600"}`}>
-            {inviteMsg.text}
-          </p>
+        {createMsg && (
+          <div className={`mt-3 flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium ${
+            createMsg.ok ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-600 border border-red-100"
+          }`}>
+            <span>{createMsg.text}</span>
+            {createMsg.ok && (
+              <button
+                onClick={() => setCreateMsg(null)}
+                className="text-xs opacity-60 hover:opacity-100 ml-4"
+              >
+                Cerrar
+              </button>
+            )}
+          </div>
         )}
       </div>
 

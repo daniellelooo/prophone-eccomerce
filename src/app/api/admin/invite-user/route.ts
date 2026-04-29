@@ -34,33 +34,46 @@ export async function POST(req: NextRequest) {
   // 2. Parsear body
   const body = await req.json();
   const email: string = body.email?.trim();
+  const password: string = body.password?.trim();
+  const fullName: string = body.full_name?.trim() ?? "";
   const role: string = body.role ?? "vendedor";
 
   if (!email) return NextResponse.json({ error: "Email requerido" }, { status: 400 });
+  if (!password || password.length < 8) {
+    return NextResponse.json({ error: "La contraseña debe tener al menos 8 caracteres" }, { status: 400 });
+  }
   if (!VALID_ROLES.includes(role as (typeof VALID_ROLES)[number])) {
     return NextResponse.json({ error: "Rol inválido" }, { status: 400 });
   }
 
-  // 3. Invitar con service role key
+  // 3. Crear usuario con service role key (email ya confirmado, sin magic link)
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-    data: { initial_role: role },
+  const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName, initial_role: role },
   });
 
-  if (inviteErr) {
-    return NextResponse.json({ error: inviteErr.message }, { status: 400 });
+  if (createErr) {
+    return NextResponse.json({ error: createErr.message }, { status: 400 });
   }
 
-  // 4. Actualizar rol en profiles (el trigger de Supabase crea el profile vacío)
-  if (invited?.user?.id) {
+  // 4. Upsert perfil con nombre y rol
+  if (created?.user?.id) {
     await supabaseAdmin
       .from("profiles")
-      .upsert({ id: invited.user.id, role, is_admin: role === "admin" });
+      .upsert({
+        id: created.user.id,
+        full_name: fullName,
+        role,
+        is_admin: role === "admin",
+      });
   }
 
   return NextResponse.json({ ok: true });

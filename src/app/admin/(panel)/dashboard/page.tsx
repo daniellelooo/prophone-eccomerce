@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle,
   Truck,
+  UserCheck,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/products";
@@ -34,6 +35,7 @@ type OrderData = {
   payment_method_type: string | null;
   customer_name: string;
   customer_phone: string;
+  seller_id: string | null;
 };
 
 type OrderItemData = {
@@ -56,7 +58,19 @@ type TopCustomer = {
   totalSpend: number;
 };
 
+type VendorStat = {
+  sellerId: string;
+  sellerName: string;
+  salesCount: number;
+  totalRevenue: number;
+};
+
 /* -------- Helpers -------- */
+
+function safeDate(s: string): Date {
+  // Normalize Postgres timestamp ("2026-04-29 13:58:41+00") to strict ISO
+  return new Date(s.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00"));
+}
 
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -78,6 +92,7 @@ export default function AdminDashboardPage() {
   const [outOfStock, setOutOfStock] = useState(0);
   const [totalSkus, setTotalSkus] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
+  const [sellerNames, setSellerNames] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -89,7 +104,7 @@ export default function AdminDashboardPage() {
           supabase
             .from("orders")
             .select(
-              "id, order_number, status, total_cop, created_at, payment_provider, payment_method_type, customer_name, customer_phone"
+              "id, order_number, status, total_cop, created_at, payment_provider, payment_method_type, customer_name, customer_phone, seller_id"
             )
             .order("created_at", { ascending: false }),
           supabase
@@ -104,12 +119,35 @@ export default function AdminDashboardPage() {
         if (variantsRes.error) throw variantsRes.error;
 
         if (!cancelled) {
-          setOrders(ordersRes.data ?? []);
+          const fetchedOrders = (ordersRes.data ?? []) as OrderData[];
+          setOrders(fetchedOrders);
           setItems(itemsRes.data ?? []);
           const variants = variantsRes.data ?? [];
           setTotalSkus(variants.length);
           setOutOfStock(variants.filter((v) => !v.in_stock).length);
           setCustomerCount(profilesRes.count ?? 0);
+
+          // Fetch seller names for local sales
+          const sellerIds = [
+            ...new Set(
+              fetchedOrders
+                .filter((o) => o.seller_id)
+                .map((o) => o.seller_id as string)
+            ),
+          ];
+          if (sellerIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from("profiles")
+              .select("id, full_name")
+              .in("id", sellerIds);
+            if (!cancelled && profiles) {
+              const map: Record<string, string> = {};
+              for (const p of profiles) {
+                map[p.id] = p.full_name || "Sin nombre";
+              }
+              setSellerNames(map);
+            }
+          }
         }
       } catch (err) {
         if (!cancelled) setError((err as Error).message);
@@ -132,11 +170,11 @@ export default function AdminDashboardPage() {
 
     const totalRevenue = nonCancelled.reduce((s, o) => s + o.total_cop, 0);
     const thisMonthRevenue = nonCancelled
-      .filter((o) => new Date(o.created_at) >= startOfThisMonth)
+      .filter((o) => safeDate(o.created_at) >= startOfThisMonth)
       .reduce((s, o) => s + o.total_cop, 0);
     const lastMonthRevenue = nonCancelled
       .filter((o) => {
-        const d = new Date(o.created_at);
+        const d = safeDate(o.created_at);
         return d >= startOfLastMonth && d <= endOfLastMonth;
       })
       .reduce((s, o) => s + o.total_cop, 0);
@@ -158,7 +196,7 @@ export default function AdminDashboardPage() {
       const end = new Date(start.getTime() + 86400000);
       const rev = nonCancelled
         .filter((o) => {
-          const od = new Date(o.created_at);
+          const od = safeDate(o.created_at);
           return od >= start && od < end;
         })
         .reduce((s, o) => s + o.total_cop, 0);
@@ -171,7 +209,9 @@ export default function AdminDashboardPage() {
       const method =
         o.payment_provider === "wompi"
           ? o.payment_method_type ?? "Wompi"
-          : "Efectivo / Manual";
+          : o.payment_provider === "local"
+            ? "Venta local"
+            : "Efectivo / Manual";
       paymentMethods[method] = (paymentMethods[method] ?? 0) + 1;
     }
 
@@ -220,6 +260,7 @@ export default function AdminDashboardPage() {
     const map = new Map<string, TopCustomer>();
     for (const o of orders) {
       if (o.status === "cancelled") continue;
+      if (o.payment_provider === "local") continue; // excluir ventas locales
       const key = o.customer_phone;
       const cur = map.get(key) ?? {
         name: o.customer_name,
@@ -235,6 +276,27 @@ export default function AdminDashboardPage() {
       .sort((a, b) => b.totalSpend - a.totalSpend)
       .slice(0, 5);
   }, [orders]);
+
+  const vendorStats = useMemo((): VendorStat[] => {
+    if (!orders) return [];
+    const map = new Map<string, VendorStat>();
+    for (const o of orders) {
+      if (o.status === "cancelled") continue;
+      if (o.payment_provider !== "local") continue;
+      if (!o.seller_id) continue;
+      const cur = map.get(o.seller_id) ?? {
+        sellerId: o.seller_id,
+        sellerName: sellerNames[o.seller_id] ?? "Vendedor",
+        salesCount: 0,
+        totalRevenue: 0,
+      };
+      cur.salesCount += 1;
+      cur.totalRevenue += o.total_cop;
+      cur.sellerName = sellerNames[o.seller_id] ?? cur.sellerName;
+      map.set(o.seller_id, cur);
+    }
+    return Array.from(map.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }, [orders, sellerNames]);
 
   if (error) {
     return (
@@ -400,7 +462,7 @@ export default function AdminDashboardPage() {
               return (
                 <div
                   key={d.label}
-                  className="flex-1 flex flex-col items-center gap-1 group relative"
+                  className="flex-1 h-full flex flex-col justify-end group relative"
                 >
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-neutral-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition pointer-events-none z-10">
                     {d.revenue > 0 ? formatPrice(d.revenue) : "—"}
@@ -577,6 +639,54 @@ export default function AdminDashboardPage() {
         </div>
       </motion.div>
 
+      {/* Ventas por vendedor */}
+      {vendorStats.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.22 }}
+        >
+          <div className="bg-white rounded-2xl border border-neutral-200 p-5">
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
+                <UserCheck size={12} className="text-[#CC0000]" /> Ventas por vendedor
+              </p>
+              <span className="text-[10px] text-neutral-400">ventas locales en tienda</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {vendorStats.map((v) => {
+                const maxRev = vendorStats[0].totalRevenue;
+                const pct = (v.totalRevenue / maxRev) * 100;
+                return (
+                  <div
+                    key={v.sellerId}
+                    className="bg-neutral-50 rounded-xl border border-neutral-100 px-4 py-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-neutral-900 truncate">
+                        {v.sellerName}
+                      </p>
+                      <span className="text-[11px] font-bold text-neutral-500 shrink-0 pl-2">
+                        {v.salesCount} venta{v.salesCount !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#CC0000] rounded-full"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-xs font-bold text-neutral-800">
+                      {formatPrice(v.totalRevenue)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Recent orders + Payment + Stock */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -619,9 +729,16 @@ export default function AdminDashboardPage() {
                         >
                           {statusLabel}
                         </span>
+                        {o.payment_provider === "local" && (
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            Local
+                          </span>
+                        )}
                       </div>
                       <p className="text-[11px] text-neutral-500 truncate mt-0.5">
-                        {o.customer_name}
+                        {o.payment_provider === "local" && o.seller_id
+                          ? `Vendedor: ${sellerNames[o.seller_id] ?? "—"}`
+                          : o.customer_name}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
@@ -629,7 +746,7 @@ export default function AdminDashboardPage() {
                         {formatPrice(o.total_cop)}
                       </p>
                       <p className="text-[10px] text-neutral-400">
-                        {new Date(o.created_at).toLocaleDateString("es-CO", {
+                        {new Date(safeDate(o.created_at)).toLocaleDateString("es-CO", {
                           day: "2-digit",
                           month: "short",
                         })}

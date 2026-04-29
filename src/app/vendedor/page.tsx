@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, Minus, Plus, CheckCircle, AlertCircle, LogOut, ExternalLink } from "lucide-react";
+import { Search, Minus, Plus, CheckCircle, AlertCircle, LogOut, ExternalLink, RotateCcw } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useCatalogStore } from "@/lib/catalog-store";
 import { formatPrice, conditionLabels } from "@/lib/products";
 import { logout } from "@/lib/admin-auth";
 
-type SaleResult = { ok: boolean; sku: string; productName: string; qty: number; error?: string };
+type SaleResult = {
+  ok: boolean;
+  sku: string;
+  productName: string;
+  qty: number;
+  orderId?: string;
+  undone?: boolean;
+  error?: string;
+};
 
 export default function VendedorPage() {
   const products = useCatalogStore((s) => s.products);
@@ -15,6 +23,7 @@ export default function VendedorPage() {
   const [qty, setQty] = useState(1);
   const [selectedSku, setSelectedSku] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
   const [results, setResults] = useState<SaleResult[]>([]);
 
   const filtered = useMemo(() => {
@@ -41,7 +50,7 @@ export default function VendedorPage() {
     if (!selectedVariant) return;
     setLoading(true);
     const supabase = getSupabaseBrowserClient();
-    const { error } = await supabase.rpc("register_local_sale", {
+    const { data: orderId, error } = await supabase.rpc("register_local_sale", {
       p_sku: selectedSku!,
       p_qty: qty,
       p_notes: "Venta local",
@@ -51,6 +60,7 @@ export default function VendedorPage() {
       sku: selectedSku!,
       productName: selectedVariant.product.name,
       qty,
+      orderId: orderId ?? undefined,
       error: error?.message,
     };
     setResults((prev) => [result, ...prev].slice(0, 20));
@@ -60,6 +70,26 @@ export default function VendedorPage() {
       setQty(1);
     }
     setLoading(false);
+  };
+
+  const handleUndo = async (orderId: string) => {
+    setUndoingId(orderId);
+    const supabase = getSupabaseBrowserClient();
+    const { error } = await supabase.rpc("undo_local_sale", { p_order_id: orderId });
+    if (!error) {
+      setResults((prev) =>
+        prev.map((r) =>
+          r.orderId === orderId ? { ...r, undone: true } : r
+        )
+      );
+    } else {
+      setResults((prev) =>
+        prev.map((r) =>
+          r.orderId === orderId ? { ...r, error: error.message } : r
+        )
+      );
+    }
+    setUndoingId(null);
   };
 
   return (
@@ -200,23 +230,48 @@ export default function VendedorPage() {
           <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
             <div className="px-5 py-3 border-b border-neutral-100">
               <h2 className="text-sm font-bold text-neutral-800">Ventas registradas (sesión actual)</h2>
+              <p className="text-xs text-neutral-400 mt-0.5">Puedes deshacer una venta si te equivocaste.</p>
             </div>
             <div className="divide-y divide-neutral-100">
               {results.map((r, i) => (
-                <div key={i} className="px-5 py-3 flex items-center gap-3">
-                  {r.ok ? (
+                <div key={i} className={`px-5 py-3 flex items-center gap-3 ${r.undone ? "opacity-50" : ""}`}>
+                  {r.ok && !r.undone ? (
                     <CheckCircle size={16} className="text-green-500 shrink-0" />
+                  ) : r.undone ? (
+                    <RotateCcw size={16} className="text-neutral-400 shrink-0" />
                   ) : (
                     <AlertCircle size={16} className="text-red-500 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 truncate">{r.productName}</p>
+                    <p className="text-sm font-semibold text-neutral-900 truncate">
+                      {r.undone ? <s>{r.productName}</s> : r.productName}
+                    </p>
                     <p className="text-xs text-neutral-500 font-mono">{r.sku} · −{r.qty} ud{r.qty > 1 ? "s" : ""}</p>
-                    {r.error && <p className="text-xs text-red-600 mt-0.5">{r.error}</p>}
+                    {r.error && !r.undone && <p className="text-xs text-red-600 mt-0.5">{r.error}</p>}
+                    {r.undone && <p className="text-xs text-neutral-400 mt-0.5">Venta deshecha · stock restaurado</p>}
                   </div>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${r.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                    {r.ok ? "OK" : "Error"}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {r.ok && !r.undone && r.orderId && (
+                      <button
+                        onClick={() => handleUndo(r.orderId!)}
+                        disabled={undoingId === r.orderId}
+                        className="text-[11px] font-semibold text-neutral-500 hover:text-red-600 border border-neutral-200 hover:border-red-200 px-2.5 py-1 rounded-lg transition disabled:opacity-40 flex items-center gap-1"
+                        title="Deshacer esta venta"
+                      >
+                        <RotateCcw size={11} />
+                        {undoingId === r.orderId ? "…" : "Deshacer"}
+                      </button>
+                    )}
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      r.undone
+                        ? "bg-neutral-100 text-neutral-500"
+                        : r.ok
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                    }`}>
+                      {r.undone ? "Deshecha" : r.ok ? "OK" : "Error"}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
