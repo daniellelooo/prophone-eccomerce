@@ -365,6 +365,7 @@ export type Database = {
           size: string | null
           sku: string
           sort_order: number
+          stock_quantity: number
           storage: string | null
           updated_at: string
         }
@@ -380,6 +381,7 @@ export type Database = {
           size?: string | null
           sku: string
           sort_order?: number
+          stock_quantity?: number
           storage?: string | null
           updated_at?: string
         }
@@ -395,6 +397,7 @@ export type Database = {
           size?: string | null
           sku?: string
           sort_order?: number
+          stock_quantity?: number
           storage?: string | null
           updated_at?: string
         }

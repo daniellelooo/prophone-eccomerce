@@ -42,6 +42,7 @@ export type Variant = {
   price: number;
   notes?: string; // "Naranja", "Batería 100%", "Sim física", etc.
   inStock: boolean;
+  stockQuantity?: number; // unidades disponibles; undefined = no rastreado, 0 = agotado
 };
 
 /**

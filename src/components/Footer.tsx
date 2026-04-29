@@ -171,25 +171,13 @@ export default function Footer() {
           <p className="text-xs text-neutral-400">
             © {new Date().getFullYear()} Prophone Medellín. Todos los derechos reservados.
           </p>
-          <div className="flex gap-5">
-            <Link
-              href="/faqs"
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
-            >
-              FAQs
-            </Link>
-            <Link
-              href="/cuenta"
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
-            >
-              Mi cuenta
-            </Link>
-            <Link
-              href="/catalogo"
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
-            >
-              Catálogo
-            </Link>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 justify-center md:justify-end">
+            <Link href="/faqs" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">FAQs</Link>
+            <Link href="/wishlist" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Favoritos</Link>
+            <Link href="/cuenta" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Mi cuenta</Link>
+            <Link href="/catalogo" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Catálogo</Link>
+            <Link href="/privacidad" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Privacidad</Link>
+            <Link href="/terminos" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Términos</Link>
           </div>
         </div>
       </div>

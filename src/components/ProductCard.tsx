@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingBag } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import { useWishlistStore } from "@/lib/wishlist-store";
 import {
   type Product,
   formatPrice,
@@ -19,6 +20,8 @@ type Props = {
 
 export default function ProductCard({ product, index = 0 }: Props) {
   const addItem = useCartStore((s) => s.addItem);
+  const toggle = useWishlistStore((s) => s.toggle);
+  const isWished = useWishlistStore((s) => s.has(product.slug));
   const minPrice = getMinPrice(product);
   const showFromLabel = hasMultipleVariants(product);
 
@@ -42,6 +45,16 @@ export default function ProductCard({ product, index = 0 }: Props) {
               Nuevo
             </span>
           )}
+          <button
+            onClick={(e) => { e.preventDefault(); toggle(product.slug); }}
+            aria-label={isWished ? "Quitar de favoritos" : "Agregar a favoritos"}
+            className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors"
+          >
+            <Heart
+              size={14}
+              className={isWished ? "fill-[#CC0000] text-[#CC0000]" : "text-neutral-400"}
+            />
+          </button>
           <Image
             src={product.image}
             alt={product.name}

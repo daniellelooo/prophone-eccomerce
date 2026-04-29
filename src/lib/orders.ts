@@ -57,6 +57,37 @@ function variantLabel(item: CartItem): string {
     .join(" · ");
 }
 
+/** Verifica disponibilidad de stock para cada ítem antes de crear la orden.
+ *  Devuelve un array de errores (vacío si todo está disponible). */
+export async function validateStock(
+  items: CartItem[]
+): Promise<string[]> {
+  if (!items.length) return [];
+  const supabase = getSupabaseBrowserClient();
+  const skus = items.map((i) => i.variant.sku);
+  const { data, error } = await supabase
+    .from("variants")
+    .select("sku, stock_quantity, in_stock")
+    .in("sku", skus);
+
+  if (error) return []; // si falla la consulta, no bloqueamos (fail-open)
+
+  const rows = data ?? [];
+  const errors: string[] = [];
+
+  for (const item of items) {
+    const row = rows.find((r) => r.sku === item.variant.sku);
+    if (!row) continue; // SKU no encontrado en DB → producto de catálogo estático, skip
+    const available = row.stock_quantity ?? (row.in_stock ? 1 : 0);
+    if (available < item.quantity) {
+      const qty = available === 0 ? "agotado" : `solo quedan ${available}`;
+      errors.push(`${item.product.name}: ${qty}.`);
+    }
+  }
+
+  return errors;
+}
+
 export async function createOrder(
   input: CreateOrderInput
 ): Promise<{ ok: true; order: OrderRecord } | { ok: false; error: string }> {

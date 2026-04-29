@@ -18,7 +18,7 @@ import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import { getCurrentProfile, type CustomerProfile } from "@/lib/customer-auth";
-import { createOrder, markOrderWhatsappSent } from "@/lib/orders";
+import { createOrder, markOrderWhatsappSent, validateStock } from "@/lib/orders";
 
 type FormData = {
   nombre: string;
@@ -159,8 +159,15 @@ export default function CheckoutPage() {
     setStep("confirm");
   };
 
-  /** Crea la orden en Supabase. Compartido por ambos métodos de pago. */
+  /** Verifica stock y crea la orden en Supabase. Compartido por ambos métodos de pago. */
   const ensureOrder = async () => {
+    const stockErrors = await validateStock(items);
+    if (stockErrors.length > 0) {
+      return {
+        ok: false as const,
+        error: `Algunos productos ya no tienen suficiente stock: ${stockErrors.join(" ")} Actualiza tu carrito e intenta de nuevo.`,
+      };
+    }
     return createOrder({
       userId: profile?.id ?? null,
       customerName: `${form.nombre} ${form.apellido}`.trim(),

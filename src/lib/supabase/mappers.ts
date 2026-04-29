@@ -26,6 +26,7 @@ export function rowToVariant(v: VariantRow): Variant {
     price: v.price_cop,
     notes: v.notes ?? undefined,
     inStock: v.in_stock,
+    stockQuantity: v.stock_quantity ?? (v.in_stock ? 1 : 0),
   };
 }
 
@@ -121,6 +122,7 @@ export function productToRows(p: Product): {
       condition: v.condition,
       price_cop: v.price,
       in_stock: v.inStock,
+      stock_quantity: v.stockQuantity ?? 1,
       notes: v.notes ?? null,
       sort_order: i,
     })),
