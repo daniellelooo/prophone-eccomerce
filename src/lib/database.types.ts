@@ -441,6 +441,10 @@ export type Database = {
         }[]
       }
       is_current_user_admin: { Args: never; Returns: boolean }
+      lookup_order: {
+        Args: { p_order_number: string; p_phone: string }
+        Returns: Json | null
+      }
       register_local_sale: {
         Args: { p_notes?: string; p_qty: number; p_sku: string }
         Returns: string

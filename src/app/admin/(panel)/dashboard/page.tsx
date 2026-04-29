@@ -166,13 +166,15 @@ export default function AdminDashboardPage() {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-    const nonCancelled = orders.filter((o) => o.status !== "cancelled");
+    // Web-only orders (exclude physical store sales)
+    const webOrders = orders.filter((o) => o.payment_provider !== "local");
+    const webNonCancelled = webOrders.filter((o) => o.status !== "cancelled");
 
-    const totalRevenue = nonCancelled.reduce((s, o) => s + o.total_cop, 0);
-    const thisMonthRevenue = nonCancelled
+    const totalRevenue = webNonCancelled.reduce((s, o) => s + o.total_cop, 0);
+    const thisMonthRevenue = webNonCancelled
       .filter((o) => safeDate(o.created_at) >= startOfThisMonth)
       .reduce((s, o) => s + o.total_cop, 0);
-    const lastMonthRevenue = nonCancelled
+    const lastMonthRevenue = webNonCancelled
       .filter((o) => {
         const d = safeDate(o.created_at);
         return d >= startOfLastMonth && d <= endOfLastMonth;
@@ -180,21 +182,21 @@ export default function AdminDashboardPage() {
       .reduce((s, o) => s + o.total_cop, 0);
 
     const avgOrderValue =
-      nonCancelled.length > 0 ? Math.round(totalRevenue / nonCancelled.length) : 0;
+      webNonCancelled.length > 0 ? Math.round(totalRevenue / webNonCancelled.length) : 0;
 
     const byStatus: Record<string, number> = {};
-    for (const o of orders) {
+    for (const o of webOrders) {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
     }
 
-    // Revenue last 14 days
+    // Revenue last 14 days (web only)
     const days14: { date: Date; label: string; revenue: number }[] = [];
     for (let i = 13; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const start = startOfDay(d);
       const end = new Date(start.getTime() + 86400000);
-      const rev = nonCancelled
+      const rev = webNonCancelled
         .filter((o) => {
           const od = safeDate(o.created_at);
           return od >= start && od < end;
@@ -203,15 +205,13 @@ export default function AdminDashboardPage() {
       days14.push({ date: start, label: dayLabel(start), revenue: rev });
     }
 
-    // Payment methods
+    // Payment methods (web only)
     const paymentMethods: Record<string, number> = {};
-    for (const o of nonCancelled) {
+    for (const o of webNonCancelled) {
       const method =
         o.payment_provider === "wompi"
           ? o.payment_method_type ?? "Wompi"
-          : o.payment_provider === "local"
-            ? "Venta local"
-            : "Efectivo / Manual";
+          : "Efectivo / Manual";
       paymentMethods[method] = (paymentMethods[method] ?? 0) + 1;
     }
 
@@ -220,7 +220,7 @@ export default function AdminDashboardPage() {
       thisMonthRevenue,
       lastMonthRevenue,
       avgOrderValue,
-      totalOrders: orders.length,
+      totalOrders: webOrders.length,
       pendingOrders: byStatus["pending"] ?? 0,
       confirmedOrders: byStatus["confirmed"] ?? 0,
       shippedOrders: byStatus["shipped"] ?? 0,
@@ -229,14 +229,16 @@ export default function AdminDashboardPage() {
       byStatus,
       days14,
       paymentMethods,
-      recentOrders: orders.slice(0, 5),
+      recentOrders: webOrders.slice(0, 5),
     };
   }, [orders]);
 
   const topProducts = useMemo((): TopProduct[] => {
     if (!orders || !items) return [];
     const nonCancelledIds = new Set(
-      orders.filter((o) => o.status !== "cancelled").map((o) => o.id)
+      orders
+        .filter((o) => o.status !== "cancelled" && o.payment_provider !== "local")
+        .map((o) => o.id)
     );
     const map = new Map<string, TopProduct>();
     for (const it of items) {

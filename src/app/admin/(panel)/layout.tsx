@@ -13,6 +13,7 @@ import {
   Settings,
   Sparkles,
   ShoppingBag,
+  TrendingUp,
   Users,
   UserCog,
   Menu,
@@ -21,7 +22,9 @@ import {
 import { logout } from "@/lib/admin-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const NAV = [
+type NavItem = { href: string; label: string; icon: React.ElementType };
+
+const NAV_ADMIN: NavItem[] = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/productos", label: "Productos", icon: Box },
   { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
@@ -32,6 +35,34 @@ const NAV = [
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ];
 
+const NAV_GESTOR: NavItem[] = [
+  { href: "/admin/productos", label: "Productos", icon: Box },
+  { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
+];
+
+const NAV_VENDEDOR: NavItem[] = [
+  { href: "/admin/mis-ventas", label: "Mis ventas", icon: TrendingUp },
+];
+
+const PANEL_LABELS: Record<string, string> = {
+  admin: "Admin",
+  gestor_inventario: "Gestor",
+  vendedor: "Vendedor",
+};
+
+function navForRole(role: string): NavItem[] {
+  if (role === "admin") return NAV_ADMIN;
+  if (role === "gestor_inventario") return NAV_GESTOR;
+  if (role === "vendedor") return NAV_VENDEDOR;
+  return [];
+}
+
+function defaultRouteForRole(role: string): string {
+  if (role === "vendedor") return "/admin/mis-ventas";
+  if (role === "gestor_inventario") return "/admin/productos";
+  return "/admin/dashboard";
+}
+
 export default function AdminPanelLayout({
   children,
 }: {
@@ -41,31 +72,54 @@ export default function AdminPanelLayout({
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [role, setRole] = useState<string>("admin");
+  const [displayName, setDisplayName] = useState<string>("");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Guard: consulta la sesión de Supabase (cookies) y escucha cambios en vivo.
-  // setState dentro de useEffect es legítimo: sincroniza con el cliente
-  // Supabase (sistema externo).
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     let cancelled = false;
 
-    supabase.auth.getSession().then(({ data }) => {
+    const init = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
       if (cancelled) return;
-      if (data.session) {
-         
-        setAuthed(true);
-      } else {
+
+      if (!sessionData.session) {
         router.replace("/admin");
+        setAuthChecked(true);
+        return;
       }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, full_name")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (cancelled) return;
+
+      const userRole = profile?.role ?? "cliente";
+
+      if (userRole === "cliente" || !profile) {
+        router.replace("/");
+        setAuthChecked(true);
+        return;
+      }
+
+      setRole(userRole);
+      setDisplayName(profile.full_name ?? sessionData.session.user.email ?? "");
+      setAuthed(true);
       setAuthChecked(true);
-    });
+    };
+
+    init();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (cancelled) return;
-       
-      setAuthed(!!session);
-      if (!session) router.replace("/admin");
+      if (!session) {
+        setAuthed(false);
+        router.replace("/admin");
+      }
     });
 
     return () => {
@@ -74,12 +128,22 @@ export default function AdminPanelLayout({
     };
   }, [router]);
 
+  // Route protection: redirect to role's default if on unauthorized route
+  useEffect(() => {
+    if (!authed || !pathname) return;
+    const nav = navForRole(role);
+    const allowed = nav.some(
+      (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+    );
+    if (!allowed) {
+      router.replace(defaultRouteForRole(role));
+    }
+  }, [authed, role, pathname, router]);
+
   const handleLogout = async () => {
     try {
       await logout();
     } finally {
-      // Forzar navegación incluso si signOut falló o el listener no se
-      // disparó (suele ocurrir si la cookie ya estaba expirada).
       window.location.href = "/admin";
     }
   };
@@ -94,9 +158,12 @@ export default function AdminPanelLayout({
 
   if (!authed) return null;
 
+  const nav = navForRole(role);
+  const panelLabel = PANEL_LABELS[role] ?? "Panel";
+
   return (
     <div className="min-h-screen bg-[#F5F5F7] flex">
-      {/* Sidebar — desktop fijo, móvil drawer */}
+      {/* Sidebar */}
       <aside
         className={`fixed md:sticky md:top-0 md:h-screen z-40 inset-y-0 left-0 w-64 bg-[#0C1014] text-white flex flex-col transform transition-transform duration-300 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -112,9 +179,11 @@ export default function AdminPanelLayout({
           />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
-              Panel
+              {panelLabel}
             </p>
-            <p className="text-sm font-bold truncate">Prophone Admin</p>
+            <p className="text-sm font-bold truncate">
+              {displayName || "Prophone"}
+            </p>
           </div>
           <button
             onClick={() => setMobileOpen(false)}
@@ -126,7 +195,7 @@ export default function AdminPanelLayout({
         </div>
 
         <nav className="flex-1 p-3 space-y-1">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href || pathname?.startsWith(item.href + "/");
@@ -149,14 +218,16 @@ export default function AdminPanelLayout({
         </nav>
 
         <div className="p-3 space-y-1 border-t border-white/10">
-          <Link
-            href="/"
-            target="_blank"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
-          >
-            <ExternalLink size={15} />
-            Ver tienda pública
-          </Link>
+          {role !== "vendedor" && (
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
+            >
+              <ExternalLink size={15} />
+              Ver tienda pública
+            </Link>
+          )}
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
@@ -178,7 +249,6 @@ export default function AdminPanelLayout({
 
       {/* Contenido */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Top bar móvil */}
         <header className="md:hidden bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
           <button
             onClick={() => setMobileOpen(true)}
@@ -187,15 +257,19 @@ export default function AdminPanelLayout({
           >
             <Menu size={18} />
           </button>
-          <p className="text-sm font-semibold">Prophone Admin</p>
-          <Link
-            href="/"
-            target="_blank"
-            className="p-2 rounded-full hover:bg-neutral-100"
-            aria-label="Ver tienda"
-          >
-            <ExternalLink size={16} />
-          </Link>
+          <p className="text-sm font-semibold">Prophone {panelLabel}</p>
+          {role !== "vendedor" ? (
+            <Link
+              href="/"
+              target="_blank"
+              className="p-2 rounded-full hover:bg-neutral-100"
+              aria-label="Ver tienda"
+            >
+              <ExternalLink size={16} />
+            </Link>
+          ) : (
+            <div className="w-9" />
+          )}
         </header>
 
         <main className="flex-1 p-5 md:p-10 max-w-7xl w-full mx-auto">

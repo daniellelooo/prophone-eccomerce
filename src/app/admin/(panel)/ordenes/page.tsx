@@ -12,6 +12,7 @@ import {
   MapPin,
   CreditCard,
   MessageCircle,
+  Download,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/products";
@@ -111,6 +112,37 @@ function AdminOrdenesContent() {
     };
   }, [rows]);
 
+  const exportCsv = () => {
+    if (!filtered.length) return;
+    const header = [
+      "Número", "Fecha", "Estado", "Cliente", "Teléfono", "Email",
+      "Ciudad", "Departamento", "Dirección", "Total COP", "Proveedor pago",
+      "Estado pago", "Productos",
+    ];
+    const rows_csv = filtered.map((o) => {
+      const date = new Date(o.createdAt).toLocaleDateString("es-CO", {
+        day: "2-digit", month: "2-digit", year: "numeric",
+      });
+      const products = o.items
+        .map((it) => `${it.productName}${it.variantLabel ? ` (${it.variantLabel})` : ""} x${it.quantity}`)
+        .join(" | ");
+      return [
+        o.orderNumber, date, o.status, o.customerName, o.customerPhone,
+        o.customerEmail ?? "", o.shippingCity ?? "", o.shippingDepartment ?? "",
+        o.shippingAddress ?? "", String(o.totalCop),
+        o.paymentProvider ?? "", o.paymentStatus ?? "", products,
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    });
+    const csv = [header.join(","), ...rows_csv].join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pedidos-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const updateStatus = async (id: string, newStatus: string) => {
     const supabase = getSupabaseBrowserClient();
     const { error: e } = await supabase
@@ -133,13 +165,25 @@ function AdminOrdenesContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-neutral-900 flex items-center gap-2">
-          <ShoppingBag size={22} className="text-[#CC0000]" /> Pedidos
-        </h1>
-        <p className="text-sm text-neutral-500 mt-1">
-          Todos los pedidos hechos en la tienda — invitados y clientes
-          registrados.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-neutral-900 flex items-center gap-2">
+              <ShoppingBag size={22} className="text-[#CC0000]" /> Pedidos
+            </h1>
+            <p className="text-sm text-neutral-500 mt-1">
+              Todos los pedidos hechos en la tienda — invitados y clientes
+              registrados.
+            </p>
+          </div>
+          <button
+            onClick={exportCsv}
+            disabled={!filtered.length}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-600 hover:bg-neutral-50 transition disabled:opacity-40"
+            title="Exportar a CSV"
+          >
+            <Download size={13} /> Exportar CSV
+          </button>
+        </div>
         {clienteFilter && (
           <div className="mt-3 inline-flex items-center gap-2 bg-neutral-900 text-white text-xs px-3 py-1.5 rounded-full">
             Filtrando pedidos de un cliente
