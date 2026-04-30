@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -13,6 +13,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useCartStore } from "@/lib/store";
+import { track } from "@/lib/analytics";
 import { formatPrice } from "@/lib/products";
 import {
   PAYMENT_STATUS_COLOR,
@@ -40,7 +41,9 @@ export default function ResultadoPage() {
   const orderNumber = params.orderNumber;
   const [state, setState] = useState<State>({ kind: "loading" });
   const clearCart = useCartStore((s) => s.clearCart);
+  const cartItems = useCartStore((s) => s.items);
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const purchaseTrackedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,14 +60,33 @@ export default function ResultadoPage() {
           setState({ kind: "error", message: json.error ?? "Error" });
           return;
         }
+        const amountCop = Math.round(json.transaction.amount_in_cents / 100);
         setState({
           kind: "ok",
           status: json.transaction.internalStatus as InternalPaymentStatus,
           transactionId: json.transaction.id,
           method: json.transaction.payment_method_type,
-          amountCop: Math.round(json.transaction.amount_in_cents / 100),
+          amountCop,
         });
-        if (json.transaction.internalStatus === "approved") {
+        if (
+          json.transaction.internalStatus === "approved" &&
+          !purchaseTrackedRef.current
+        ) {
+          purchaseTrackedRef.current = true;
+          // Snapshot del carrito ANTES de limpiarlo (para items en el evento)
+          const snapshot = cartItems;
+          track("purchase", {
+            value: amountCop,
+            orderId: orderNumber,
+            contentIds: snapshot.map((i) => i.product.id),
+            items: snapshot.map((i) => ({
+              id: i.product.id,
+              name: i.product.name,
+              category: i.product.category,
+              price: i.variant.price,
+              quantity: i.quantity,
+            })),
+          });
           clearCart();
         }
       })
@@ -75,7 +97,9 @@ export default function ResultadoPage() {
     return () => {
       cancelled = true;
     };
-  }, [wompiId, clearCart]);
+    // cartItems intencionalmente fuera de deps: queremos snapshotearlo en el momento del fetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wompiId, clearCart, orderNumber]);
 
   const isApproved = state.kind === "ok" && state.status === "approved";
   const isPending = state.kind === "ok" && state.status === "pending";

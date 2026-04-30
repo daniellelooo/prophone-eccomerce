@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import PriceTicker from "@/components/PriceTicker";
 import BottomNav from "@/components/BottomNav";
+import { Suspense } from "react";
 import CatalogHydrator from "@/components/CatalogHydrator";
 import MarketingPixels from "@/components/MarketingPixels";
 
@@ -100,7 +101,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
         <CatalogHydrator />
-        <MarketingPixels />
+        <Suspense fallback={null}>
+          <MarketingPixels />
+        </Suspense>
         <PriceTicker />
         <Navbar />
         <CartDrawer />

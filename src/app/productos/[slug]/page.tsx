@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ShoppingBag,
   ChevronRight,
@@ -26,6 +26,7 @@ import { useWishlistStore } from "@/lib/wishlist-store";
 import ProductGallery from "@/components/ProductGallery";
 import RelatedProducts from "@/components/RelatedProducts";
 import ProductDetails from "@/components/ProductDetails";
+import { track } from "@/lib/analytics";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
@@ -92,9 +93,45 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!selectedVariant) return;
     addItem(product, { variant: selectedVariant, color: selectedColor });
+    track("add_to_cart", {
+      value: selectedVariant.price,
+      contentName: product.name,
+      contentIds: [product.id],
+      items: [
+        {
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          price: selectedVariant.price,
+          quantity: 1,
+        },
+      ],
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
+
+  // ViewContent al entrar / cambiar variante
+  useEffect(() => {
+    if (!product || !selectedVariant) return;
+    track("view_content", {
+      value: selectedVariant.price,
+      contentName: product.name,
+      contentCategory: product.category,
+      contentIds: [product.id],
+      items: [
+        {
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          price: selectedVariant.price,
+          quantity: 1,
+        },
+      ],
+    });
+    // Solo dispara cuando cambia el producto (no en cada cambio de variante)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   const variantInfo = [
     selectedVariant?.size,

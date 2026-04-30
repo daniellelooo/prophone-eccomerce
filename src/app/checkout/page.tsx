@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
@@ -19,6 +19,7 @@ import { formatPrice } from "@/lib/products";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import { getCurrentProfile, type CustomerProfile } from "@/lib/customer-auth";
 import { createOrder, markOrderWhatsappSent, validateStock } from "@/lib/orders";
+import { track } from "@/lib/analytics";
 
 type FormData = {
   nombre: string;
@@ -82,6 +83,25 @@ export default function CheckoutPage() {
     direccion: "",
     notas: "",
   });
+
+  // InitiateCheckout: dispara cuando se entra al checkout con items en el carrito
+  const initiatedRef = useRef(false);
+  useEffect(() => {
+    if (initiatedRef.current) return;
+    if (items.length === 0) return;
+    initiatedRef.current = true;
+    track("initiate_checkout", {
+      value: cartTotal,
+      contentIds: items.map((i) => i.product.id),
+      items: items.map((i) => ({
+        id: i.product.id,
+        name: i.product.name,
+        category: i.product.category,
+        price: i.variant.price,
+        quantity: i.quantity,
+      })),
+    });
+  }, [items, cartTotal]);
 
   // Pre-rellenar datos si hay sesión
   useEffect(() => {

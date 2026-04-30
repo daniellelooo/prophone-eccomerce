@@ -1,26 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSiteConfigStore } from "@/lib/site-config-store";
+import { track } from "@/lib/analytics";
 
 /**
  * Inyecta Meta Pixel y GA4 si están configurados desde admin → Configuración.
  * Solo carga scripts si los IDs están presentes; nada se inyecta sin config.
+ *
+ * Dispara PageView en cada cambio de ruta (App Router no recarga en navegación).
  */
 export default function MarketingPixels() {
   const metaPixelId = useSiteConfigStore((s) => s.metaPixelId);
   const gaId = useSiteConfigStore((s) => s.gaMeasurementId);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const initialPageViewSent = useRef(false);
 
-  // Meta Pixel
+  // Meta Pixel — bootstrap una sola vez
   useEffect(() => {
     if (!metaPixelId) return;
     if (typeof window === "undefined") return;
     /* eslint-disable @typescript-eslint/no-explicit-any */
     const w = window as any;
-    if (w.fbq) {
-      w.fbq("track", "PageView");
-      return;
-    }
+    if (w.fbq) return;
+
     const fbq: any = function (...args: unknown[]) {
       if (fbq.callMethod) fbq.callMethod(...args);
       else fbq.queue.push(args);
@@ -42,11 +47,10 @@ export default function MarketingPixels() {
       document.head.appendChild(s);
     }
     fbq("init", metaPixelId);
-    fbq("track", "PageView");
     /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [metaPixelId]);
 
-  // Google Analytics 4
+  // GA4 — bootstrap una sola vez
   useEffect(() => {
     if (!gaId) return;
     if (typeof window === "undefined") return;
@@ -68,9 +72,23 @@ export default function MarketingPixels() {
       document.head.appendChild(s);
     }
     w.gtag("js", new Date());
-    w.gtag("config", gaId);
+    // send_page_view: false porque lo manejamos manualmente para SPA
+    w.gtag("config", gaId, { send_page_view: false });
     /* eslint-enable @typescript-eslint/no-explicit-any */
   }, [gaId]);
+
+  // PageView en cada cambio de ruta (incluye la inicial)
+  useEffect(() => {
+    if (!metaPixelId && !gaId) return;
+    if (typeof window === "undefined") return;
+    // Pequeño defer para que el script del pixel termine de inicializarse en la primera carga
+    const t = setTimeout(() => {
+      track("page_view");
+      initialPageViewSent.current = true;
+    }, initialPageViewSent.current ? 0 : 200);
+    return () => clearTimeout(t);
+    // searchParams en deps para captar también query-string changes
+  }, [pathname, searchParams, metaPixelId, gaId]);
 
   if (!metaPixelId) return null;
   return (
