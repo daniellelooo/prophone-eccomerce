@@ -24,6 +24,7 @@ import {
   X,
   Plus,
   Clock,
+  ChevronDown,
 } from "lucide-react";
 
 type TeamMember = {
@@ -460,7 +461,7 @@ export default function UsuariosPage() {
       )}
 
       {/* Búsqueda + lista */}
-      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-neutral-200">
         <div className="px-4 py-3 border-b border-neutral-100">
           <div className="relative">
             <Search
@@ -775,28 +776,58 @@ function TeamRow({
         </div>
       </div>
 
-      <select
-        value={p.role}
-        onChange={(e) => onChangeRole(e.target.value)}
-        disabled={saving || isMe}
-        className="text-xs px-2 py-1.5 rounded-lg border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 disabled:opacity-50 hidden md:block"
-        title={isMe ? "No puedes cambiar tu propio rol" : "Cambiar rol"}
-      >
-        <option value="admin">Admin</option>
-        <option value="vendedor">Vendedor</option>
-        <option value="gestor_inventario">Gestor inventario</option>
-      </select>
+      {/* Select de rol estilizado */}
+      <div className="relative shrink-0 hidden md:block">
+        <select
+          value={p.role}
+          onChange={(e) => onChangeRole(e.target.value)}
+          disabled={saving || isMe}
+          className="appearance-none pr-7 pl-3 py-1.5 text-xs font-semibold rounded-lg border border-neutral-200 bg-white text-neutral-800 hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition"
+          title={isMe ? "No puedes cambiar tu propio rol" : "Cambiar rol"}
+        >
+          <option value="admin">Admin</option>
+          <option value="vendedor">Vendedor</option>
+          <option value="gestor_inventario">Gestor inv.</option>
+        </select>
+        <ChevronDown
+          size={12}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none"
+        />
+      </div>
 
+      {/* Botones inline */}
+      {p.role === "vendedor" && (
+        <Link
+          href={`/admin/vendedor/${p.id}`}
+          className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] font-semibold text-neutral-700 hover:border-[#CC0000] hover:text-[#CC0000] hover:bg-red-50 transition shrink-0"
+          title="Ver historial de ventas"
+        >
+          <TrendingUp size={12} /> Ventas
+        </Link>
+      )}
+
+      <button
+        onClick={onDelete}
+        disabled={isMe}
+        title={isMe ? "No puedes eliminarte a ti mismo" : "Eliminar miembro"}
+        className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] font-semibold text-neutral-500 hover:border-[#CC0000] hover:text-[#CC0000] hover:bg-red-50 transition disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-neutral-200 disabled:hover:text-neutral-500 disabled:hover:bg-white shrink-0"
+      >
+        <Trash2 size={12} />
+        <span className="hidden lg:inline">Eliminar</span>
+      </button>
+
+      {/* Menú adicional con acciones secundarias */}
       <div className="relative shrink-0" ref={menuRef}>
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="p-2 rounded-lg border border-neutral-200 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition"
-          aria-label="Acciones"
+          className="p-2 rounded-lg border border-neutral-200 bg-white text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition"
+          aria-label="Más acciones"
+          title="Más acciones"
         >
           <MoreVertical size={14} />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-xl border border-neutral-200 shadow-lg w-48 py-1">
+          <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-xl border border-neutral-200 shadow-lg w-52 py-1">
             <MenuItem
               icon={<Pencil size={13} />}
               label="Editar datos"
@@ -813,28 +844,31 @@ function TeamRow({
                 onResetPassword();
               }}
             />
-            {p.role === "vendedor" && (
-              <Link
-                href={`/admin/vendedor/${p.id}`}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition"
-                onClick={() => setMenuOpen(false)}
-              >
-                <TrendingUp size={13} />
-                Ver ventas
-              </Link>
-            )}
-            <div className="my-1 border-t border-neutral-100" />
-            <MenuItem
-              icon={<Trash2 size={13} />}
-              label="Eliminar"
-              danger
-              disabled={isMe}
-              onClick={() => {
-                if (isMe) return;
-                setMenuOpen(false);
-                onDelete();
-              }}
-            />
+            {/* Versión mobile de las acciones inline */}
+            <div className="sm:hidden">
+              <div className="my-1 border-t border-neutral-100" />
+              {p.role === "vendedor" && (
+                <Link
+                  href={`/admin/vendedor/${p.id}`}
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <TrendingUp size={13} />
+                  Ver ventas
+                </Link>
+              )}
+              <MenuItem
+                icon={<Trash2 size={13} />}
+                label="Eliminar"
+                danger
+                disabled={isMe}
+                onClick={() => {
+                  if (isMe) return;
+                  setMenuOpen(false);
+                  onDelete();
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
