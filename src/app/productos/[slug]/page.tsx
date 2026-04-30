@@ -112,7 +112,7 @@ export default function ProductPage() {
   }. ¿Tienen disponibilidad?`;
 
   return (
-    <div className="pt-24 min-h-screen bg-white">
+    <div className="pt-24 min-h-screen bg-white relative z-0">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 pb-28 md:pb-8">
         <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-10">
           <Link
