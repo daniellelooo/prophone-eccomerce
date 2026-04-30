@@ -102,7 +102,7 @@ export default function VendedorDetailPage() {
           href="/admin/usuarios"
           className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-800 transition mb-4"
         >
-          <ArrowLeft size={14} /> Volver a usuarios
+          <ArrowLeft size={14} /> Volver al equipo
         </Link>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-neutral-900 flex items-center gap-2">
           <TrendingUp size={22} className="text-[#CC0000]" />{" "}

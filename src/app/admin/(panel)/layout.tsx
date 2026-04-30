@@ -62,6 +62,11 @@ function navForRole(role: string): NavItem[] {
   return [];
 }
 
+/** Rutas permitidas que no aparecen en el sidebar pero a las que el rol puede acceder. */
+const EXTRA_ALLOWED: Record<string, string[]> = {
+  admin: ["/admin/vendedor"],
+};
+
 function defaultRouteForRole(role: string): string {
   if (role === "vendedor") return "/admin/mis-ventas";
   if (role === "gestor_inventario") return "/admin/productos";
@@ -170,9 +175,14 @@ export default function AdminPanelLayout({
   useEffect(() => {
     if (!authed || !pathname) return;
     const nav = navForRole(role);
-    const allowed = nav.some(
-      (item) => pathname === item.href || pathname.startsWith(item.href + "/")
-    );
+    const extras = EXTRA_ALLOWED[role] ?? [];
+    const allowed =
+      nav.some(
+        (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+      ) ||
+      extras.some(
+        (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+      );
     if (!allowed) {
       router.replace(defaultRouteForRole(role));
     }
