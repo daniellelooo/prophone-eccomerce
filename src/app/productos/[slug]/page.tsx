@@ -112,7 +112,7 @@ export default function ProductPage() {
   }. ¿Tienen disponibilidad?`;
 
   return (
-    <div className="pt-16 min-h-screen bg-white">
+    <div className="pt-24 min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 pb-28 md:pb-8">
         <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-10">
           <Link
@@ -139,7 +139,7 @@ export default function ProductPage() {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:sticky lg:top-24"
+            className="lg:sticky lg:top-24 relative z-10"
           >
             <ProductGallery
               key={`${product.slug}-${selectedColor}`}
@@ -300,7 +300,24 @@ export default function ProductPage() {
             )}
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2">
+              {selectedVariant && !selectedVariant.inStock && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-neutral-100 rounded-2xl">
+                  <span className="w-2 h-2 rounded-full bg-neutral-400 shrink-0" />
+                  <p className="text-sm text-neutral-600 font-medium">
+                    Esta variante no tiene stock disponible.{" "}
+                    <a
+                      href={`https://wa.me/573148941200?text=${encodeURIComponent(`Hola, me interesa el ${product.name} pero aparece sin stock. ¿Pueden avisarme cuando esté disponible?`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#25D366] font-semibold hover:underline"
+                    >
+                      Consultar por WhatsApp
+                    </a>
+                  </p>
+                </div>
+              )}
+              <div className="flex flex-row gap-3">
               <button
                 onClick={handleAddToCart}
                 disabled={!selectedVariant?.inStock}
@@ -320,6 +337,14 @@ export default function ProductPage() {
                   </>
                 )}
               </button>
+              <a
+                href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base bg-[#25D366] text-white hover:bg-[#1ebe5d] active:scale-98 transition-all"
+              >
+                Pedir por WhatsApp
+              </a>
               <button
                 onClick={() => toggleWishlist(product.slug)}
                 title={isWished ? "Quitar de favoritos" : "Guardar en favoritos"}
@@ -331,14 +356,7 @@ export default function ProductPage() {
               >
                 <Heart size={20} className={isWished ? "fill-[#CC0000]" : ""} />
               </button>
-              <a
-                href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base bg-[#25D366] text-white hover:bg-[#1ebe5d] active:scale-98 transition-all"
-              >
-                Pedir por WhatsApp
-              </a>
+              </div>
             </div>
 
             {/* Trust badges */}

@@ -24,6 +24,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
   const isWished = useWishlistStore((s) => s.has(product.slug));
   const minPrice = getMinPrice(product);
   const showFromLabel = hasMultipleVariants(product);
+  const allOutOfStock = product.variants.every((v) => !v.inStock);
 
   return (
     <motion.div
@@ -35,12 +36,19 @@ export default function ProductCard({ product, index = 0 }: Props) {
     >
       <Link href={`/productos/${product.slug}`} className="block">
         <div className="relative aspect-square mb-3 bg-[#F5F5F7] rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-200">
-          {product.badge && (
+          {allOutOfStock && (
+            <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+              <span className="bg-neutral-900/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                Sin stock
+              </span>
+            </div>
+          )}
+          {product.badge && !allOutOfStock && (
             <span className="absolute top-2.5 left-2.5 z-10 bg-white text-neutral-600 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-neutral-200">
               {product.badge}
             </span>
           )}
-          {product.isNew && !product.badge && (
+          {product.isNew && !product.badge && !allOutOfStock && (
             <span className="absolute top-2.5 left-2.5 z-10 bg-neutral-900 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
               Nuevo
             </span>
@@ -82,14 +90,20 @@ export default function ProductCard({ product, index = 0 }: Props) {
             )}
             {formatPrice(minPrice)}
           </p>
-          <button
-            onClick={() => addItem(product)}
-            className="flex items-center gap-1.5 bg-neutral-100 hover:bg-[#CC0000] hover:text-white text-neutral-600 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95"
-            aria-label="Agregar al carrito"
-          >
-            <ShoppingBag size={12} />
-            <span className="hidden sm:inline">Agregar</span>
-          </button>
+          {allOutOfStock ? (
+            <span className="text-[10px] font-semibold text-neutral-400 px-3 py-1.5">
+              Sin stock
+            </span>
+          ) : (
+            <button
+              onClick={() => addItem(product)}
+              className="flex items-center gap-1.5 bg-neutral-100 hover:bg-[#CC0000] hover:text-white text-neutral-600 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all active:scale-95"
+              aria-label="Agregar al carrito"
+            >
+              <ShoppingBag size={12} />
+              <span className="hidden sm:inline">Agregar</span>
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

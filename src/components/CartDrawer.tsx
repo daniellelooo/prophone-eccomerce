@@ -136,32 +136,40 @@ export default function CartDrawer() {
                         <p className="text-sm font-semibold text-neutral-900 mt-1">
                           {formatPrice(item.variant.price * item.quantity)}
                         </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.variant.sku, item.quantity - 1)
-                            }
-                            className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className="text-sm font-medium w-5 text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.variant.sku, item.quantity + 1)
-                            }
-                            className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
-                          >
-                            <Plus size={12} />
-                          </button>
-                          <button
-                            onClick={() => removeItem(item.variant.sku)}
-                            className="ml-auto text-neutral-400 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                        <div className="flex flex-col gap-1 mt-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                updateQuantity(item.variant.sku, item.quantity - 1)
+                              }
+                              className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="text-sm font-medium w-5 text-center">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateQuantity(item.variant.sku, item.quantity + 1)
+                              }
+                              disabled={item.quantity >= (item.variant.stockQuantity ?? 10)}
+                              className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Plus size={12} />
+                            </button>
+                            <button
+                              onClick={() => removeItem(item.variant.sku)}
+                              className="ml-auto text-neutral-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          {item.quantity >= (item.variant.stockQuantity ?? 10) && (
+                            <p className="text-[10px] text-amber-600 font-medium">
+                              Máximo disponible
+                            </p>
+                          )}
                         </div>
                       </div>
                     </motion.div>

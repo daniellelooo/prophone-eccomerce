@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Maximize2, X, ZoomIn } from "lucide-react";
 
@@ -201,83 +202,88 @@ export default function ProductGallery({ images, alt, badge }: Props) {
         </div>
       )}
 
-      {/* Lightbox */}
-      <AnimatePresence>
-        {lightboxOpen && (
-          <motion.div
-            key="lightbox"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center"
-            onClick={() => setLightboxOpen(false)}
-          >
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxOpen(false);
-              }}
-              className="absolute top-5 right-5 z-10 text-white/80 hover:text-white p-2 rounded-full hover:bg-white/10 transition"
-              aria-label="Cerrar"
-            >
-              <X size={24} />
-            </button>
-
-            {safeImages.length > 1 && (
-              <>
+      {/* Lightbox — montado en document.body con portal para evitar
+          problemas de stacking context con los transforms de Framer Motion */}
+      {typeof window !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {lightboxOpen && (
+              <motion.div
+                key="lightbox"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-sm flex items-center justify-center"
+                onClick={() => setLightboxOpen(false)}
+              >
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    goPrev();
+                    setLightboxOpen(false);
                   }}
-                  className="absolute left-5 z-10 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition"
-                  aria-label="Imagen anterior"
+                  className="absolute top-5 right-5 z-10 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition"
+                  aria-label="Cerrar"
                 >
-                  <ChevronLeft size={24} />
+                  <X size={22} />
                 </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    goNext();
-                  }}
-                  className="absolute right-5 z-10 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition"
-                  aria-label="Imagen siguiente"
+
+                {safeImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goPrev();
+                      }}
+                      className="absolute left-5 z-10 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition"
+                      aria-label="Imagen anterior"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goNext();
+                      }}
+                      className="absolute right-16 z-10 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition"
+                      aria-label="Imagen siguiente"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+                  </>
+                )}
+
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative w-[92vw] h-[80vh] max-w-5xl"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <ChevronRight size={24} />
-                </button>
-              </>
-            )}
+                  <Image
+                    src={safeImages[index]}
+                    alt={alt}
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </motion.div>
 
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-[92vw] h-[80vh] max-w-5xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Image
-                src={safeImages[index]}
-                alt={alt}
-                fill
-                className="object-contain"
-                unoptimized
-              />
-            </motion.div>
-
-            {safeImages.length > 1 && (
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-xs">
-                {index + 1} / {safeImages.length}
-              </div>
+                {safeImages.length > 1 && (
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-xs">
+                    {index + 1} / {safeImages.length}
+                  </div>
+                )}
+              </motion.div>
             )}
-          </motion.div>
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 }

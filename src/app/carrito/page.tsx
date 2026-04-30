@@ -120,26 +120,34 @@ export default function CartPage() {
                       >
                         <Trash2 size={16} />
                       </button>
-                      <div className="flex items-center gap-2 bg-neutral-100 rounded-full px-2 py-1">
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.variant.sku, item.quantity - 1)
-                          }
-                          className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="text-sm font-bold w-5 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.variant.sku, item.quantity + 1)
-                          }
-                          className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          <Plus size={12} />
-                        </button>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2 bg-neutral-100 rounded-full px-2 py-1">
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.variant.sku, item.quantity - 1)
+                            }
+                            className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="text-sm font-bold w-5 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.variant.sku, item.quantity + 1)
+                            }
+                            disabled={item.quantity >= (item.variant.stockQuantity ?? 10)}
+                            className="w-7 h-7 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                        {item.quantity >= (item.variant.stockQuantity ?? 10) && (
+                          <p className="text-[10px] text-amber-600 font-medium pr-1">
+                            Máximo disponible
+                          </p>
+                        )}
                       </div>
                     </div>
                   </motion.div>

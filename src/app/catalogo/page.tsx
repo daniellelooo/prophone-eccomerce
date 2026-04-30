@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, Suspense } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Filter, RotateCcw, Search, SlidersHorizontal, X } from "lucide-react";
@@ -44,6 +44,14 @@ function CatalogoContent() {
   const router = useRouter();
   const products = useCatalogStore((s) => s.products);
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
+  const [filterScrolled, setFilterScrolled] = useState(false);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const onScroll = () => setFilterScrolled(window.scrollY > 100);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Categoría activa derivada de la URL — no se guarda en useState.
   // Así, navegar desde el navbar (`/catalogo?cat=ipad`) actualiza el filtro
@@ -177,13 +185,13 @@ function CatalogoContent() {
 
       {/* Sticky filter bar */}
       <section
-        className="sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 py-4"
+        className={`sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 transition-all duration-300 ${filterScrolled ? "py-2" : "py-4"}`}
         aria-label="Filtros del catálogo"
       >
-        <div className="max-w-7xl mx-auto flex flex-col gap-3">
+        <div className={`max-w-7xl mx-auto flex flex-col ${filterScrolled ? "gap-1.5" : "gap-3"}`}>
           {/* Category pills */}
           <div
-            className="flex gap-2.5 overflow-x-auto no-scrollbar"
+            className="flex gap-2 overflow-x-auto no-scrollbar"
             role="tablist"
             aria-label="Categorías"
           >
@@ -193,7 +201,7 @@ function CatalogoContent() {
                 onClick={() => setActiveCategory(cat.id)}
                 role="tab"
                 aria-selected={activeCategory === cat.id}
-                className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 ${
+                className={`rounded-full font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 ${filterScrolled ? "px-3 py-1 text-xs" : "px-5 py-2.5 text-sm"} ${
                   activeCategory === cat.id
                     ? "bg-neutral-900 text-white shadow-sm"
                     : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
@@ -204,28 +212,30 @@ function CatalogoContent() {
             ))}
           </div>
 
-          {/* Condition pills */}
-          <div
-            className="flex gap-2 overflow-x-auto no-scrollbar"
-            role="tablist"
-            aria-label="Condición"
-          >
-            {CONDITION_FILTERS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setActiveCondition(c.id)}
-                role="tab"
-                aria-selected={activeCondition === c.id}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
-                  activeCondition === c.id
-                    ? "bg-[#CC0000] text-white shadow-sm"
-                    : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+          {/* Condition pills — se ocultan al comprimir */}
+          {!filterScrolled && (
+            <div
+              className="flex gap-2 overflow-x-auto no-scrollbar"
+              role="tablist"
+              aria-label="Condición"
+            >
+              {CONDITION_FILTERS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCondition(c.id)}
+                  role="tab"
+                  aria-selected={activeCondition === c.id}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+                    activeCondition === c.id
+                      ? "bg-[#CC0000] text-white shadow-sm"
+                      : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Search + sort + advanced toggle */}
           <div className="flex items-center gap-2">
@@ -241,20 +251,20 @@ function CatalogoContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 aria-label="Buscar productos"
-                className="w-full pl-10 pr-4 py-2.5 bg-neutral-100 rounded-full text-sm text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                className={`w-full pl-10 pr-4 bg-neutral-100 rounded-full text-neutral-700 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 transition-all duration-300 ${filterScrolled ? "py-1.5 text-xs" : "py-2.5 text-sm"}`}
               />
             </div>
             <button
               onClick={() => setAdvancedOpen((v) => !v)}
               aria-expanded={advancedOpen}
               aria-controls="advanced-filters"
-              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+              className={`relative flex items-center gap-2 rounded-full font-semibold transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${filterScrolled ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"} ${
                 advancedOpen || activeFilterCount > 0
                   ? "bg-[#CC0000] text-white"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
               }`}
             >
-              <SlidersHorizontal size={14} aria-hidden />
+              <SlidersHorizontal size={filterScrolled ? 12 : 14} aria-hidden />
               <span className="hidden sm:inline">Filtros</span>
               {activeFilterCount > 0 && (
                 <span className="bg-white/30 text-white text-[11px] font-bold rounded-full px-1.5 py-0.5 leading-none">
@@ -266,7 +276,7 @@ function CatalogoContent() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               aria-label="Ordenar por"
-              className="appearance-none bg-neutral-100 text-neutral-700 text-sm py-2.5 pl-4 pr-8 rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 shrink-0 cursor-pointer"
+              className={`appearance-none bg-neutral-100 text-neutral-700 pl-4 pr-8 rounded-full focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 shrink-0 cursor-pointer transition-all duration-300 ${filterScrolled ? "py-1.5 text-xs" : "py-2.5 text-sm"}`}
             >
               <option value="featured">Destacados</option>
               <option value="price-asc">Menor precio</option>

@@ -31,6 +31,7 @@ import {
   type OrderRecord,
 } from "@/lib/orders";
 import { formatPrice } from "@/lib/products";
+import { useCatalogStore } from "@/lib/catalog-store";
 import CustomerAuthForm from "@/components/CustomerAuthForm";
 
 type Tab = "pedidos" | "datos";
@@ -346,6 +347,8 @@ function Field({
 
 function OrderCard({ order }: { order: OrderRecord }) {
   const date = new Date(order.createdAt);
+  const catalogProducts = useCatalogStore((s) => s.products);
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 8 }}
@@ -387,41 +390,80 @@ function OrderCard({ order }: { order: OrderRecord }) {
         </div>
       </header>
       <ul className="px-5 py-3 space-y-2.5">
-        {order.items.map((item, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-3 text-sm text-neutral-700"
-          >
-            {item.imageUrl && (
-              <div className="relative w-10 h-10 bg-neutral-50 rounded-lg overflow-hidden shrink-0">
-                <Image
-                  src={item.imageUrl}
-                  alt={item.productName}
-                  fill
-                  className="object-contain p-1"
-                  unoptimized
-                />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-neutral-900 truncate">
-                {item.productName}
-                <span className="text-neutral-400 font-normal">
-                  {" "}
-                  × {item.quantity}
-                </span>
-              </p>
-              {item.variantLabel && (
-                <p className="text-[11px] text-neutral-500 truncate">
-                  {item.variantLabel}
-                </p>
-              )}
-            </div>
-            <span className="text-sm font-semibold text-neutral-900 shrink-0">
-              {formatPrice(item.unitPriceCop * item.quantity)}
+        {order.items.map((item, i) => {
+          const catalogProduct = catalogProducts.find(
+            (p) => p.id === item.productId || p.name === item.productName
+          );
+          const imageUrl = item.imageUrl ?? catalogProduct?.image ?? null;
+          const productSlug = catalogProduct?.slug ?? null;
+
+          const nameNode = productSlug ? (
+            <Link
+              href={`/productos/${productSlug}`}
+              className="font-medium text-neutral-900 hover:text-[#CC0000] transition-colors truncate"
+            >
+              {item.productName}
+            </Link>
+          ) : (
+            <span className="font-medium text-neutral-900 truncate">
+              {item.productName}
             </span>
-          </li>
-        ))}
+          );
+
+          return (
+            <li
+              key={i}
+              className="flex items-center gap-3 text-sm text-neutral-700"
+            >
+              <div className="relative w-12 h-12 bg-neutral-50 rounded-xl overflow-hidden shrink-0 border border-neutral-100">
+                {imageUrl ? (
+                  <>
+                    {productSlug ? (
+                      <Link href={`/productos/${productSlug}`} tabIndex={-1}>
+                        <Image
+                          src={imageUrl}
+                          alt={item.productName}
+                          fill
+                          className="object-contain p-1.5"
+                          unoptimized
+                        />
+                      </Link>
+                    ) : (
+                      <Image
+                        src={imageUrl}
+                        alt={item.productName}
+                        fill
+                        className="object-contain p-1.5"
+                        unoptimized
+                      />
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ShoppingBag size={16} className="text-neutral-300" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="truncate">
+                  {nameNode}
+                  <span className="text-neutral-400 font-normal">
+                    {" "}
+                    × {item.quantity}
+                  </span>
+                </div>
+                {item.variantLabel && (
+                  <p className="text-[11px] text-neutral-500 truncate">
+                    {item.variantLabel}
+                  </p>
+                )}
+              </div>
+              <span className="text-sm font-semibold text-neutral-900 shrink-0">
+                {formatPrice(item.unitPriceCop * item.quantity)}
+              </span>
+            </li>
+          );
+        })}
       </ul>
       {order.shippingAddress && (
         <footer className="px-5 py-3 border-t border-neutral-100 flex items-center gap-2 text-[11px] text-neutral-500">
