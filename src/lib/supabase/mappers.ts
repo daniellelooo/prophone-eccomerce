@@ -82,10 +82,35 @@ export function configRowsToSiteConfig(
       DEFAULT_SITE_CONFIG.whatsappDefaultMessage
     ),
     instagramUrl: get("instagram_url", DEFAULT_SITE_CONFIG.instagramUrl),
+    tiktokUrl: get("tiktok_url", DEFAULT_SITE_CONFIG.tiktokUrl),
+    facebookUrl: get("facebook_url", DEFAULT_SITE_CONFIG.facebookUrl),
     bannerEnabled: get("banner_enabled", DEFAULT_SITE_CONFIG.bannerEnabled),
     bannerItems: get("banner_items", DEFAULT_SITE_CONFIG.bannerItems),
     hoursWeek: get("hours_week", DEFAULT_SITE_CONFIG.hoursWeek),
     hoursWeekend: get("hours_weekend", DEFAULT_SITE_CONFIG.hoursWeekend),
+    heroImagesDesktop: get(
+      "hero_images_desktop",
+      DEFAULT_SITE_CONFIG.heroImagesDesktop
+    ),
+    heroImagesMobile: get(
+      "hero_images_mobile",
+      DEFAULT_SITE_CONFIG.heroImagesMobile
+    ),
+    heroTitle: get("hero_title", DEFAULT_SITE_CONFIG.heroTitle),
+    heroSubtitle: get("hero_subtitle", DEFAULT_SITE_CONFIG.heroSubtitle),
+    seoTitle: get("seo_title", DEFAULT_SITE_CONFIG.seoTitle),
+    seoDescription: get("seo_description", DEFAULT_SITE_CONFIG.seoDescription),
+    ogImageUrl: get("og_image_url", DEFAULT_SITE_CONFIG.ogImageUrl),
+    metaPixelId: get("meta_pixel_id", DEFAULT_SITE_CONFIG.metaPixelId),
+    gaMeasurementId: get(
+      "ga_measurement_id",
+      DEFAULT_SITE_CONFIG.gaMeasurementId
+    ),
+    footerTagline: get("footer_tagline", DEFAULT_SITE_CONFIG.footerTagline),
+    stockLowThreshold: get(
+      "stock_low_threshold",
+      DEFAULT_SITE_CONFIG.stockLowThreshold
+    ),
     sedes,
   };
 }

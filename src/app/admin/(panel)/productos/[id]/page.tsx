@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Check,
+  Copy,
   ImagePlus,
   Plus,
   Save,
@@ -141,6 +142,20 @@ export default function ProductEditorPage() {
 
   const addVariant = () =>
     setDraft((d) => ({ ...d, variants: [...d.variants, emptyVariant()] }));
+
+  const duplicateVariant = (sku: string) =>
+    setDraft((d) => {
+      const orig = d.variants.find((v) => v.sku === sku);
+      if (!orig) return d;
+      const copy: Variant = {
+        ...orig,
+        sku: `sku-${Math.random().toString(36).slice(2, 9)}`,
+      };
+      const idx = d.variants.findIndex((v) => v.sku === sku);
+      const next = [...d.variants];
+      next.splice(idx + 1, 0, copy);
+      return { ...d, variants: next };
+    });
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files) return;
@@ -557,108 +572,157 @@ export default function ProductEditorPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {draft.variants.map((v) => (
-              <div
-                key={v.sku}
-                className="bg-neutral-50 rounded-xl p-4 grid grid-cols-2 md:grid-cols-12 gap-3 items-end border border-neutral-200"
-              >
-                <Field label="Almacenamiento" className="md:col-span-2">
-                  <Input
-                    value={v.storage ?? ""}
-                    onChange={(val) => updateVariant(v.sku, { storage: val })}
-                    placeholder="256 GB"
-                  />
-                </Field>
-                <Field label="RAM" className="md:col-span-1">
-                  <Input
-                    value={v.ram ?? ""}
-                    onChange={(val) => updateVariant(v.sku, { ram: val })}
-                    placeholder="16 GB"
-                  />
-                </Field>
-                <Field label="Tamaño" className="md:col-span-1">
-                  <Input
-                    value={v.size ?? ""}
-                    onChange={(val) => updateVariant(v.sku, { size: val })}
-                    placeholder='14"'
-                  />
-                </Field>
-                <Field label="Condición" className="md:col-span-2">
-                  <select
-                    value={v.condition}
-                    onChange={(e) =>
-                      updateVariant(v.sku, {
-                        condition: e.target.value as ProductCondition,
-                      })
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
-                  >
-                    {CONDITIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {conditionLabels[c]}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Precio (COP)" className="md:col-span-2">
-                  <Input
-                    type="number"
-                    value={String(v.price)}
-                    onChange={(val) =>
-                      updateVariant(v.sku, { price: Number(val) || 0 })
-                    }
-                    placeholder="2950000"
-                  />
-                </Field>
-                <Field label="Stock" className="md:col-span-1">
-                  <Input
-                    type="number"
-                    value={String(v.stockQuantity ?? 1)}
-                    onChange={(val) =>
-                      updateVariant(v.sku, { stockQuantity: Math.max(0, Number(val) || 0) })
-                    }
-                    placeholder="1"
-                  />
-                </Field>
-                <Field label="Notas" className="md:col-span-2">
-                  <Input
-                    value={v.notes ?? ""}
-                    onChange={(val) => updateVariant(v.sku, { notes: val })}
-                    placeholder="Sim física, batería 100%, …"
-                  />
-                </Field>
-                <div className="md:col-span-1 flex items-center justify-end gap-2 pb-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateVariant(v.sku, { inStock: !v.inStock })
-                    }
-                    className={`p-2 rounded-lg text-xs font-semibold transition ${
-                      v.inStock
-                        ? "bg-green-100 text-green-700 hover:bg-green-200"
-                        : "bg-red-100 text-red-700 hover:bg-red-200"
-                    }`}
-                    title={v.inStock ? "En stock — clic para marcar agotado" : "Agotado — clic para marcar en stock"}
-                  >
-                    {v.inStock ? "Stock" : "Agot."}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(v.sku)}
-                    className="p-2 rounded-lg text-neutral-400 hover:text-[#CC0000] hover:bg-red-50 transition"
-                    aria-label="Eliminar variante"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+            {draft.variants.map((v) => {
+              const qty = Math.max(0, Number(v.stockQuantity ?? 0));
+              const stockBadge =
+                qty === 0
+                  ? { label: "Agotado", cls: "bg-red-100 text-red-700" }
+                  : qty <= 2
+                    ? { label: `${qty} en stock`, cls: "bg-amber-100 text-amber-700" }
+                    : { label: `${qty} en stock`, cls: "bg-green-100 text-green-700" };
+              return (
+                <div
+                  key={v.sku}
+                  className="bg-neutral-50 rounded-xl p-4 border border-neutral-200 space-y-3"
+                >
+                  {/* Fila 1: especificaciones */}
+                  <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+                    <Field label="Almacenamiento" className="md:col-span-3">
+                      <Input
+                        value={v.storage ?? ""}
+                        onChange={(val) => updateVariant(v.sku, { storage: val })}
+                        placeholder="256 GB"
+                      />
+                    </Field>
+                    <Field label="RAM" className="md:col-span-2">
+                      <Input
+                        value={v.ram ?? ""}
+                        onChange={(val) => updateVariant(v.sku, { ram: val })}
+                        placeholder="16 GB"
+                      />
+                    </Field>
+                    <Field label="Tamaño" className="md:col-span-2">
+                      <Input
+                        value={v.size ?? ""}
+                        onChange={(val) => updateVariant(v.sku, { size: val })}
+                        placeholder='14"'
+                      />
+                    </Field>
+                    <Field label="Color" className="md:col-span-2">
+                      {draft.colors.length > 0 ? (
+                        <select
+                          value={v.color ?? ""}
+                          onChange={(e) =>
+                            updateVariant(v.sku, { color: e.target.value || undefined })
+                          }
+                          className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                        >
+                          <option value="">— sin color —</option>
+                          {draft.colors.map((c) => (
+                            <option key={c.name} value={c.name}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <Input
+                          value={v.color ?? ""}
+                          onChange={(val) => updateVariant(v.sku, { color: val })}
+                          placeholder="Negro"
+                        />
+                      )}
+                    </Field>
+                    <Field label="Condición" className="md:col-span-3">
+                      <select
+                        value={v.condition}
+                        onChange={(e) =>
+                          updateVariant(v.sku, {
+                            condition: e.target.value as ProductCondition,
+                          })
+                        }
+                        className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                      >
+                        {CONDITIONS.map((c) => (
+                          <option key={c} value={c}>
+                            {conditionLabels[c]}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
+
+                  {/* Fila 2: precio · stock · notas */}
+                  <div className="grid grid-cols-2 md:grid-cols-12 gap-3">
+                    <Field label="Precio (COP)" className="md:col-span-3">
+                      <Input
+                        type="number"
+                        value={String(v.price)}
+                        onChange={(val) =>
+                          updateVariant(v.sku, { price: Number(val) || 0 })
+                        }
+                        placeholder="2950000"
+                      />
+                    </Field>
+                    <Field label="Stock (unidades)" className="md:col-span-2">
+                      <Input
+                        type="number"
+                        value={String(v.stockQuantity ?? 0)}
+                        onChange={(val) =>
+                          updateVariant(v.sku, {
+                            stockQuantity: Math.max(0, Number(val) || 0),
+                          })
+                        }
+                        placeholder="1"
+                      />
+                    </Field>
+                    <Field label="Notas" className="md:col-span-7">
+                      <Input
+                        value={v.notes ?? ""}
+                        onChange={(val) => updateVariant(v.sku, { notes: val })}
+                        placeholder="Sim física, batería 100%, …"
+                      />
+                    </Field>
+                  </div>
+
+                  {/* Footer: badge stock · resumen · acciones */}
+                  <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-neutral-200">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${stockBadge.cls}`}
+                      >
+                        {stockBadge.label}
+                      </span>
+                      <span className="text-[11px] font-mono text-neutral-400">
+                        {v.sku}
+                      </span>
+                      <span className="text-[11px] font-semibold text-neutral-600">
+                        {formatPrice(v.price)} · {conditionLabels[v.condition]}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => duplicateVariant(v.sku)}
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-white transition"
+                        title="Duplicar variante"
+                        aria-label="Duplicar variante"
+                      >
+                        <Copy size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(v.sku)}
+                        className="p-1.5 rounded-lg text-neutral-400 hover:text-[#CC0000] hover:bg-red-50 transition"
+                        aria-label="Eliminar variante"
+                        title="Eliminar variante"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="md:col-span-12 flex items-center justify-between text-[11px] text-neutral-400 pt-1 border-t border-neutral-200">
-                  <span className="font-mono">SKU: {v.sku}</span>
-                  <span className="font-semibold text-neutral-600">
-                    {formatPrice(v.price)} · {conditionLabels[v.condition]}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
         <button

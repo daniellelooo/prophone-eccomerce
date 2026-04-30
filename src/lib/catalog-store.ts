@@ -16,6 +16,11 @@ type CatalogState = {
   refresh: () => Promise<void>;
   /** Crea o actualiza un producto (write-through a Supabase). */
   upsert: (product: Product) => Promise<void>;
+  /** Actualiza solo flags de presentación (isFeatured, isNew, badge) sin tocar variantes/imágenes. */
+  updateFlags: (
+    id: string,
+    flags: { isFeatured?: boolean; isNew?: boolean; badge?: string | null }
+  ) => Promise<void>;
   /** Borra un producto y sus relaciones (variants, images cascade). */
   remove: (id: string) => Promise<void>;
   /** Reemplaza todo el catálogo (usado por importar JSON). */
@@ -103,6 +108,38 @@ export const useCatalogStore = create<CatalogState>()((set, get) => ({
           : [...s.products, product],
       };
     });
+  },
+
+  updateFlags: async (id, flags) => {
+    const supabase = getSupabaseBrowserClient();
+    const patch: {
+      is_featured?: boolean;
+      is_new?: boolean;
+      badge?: string | null;
+    } = {};
+    if (flags.isFeatured !== undefined) patch.is_featured = flags.isFeatured;
+    if (flags.isNew !== undefined) patch.is_new = flags.isNew;
+    if (flags.badge !== undefined) patch.badge = flags.badge ?? null;
+    if (Object.keys(patch).length === 0) return;
+
+    const { error } = await supabase.from("products").update(patch).eq("id", id);
+    if (error) throw error;
+
+    set((s) => ({
+      products: s.products.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              isFeatured: flags.isFeatured ?? p.isFeatured,
+              isNew: flags.isNew ?? p.isNew,
+              badge:
+                flags.badge !== undefined
+                  ? flags.badge ?? undefined
+                  : p.badge,
+            }
+          : p
+      ),
+    }));
   },
 
   remove: async (id) => {

@@ -13,6 +13,8 @@ import {
   CreditCard,
   MessageCircle,
   Download,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/products";
@@ -69,6 +71,7 @@ function AdminOrdenesContent() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "kanban">("list");
 
   useEffect(() => {
     let cancelled = false;
@@ -175,14 +178,40 @@ function AdminOrdenesContent() {
               registrados.
             </p>
           </div>
-          <button
-            onClick={exportCsv}
-            disabled={!filtered.length}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-600 hover:bg-neutral-50 transition disabled:opacity-40"
-            title="Exportar a CSV"
-          >
-            <Download size={13} /> Exportar CSV
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="inline-flex bg-white border border-neutral-200 rounded-xl p-0.5">
+              <button
+                onClick={() => setView("list")}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 ${
+                  view === "list"
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+                title="Vista lista"
+              >
+                <List size={13} /> Lista
+              </button>
+              <button
+                onClick={() => setView("kanban")}
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition inline-flex items-center gap-1.5 ${
+                  view === "kanban"
+                    ? "bg-neutral-900 text-white"
+                    : "text-neutral-500 hover:text-neutral-800"
+                }`}
+                title="Vista Kanban"
+              >
+                <LayoutGrid size={13} /> Kanban
+              </button>
+            </div>
+            <button
+              onClick={exportCsv}
+              disabled={!filtered.length}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-600 hover:bg-neutral-50 transition disabled:opacity-40"
+              title="Exportar a CSV"
+            >
+              <Download size={13} /> Exportar
+            </button>
+          </div>
         </div>
         {clienteFilter && (
           <div className="mt-3 inline-flex items-center gap-2 bg-neutral-900 text-white text-xs px-3 py-1.5 rounded-full">
@@ -257,7 +286,7 @@ function AdminOrdenesContent() {
         </div>
       )}
 
-      {rows && filtered.length > 0 && (
+      {rows && filtered.length > 0 && view === "list" && (
         <div className="space-y-2">
           {filtered.map((o) => (
             <OrderRowCard
@@ -270,6 +299,13 @@ function AdminOrdenesContent() {
             />
           ))}
         </div>
+      )}
+
+      {rows && filtered.length > 0 && view === "kanban" && (
+        <KanbanBoard
+          orders={filtered}
+          onUpdateStatus={updateStatus}
+        />
       )}
     </div>
   );
@@ -577,4 +613,145 @@ async function fetchOrders(): Promise<OrderRow[]> {
         unitPriceCop: it.unit_price_cop,
       })),
   }));
+}
+
+/* ----------------------- Kanban ----------------------- */
+
+const KANBAN_COLUMNS: { status: string; label: string; color: string }[] = [
+  { status: "pending", label: "Pendientes", color: "border-amber-300 bg-amber-50" },
+  { status: "confirmed", label: "Confirmados", color: "border-blue-300 bg-blue-50" },
+  { status: "shipped", label: "En camino", color: "border-violet-300 bg-violet-50" },
+  { status: "delivered", label: "Entregados", color: "border-green-300 bg-green-50" },
+  { status: "cancelled", label: "Cancelados", color: "border-neutral-300 bg-neutral-100" },
+];
+
+function KanbanBoard({
+  orders,
+  onUpdateStatus,
+}: {
+  orders: OrderRow[];
+  onUpdateStatus: (id: string, newStatus: string) => Promise<void>;
+}) {
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [overCol, setOverCol] = useState<string | null>(null);
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, OrderRow[]>();
+    for (const col of KANBAN_COLUMNS) map.set(col.status, []);
+    for (const o of orders) {
+      const list = map.get(o.status) ?? [];
+      list.push(o);
+      map.set(o.status, list);
+    }
+    return map;
+  }, [orders]);
+
+  return (
+    <div className="overflow-x-auto -mx-1 px-1">
+      <div className="flex gap-3 min-w-max pb-3">
+        {KANBAN_COLUMNS.map((col) => {
+          const columnOrders = grouped.get(col.status) ?? [];
+          const total =
+            col.status === "cancelled"
+              ? 0
+              : columnOrders.reduce((s, o) => s + o.totalCop, 0);
+          return (
+            <div
+              key={col.status}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setOverCol(col.status);
+              }}
+              onDragLeave={() => setOverCol((cur) => (cur === col.status ? null : cur))}
+              onDrop={(e) => {
+                e.preventDefault();
+                setOverCol(null);
+                if (draggingId) {
+                  const o = orders.find((x) => x.id === draggingId);
+                  if (o && o.status !== col.status) {
+                    void onUpdateStatus(draggingId, col.status);
+                  }
+                }
+                setDraggingId(null);
+              }}
+              className={`w-72 shrink-0 rounded-2xl border-2 ${col.color} ${
+                overCol === col.status ? "ring-2 ring-[#CC0000]/50" : ""
+              } transition`}
+            >
+              <div className="px-3 py-2.5 border-b border-black/5 flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-700">
+                  {col.label}
+                </p>
+                <span className="text-[10px] font-bold text-neutral-500 bg-white px-2 py-0.5 rounded-full">
+                  {columnOrders.length}
+                </span>
+              </div>
+              {total > 0 && (
+                <p className="px-3 pt-2 text-[10px] font-semibold text-neutral-500">
+                  {formatPrice(total)}
+                </p>
+              )}
+              <div className="p-2 space-y-2 max-h-[600px] overflow-y-auto min-h-[80px]">
+                {columnOrders.length === 0 ? (
+                  <p className="text-[11px] text-neutral-400 text-center py-4">
+                    Sin pedidos
+                  </p>
+                ) : (
+                  columnOrders.map((o) => (
+                    <div
+                      key={o.id}
+                      draggable={true}
+                      onDragStart={() => setDraggingId(o.id)}
+                      onDragEnd={() => {
+                        setDraggingId(null);
+                        setOverCol(null);
+                      }}
+                      className={`bg-white rounded-xl border border-neutral-200 p-3 shadow-sm cursor-grab active:cursor-grabbing hover:border-neutral-400 transition ${
+                        draggingId === o.id ? "opacity-50" : ""
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-mono text-[11px] font-bold text-neutral-700">
+                          {o.orderNumber}
+                        </span>
+                        {o.paymentProvider === "local" && (
+                          <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-blue-100 text-blue-700">
+                            Local
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-semibold text-neutral-900 truncate">
+                        {o.customerName}
+                      </p>
+                      <p className="text-[10px] text-neutral-500 truncate">
+                        {o.shippingCity || o.customerPhone}
+                      </p>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs font-bold text-neutral-900">
+                          {formatPrice(o.totalCop)}
+                        </span>
+                        <span className="text-[9px] text-neutral-400">
+                          {new Date(o.createdAt).toLocaleDateString("es-CO", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-neutral-500 mt-1.5 truncate">
+                        {o.items.length} producto{o.items.length !== 1 ? "s" : ""} ·{" "}
+                        {o.items.reduce((s, i) => s + i.quantity, 0)} unidades
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-neutral-400 mt-2 text-center">
+        Arrastra una tarjeta a otra columna para cambiar su estado.
+      </p>
+    </div>
+  );
 }

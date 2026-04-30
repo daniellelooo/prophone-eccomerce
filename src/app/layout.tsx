@@ -7,6 +7,7 @@ import CartDrawer from "@/components/CartDrawer";
 import PriceTicker from "@/components/PriceTicker";
 import BottomNav from "@/components/BottomNav";
 import CatalogHydrator from "@/components/CatalogHydrator";
+import MarketingPixels from "@/components/MarketingPixels";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -99,6 +100,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
         <CatalogHydrator />
+        <MarketingPixels />
         <PriceTicker />
         <Navbar />
         <CartDrawer />

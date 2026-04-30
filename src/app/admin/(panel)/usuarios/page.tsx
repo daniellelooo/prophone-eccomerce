@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   UserPlus, RefreshCw, Shield, ShoppingBag, Package, User, Eye, EyeOff,
-  Copy, Check, Key, ExternalLink,
+  Copy, Check, Key, TrendingUp,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -170,20 +170,20 @@ export default function UsuariosPage() {
   };
 
   const staffProfiles = profiles.filter((p) => p.role !== "cliente");
-  const clientProfiles = profiles.filter((p) => p.role === "cliente");
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-neutral-900">
-            Usuarios
+            Equipo
           </h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Gestiona roles del equipo. Los vendedores pueden registrar ventas desde{" "}
-            <a href="/vendedor" target="_blank" className="text-[#0071E3] underline">
-              /vendedor
-            </a>
+            Admins, vendedores y gestores de inventario. Los clientes
+            registrados están en{" "}
+            <Link href="/admin/clientes" className="text-[#CC0000] underline">
+              Clientes
+            </Link>
             .
           </p>
         </div>
@@ -327,10 +327,10 @@ export default function UsuariosPage() {
                   {(p.role === "vendedor") && (
                     <Link
                       href={`/admin/vendedor/${p.id}`}
-                      className="p-1.5 rounded-lg border border-neutral-200 text-neutral-400 hover:text-[#CC0000] hover:border-[#CC0000]/30 transition"
-                      title="Ver ventas"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-neutral-900 text-white text-[11px] font-semibold hover:bg-neutral-700 transition"
+                      title="Ver ventas del vendedor"
                     >
-                      <ExternalLink size={13} />
+                      <TrendingUp size={12} /> Ver ventas
                     </Link>
                   )}
                   <button
@@ -354,48 +354,6 @@ export default function UsuariosPage() {
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
-
-      {/* Clientes */}
-      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-neutral-100 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-neutral-800">
-            Clientes registrados ({clientProfiles.length})
-          </h2>
-          <p className="text-xs text-neutral-400">Solo lectura · Cambia rol en la fila para promover</p>
-        </div>
-        {loading ? (
-          <div className="p-6 text-center text-sm text-neutral-400">Cargando…</div>
-        ) : (
-          <div className="divide-y divide-neutral-100 max-h-72 overflow-y-auto">
-            {clientProfiles.map((p) => (
-              <div key={p.id} className="px-5 py-3 flex items-center gap-4">
-                <div className="w-7 h-7 rounded-full bg-neutral-100 flex items-center justify-center shrink-0">
-                  <User size={13} className="text-neutral-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-neutral-700 truncate">
-                    {p.full_name || "Sin nombre"}
-                  </p>
-                  {p.phone && (
-                    <p className="text-xs text-neutral-400">{p.phone}</p>
-                  )}
-                </div>
-                <select
-                  value={p.role}
-                  onChange={(e) => changeRole(p.id, e.target.value)}
-                  disabled={saving === p.id}
-                  className="text-xs px-2 py-1.5 rounded-lg border border-neutral-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 disabled:opacity-50"
-                >
-                  <option value="cliente">Cliente</option>
-                  <option value="vendedor">Vendedor</option>
-                  <option value="gestor_inventario">Gestor inventario</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-            ))}
           </div>
         )}
       </div>

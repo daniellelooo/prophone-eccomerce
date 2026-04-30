@@ -8,11 +8,13 @@ import {
   BarChart3,
   Box,
   ExternalLink,
+  FileBarChart,
   LogOut,
   MapPin,
   Settings,
   Sparkles,
   ShoppingBag,
+  Store,
   TrendingUp,
   Users,
   UserCog,
@@ -21,15 +23,18 @@ import {
 } from "lucide-react";
 import { logout } from "@/lib/admin-auth";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useSiteConfigStore } from "@/lib/site-config-store";
 
-type NavItem = { href: string; label: string; icon: React.ElementType };
+type NavItem = { href: string; label: string; icon: React.ElementType; badgeKey?: string };
 
 const NAV_ADMIN: NavItem[] = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/admin/productos", label: "Productos", icon: Box },
-  { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
+  { href: "/admin/dashboard", label: "Dashboard web", icon: BarChart3 },
+  { href: "/admin/ventas-local", label: "Ventas local", icon: Store },
+  { href: "/admin/reportes", label: "Reportes", icon: FileBarChart },
+  { href: "/admin/productos", label: "Productos", icon: Box, badgeKey: "lowStock" },
+  { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag, badgeKey: "pending" },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
-  { href: "/admin/usuarios", label: "Usuarios", icon: UserCog },
+  { href: "/admin/usuarios", label: "Equipo", icon: UserCog },
   { href: "/admin/promociones", label: "Promociones", icon: Sparkles },
   { href: "/admin/sedes", label: "Sedes", icon: MapPin },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
@@ -75,6 +80,8 @@ export default function AdminPanelLayout({
   const [role, setRole] = useState<string>("admin");
   const [displayName, setDisplayName] = useState<string>("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [badges, setBadges] = useState<Record<string, number>>({});
+  const lowStockThreshold = useSiteConfigStore((s) => s.stockLowThreshold);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -127,6 +134,37 @@ export default function AdminPanelLayout({
       sub.subscription.unsubscribe();
     };
   }, [router]);
+
+  // Carga periódica de badges (stock crítico + pedidos pendientes)
+  useEffect(() => {
+    if (!authed) return;
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+    const load = async () => {
+      const [variantsRes, pendingRes] = await Promise.all([
+        supabase
+          .from("variants")
+          .select("stock_quantity, in_stock", { count: "exact", head: false })
+          .lte("stock_quantity", lowStockThreshold),
+        supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+          .neq("payment_provider", "local"),
+      ]);
+      if (cancelled) return;
+      setBadges({
+        lowStock: variantsRes.data?.length ?? 0,
+        pending: pendingRes.count ?? 0,
+      });
+    };
+    load();
+    const interval = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [authed, lowStockThreshold]);
 
   // Route protection: redirect to role's default if on unauthorized route
   useEffect(() => {
@@ -211,7 +249,18 @@ export default function AdminPanelLayout({
                 }`}
               >
                 <Icon size={15} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.badgeKey && badges[item.badgeKey] > 0 && (
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                      active
+                        ? "bg-white/30 text-white"
+                        : "bg-amber-500 text-white"
+                    }`}
+                  >
+                    {badges[item.badgeKey]}
+                  </span>
+                )}
               </Link>
             );
           })}

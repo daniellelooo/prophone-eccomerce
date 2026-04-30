@@ -22,35 +22,19 @@ import { formatPrice } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
-const CAROUSEL_IMAGES = [
-  "/SaveClip.App_669968396_17969893659022618_2634456334907307944_n.jpg",
-  "/SaveClip.App_670261212_17969893632022618_2971371486548960346_n.jpg",
-  "/SaveClip.App_670356744_17969893647022618_671068078662591014_n.jpg",
-  "/SaveClip.App_670660195_17969893653022618_1022367743358883716_n.jpg",
-  "/SaveClip.App_670841629_17969893671022618_2948609800837551989_n.jpg",
-  "/SaveClip.App_670898237_17969893623022618_6482046461573185776_n.jpg",
-  "/SaveClip.App_673772651_17971073052022618_8062033588449160424_n.jpg",
-  "/SaveClip.App_681366003_17971073055022618_4293193256490824427_n.jpg",
-];
+// Las imágenes del carrusel ahora vienen de site-config (admin → Configuración).
 
-const MOBILE_IMAGES = [
-  "/IPHONE 17 PRO MAX HORIZONTAL.jpg",
-  "/IPHONE17PROHORIZONTAL.jpg",
-  "/IPAD A16 HORIZONTAL.jpg",
-  "/IPADAIRHORIZONTAL.jpg",
-];
-
-// WA_URL ahora se computa dentro de HomePage usando el store de site-config.
-
-function MobileCarousel() {
+function MobileCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
+  const list = images.length > 0 ? images : [""];
 
   useEffect(() => {
+    if (list.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % MOBILE_IMAGES.length);
+      setCurrent((prev) => (prev + 1) % list.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [list.length]);
 
   return (
     <div className="w-full">
@@ -64,20 +48,22 @@ function MobileCarousel() {
             transition={{ duration: 1, ease: "easeInOut" }}
             className="absolute inset-0"
           >
-            <Image
-              src={MOBILE_IMAGES[current]}
-              alt={`Prophone ${current + 1}`}
-              fill
-              className="object-contain"
-              priority={current === 0}
-            />
+            {list[current] && (
+              <Image
+                src={list[current]}
+                alt={`Prophone ${current + 1}`}
+                fill
+                className="object-contain"
+                priority={current === 0}
+                unoptimized
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Dots debajo de la imagen, no encima */}
       <div className="flex gap-1.5 justify-center pt-2.5">
-        {MOBILE_IMAGES.map((_, i) => (
+        {list.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
@@ -92,15 +78,17 @@ function MobileCarousel() {
   );
 }
 
-function HeroCarousel() {
+function HeroCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
+  const list = images.length > 0 ? images : [""];
 
   useEffect(() => {
+    if (list.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+      setCurrent((prev) => (prev + 1) % list.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [list.length]);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl lg:rounded-3xl aspect-[4/5] max-w-[360px] lg:max-w-[420px] xl:max-w-[460px] mx-auto bg-[#F5F5F7]">
@@ -113,18 +101,21 @@ function HeroCarousel() {
           transition={{ duration: 1.2, ease: "easeInOut" }}
           className="absolute inset-0"
         >
-          <Image
-            src={CAROUSEL_IMAGES[current]}
-            alt={`Prophone Medellín ${current + 1}`}
-            fill
-            className="object-contain"
-            priority={current === 0}
-          />
+          {list[current] && (
+            <Image
+              src={list[current]}
+              alt={`Prophone Medellín ${current + 1}`}
+              fill
+              className="object-contain"
+              priority={current === 0}
+              unoptimized
+            />
+          )}
         </motion.div>
       </AnimatePresence>
 
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-        {CAROUSEL_IMAGES.map((_, i) => (
+        {list.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
@@ -150,6 +141,8 @@ export default function HomePage() {
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
   const instagramUrl = useSiteConfigStore((s) => s.instagramUrl);
+  const heroImagesDesktop = useSiteConfigStore((s) => s.heroImagesDesktop);
+  const heroImagesMobile = useSiteConfigStore((s) => s.heroImagesMobile);
   const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
 
   return (
@@ -167,7 +160,7 @@ export default function HomePage() {
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="order-1 lg:hidden"
             >
-              <MobileCarousel />
+              <MobileCarousel images={heroImagesMobile} />
             </motion.div>
 
             {/* Desktop: carrusel */}
@@ -177,7 +170,7 @@ export default function HomePage() {
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="order-1 lg:order-2 hidden lg:block lg:pr-12"
             >
-              <HeroCarousel />
+              <HeroCarousel images={heroImagesDesktop} />
             </motion.div>
 
             {/* Text — order-2 on mobile (bottom), order-1 on desktop (left) */}

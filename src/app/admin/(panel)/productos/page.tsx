@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Plus, ExternalLink, Pencil, Tag, Trash2 } from "lucide-react";
+import { Search, Plus, ExternalLink, Pencil, Tag, Trash2, AlertTriangle } from "lucide-react";
 import { useCatalogStore } from "@/lib/catalog-store";
+import { useSiteConfigStore } from "@/lib/site-config-store";
 import {
   formatPrice,
   getMinPrice,
@@ -24,6 +25,8 @@ export default function AdminProductosPage() {
     "todos"
   );
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [onlyLowStock, setOnlyLowStock] = useState(false);
+  const lowStockThreshold = useSiteConfigStore((s) => s.stockLowThreshold);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -35,9 +38,24 @@ export default function AdminProductosPage() {
           .join(" ")
           .toLowerCase()
           .includes(search.toLowerCase());
-      return matchCat && matchSearch;
+      const matchLow =
+        !onlyLowStock ||
+        p.variants.some(
+          (v) => (v.stockQuantity ?? 0) <= lowStockThreshold
+        );
+      return matchCat && matchSearch && matchLow;
     });
-  }, [products, search, activeCategory]);
+  }, [products, search, activeCategory, onlyLowStock, lowStockThreshold]);
+
+  const lowStockCount = useMemo(() => {
+    return products.reduce(
+      (sum, p) =>
+        sum +
+        p.variants.filter((v) => (v.stockQuantity ?? 0) <= lowStockThreshold)
+          .length,
+      0
+    );
+  }, [products, lowStockThreshold]);
 
   // Métricas rápidas
   const totalSKUs = products.reduce((sum, p) => sum + p.variants.length, 0);
@@ -100,6 +118,32 @@ export default function AdminProductosPage() {
         <Kpi label="En stock" value={`${inStockSKUs}/${totalSKUs}`} />
         <Kpi label="Destacados home" value={String(featuredCount)} />
       </div>
+
+      {/* Alerta de stock crítico */}
+      {lowStockCount > 0 && (
+        <button
+          onClick={() => setOnlyLowStock((v) => !v)}
+          className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+            onlyLowStock
+              ? "bg-amber-100 border-amber-300"
+              : "bg-amber-50 border-amber-200 hover:bg-amber-100"
+          }`}
+        >
+          <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-900">
+              {lowStockCount} variante{lowStockCount === 1 ? "" : "s"} con stock crítico
+            </p>
+            <p className="text-[11px] text-amber-700">
+              Stock ≤ {lowStockThreshold} unidades · Click para{" "}
+              {onlyLowStock ? "ver todo" : "filtrar solo críticos"}
+            </p>
+          </div>
+          <span className="text-[11px] font-bold text-amber-800">
+            {onlyLowStock ? "Quitar filtro" : "Filtrar"}
+          </span>
+        </button>
+      )}
 
       {/* Filtros */}
       <div className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-3">

@@ -15,10 +15,30 @@ export type SiteConfig = {
   whatsappNumber: string;
   whatsappDefaultMessage: string;
   instagramUrl: string;
+  tiktokUrl: string;
+  facebookUrl: string;
   bannerEnabled: boolean;
   bannerItems: string[];
   hoursWeek: string;
   hoursWeekend: string;
+  /** Carrusel desktop del home */
+  heroImagesDesktop: string[];
+  /** Carrusel mobile del home */
+  heroImagesMobile: string[];
+  /** Texto opcional del hero (se muestra encima del CTA principal) */
+  heroTitle: string;
+  heroSubtitle: string;
+  /** SEO global */
+  seoTitle: string;
+  seoDescription: string;
+  ogImageUrl: string;
+  /** Pixels para campañas */
+  metaPixelId: string;
+  gaMeasurementId: string;
+  /** Texto libre del footer */
+  footerTagline: string;
+  /** Stock crítico — alerta si quantity ≤ N */
+  stockLowThreshold: number;
   sedes: Sede[];
 };
 
@@ -27,6 +47,8 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   whatsappDefaultMessage:
     "Hola, me interesa un producto de Prophone Medellín",
   instagramUrl: "https://www.instagram.com/prophone_medellin/",
+  tiktokUrl: "",
+  facebookUrl: "",
   bannerEnabled: true,
   bannerItems: [
     "Reseller Apple · Medellín, Colombia",
@@ -40,6 +62,32 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   ],
   hoursWeek: "Lunes–Sábado 10am–7:30pm",
   hoursWeekend: "Domingos y festivos 11am–5pm",
+  heroImagesDesktop: [
+    "/SaveClip.App_669968396_17969893659022618_2634456334907307944_n.jpg",
+    "/SaveClip.App_670261212_17969893632022618_2971371486548960346_n.jpg",
+    "/SaveClip.App_670356744_17969893647022618_671068078662591014_n.jpg",
+    "/SaveClip.App_670660195_17969893653022618_1022367743358883716_n.jpg",
+    "/SaveClip.App_670841629_17969893671022618_2948609800837551989_n.jpg",
+    "/SaveClip.App_670898237_17969893623022618_6482046461573185776_n.jpg",
+    "/SaveClip.App_673772651_17971073052022618_8062033588449160424_n.jpg",
+    "/SaveClip.App_681366003_17971073055022618_4293193256490824427_n.jpg",
+  ],
+  heroImagesMobile: [
+    "/IPHONE 17 PRO MAX HORIZONTAL.jpg",
+    "/IPHONE17PROHORIZONTAL.jpg",
+    "/IPAD A16 HORIZONTAL.jpg",
+    "/IPADAIRHORIZONTAL.jpg",
+  ],
+  heroTitle: "",
+  heroSubtitle: "",
+  seoTitle: "Prophone Medellín · Reseller Apple",
+  seoDescription:
+    "iPhone, iPad, Mac y accesorios Apple originales con garantía oficial en Medellín.",
+  ogImageUrl: "",
+  metaPixelId: "",
+  gaMeasurementId: "",
+  footerTagline: "Reseller Apple en Medellín, Colombia.",
+  stockLowThreshold: 2,
   sedes: [
     { id: "monterrey-206", name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Local 206" },
     { id: "monterrey-098-099", name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Locales 098 / 099" },
@@ -66,10 +114,23 @@ const CONFIG_KEYS = {
   whatsappNumber: "whatsapp_number",
   whatsappDefaultMessage: "whatsapp_default_message",
   instagramUrl: "instagram_url",
+  tiktokUrl: "tiktok_url",
+  facebookUrl: "facebook_url",
   bannerEnabled: "banner_enabled",
   bannerItems: "banner_items",
   hoursWeek: "hours_week",
   hoursWeekend: "hours_weekend",
+  heroImagesDesktop: "hero_images_desktop",
+  heroImagesMobile: "hero_images_mobile",
+  heroTitle: "hero_title",
+  heroSubtitle: "hero_subtitle",
+  seoTitle: "seo_title",
+  seoDescription: "seo_description",
+  ogImageUrl: "og_image_url",
+  metaPixelId: "meta_pixel_id",
+  gaMeasurementId: "ga_measurement_id",
+  footerTagline: "footer_tagline",
+  stockLowThreshold: "stock_low_threshold",
 } as const;
 
 type ConfigKey = keyof typeof CONFIG_KEYS;
