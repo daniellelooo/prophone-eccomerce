@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import {
   ShoppingBag,
   ChevronRight,
@@ -112,7 +111,7 @@ export default function ProductPage() {
   }. ¿Tienen disponibilidad?`;
 
   return (
-    <div className="pt-24 min-h-screen bg-white relative z-0">
+    <div className="pt-24 min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 md:px-12 py-8 pb-28 md:pb-8">
         <nav className="flex items-center gap-2 text-sm text-neutral-500 mb-10">
           <Link
@@ -135,27 +134,17 @@ export default function ProductPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Galería con zoom + lightbox */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:sticky lg:top-24"
-          >
+          <div className="lg:sticky lg:top-24">
             <ProductGallery
               key={`${product.slug}-${selectedColor}`}
               images={galleryImages}
               alt={`${product.name}${selectedColor ? ` ${selectedColor}` : ""}`}
               badge={product.badge}
             />
-          </motion.div>
+          </div>
 
           {/* Info */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-8 py-4"
-          >
+          <div className="space-y-8 py-4">
             <div>
               <p className="text-sm text-[#0071E3] font-semibold mb-2 uppercase tracking-wide">
                 {product.category.charAt(0).toUpperCase() +
@@ -375,7 +364,7 @@ export default function ProductPage() {
 
             {/* Detalles del producto: specs, envío, garantía, pagos, ayuda */}
             <ProductDetails product={product} variant={selectedVariant} />
-          </motion.div>
+          </div>
         </div>
 
         {/* Productos relacionados */}
