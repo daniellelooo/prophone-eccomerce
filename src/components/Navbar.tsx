@@ -44,6 +44,11 @@ export default function Navbar() {
   // El navbar público no aparece en /admin (tiene su propio shell)
   if (pathname?.startsWith("/admin")) return null;
 
+  // La PriceTicker solo se muestra en / y /catalogo. En las demás rutas el
+  // navbar debe ir pegado al top (top-0) para no dejar una franja vacía
+  // por la que el contenido se vea al hacer scroll.
+  const hasTickerSpace = pathname === "/" || pathname === "/catalogo";
+
   const navLinks = [
     { href: "/catalogo?cat=iphone", label: "iPhone" },
     { href: "/catalogo?cat=ipad", label: "iPad" },
@@ -58,7 +63,7 @@ export default function Navbar() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className={`fixed top-8 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed ${hasTickerSpace ? "top-8" : "top-0"} left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
             ? "bg-white/85 backdrop-blur-2xl border-b border-neutral-200/60 shadow-sm"
             : "bg-white/60 backdrop-blur-xl"
