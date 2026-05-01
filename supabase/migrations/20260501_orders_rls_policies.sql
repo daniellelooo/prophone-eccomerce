@@ -1,25 +1,34 @@
--- Políticas RLS para orders y order_items
+-- Políticas RLS finales para orders y order_items
 --
--- Soporta:
---   1. Checkout invitado (user_id IS NULL) — anon puede crear orden
---   2. Checkout autenticado — el usuario crea con su propio user_id
---   3. Cliente lee sus propias órdenes
---   4. Admin lee/actualiza todas las órdenes
---   5. Admin/vendedor crea ventas locales
+-- Modelo de privacidad:
+--   - Guest: puede crear órdenes con user_id IS NULL (checkout invitado)
+--   - Cliente autenticado: crea órdenes con su propio user_id, lee solo las suyas
+--   - Admin / gestor_inventario: leen y actualizan TODAS las órdenes
+--   - Vendedor: solo lee y actualiza SUS propias ventas (seller_id = auth.uid())
+--   - Solo admin puede borrar
+--
+-- Esta migración es idempotente: limpia cualquier policy previa y aplica
+-- el set canónico.
 
 -- ─── ORDERS ──────────────────────────────────────────────────────────
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
--- Drop si existen para que la migración sea idempotente
+-- Limpiar policies existentes (incluye las redundantes históricas)
+DROP POLICY IF EXISTS "orders_guest_insert" ON public.orders;
+DROP POLICY IF EXISTS "orders_self_insert" ON public.orders;
+DROP POLICY IF EXISTS "orders_guest_read_by_number" ON public.orders;
+DROP POLICY IF EXISTS "orders_self_read" ON public.orders;
+DROP POLICY IF EXISTS "orders_admin_update" ON public.orders;
 DROP POLICY IF EXISTS "orders_insert_guest_or_owner" ON public.orders;
 DROP POLICY IF EXISTS "orders_select_owner" ON public.orders;
 DROP POLICY IF EXISTS "orders_select_admin" ON public.orders;
+DROP POLICY IF EXISTS "orders_seller_read" ON public.orders;
 DROP POLICY IF EXISTS "orders_update_admin" ON public.orders;
+DROP POLICY IF EXISTS "orders_seller_update" ON public.orders;
 DROP POLICY IF EXISTS "orders_delete_admin" ON public.orders;
 
--- INSERT: guest (user_id null) o el dueño autenticado.
--- También admins/vendedores/gestores autenticados pueden crear con cualquier user_id (ventas locales).
+-- INSERT: guest (user_id null), dueño autenticado, o staff (admin/vendedor/gestor)
 CREATE POLICY "orders_insert_guest_or_owner"
   ON public.orders
   FOR INSERT
@@ -33,13 +42,13 @@ CREATE POLICY "orders_insert_guest_or_owner"
     )
   );
 
--- SELECT: el dueño puede leer sus órdenes
+-- SELECT: dueño
 CREATE POLICY "orders_select_owner"
   ON public.orders
   FOR SELECT
   USING (auth.uid() = user_id);
 
--- SELECT: admins/equipo leen todas
+-- SELECT: admin + gestor (NO vendedor — vendedor solo ve sus propias ventas)
 CREATE POLICY "orders_select_admin"
   ON public.orders
   FOR SELECT
@@ -47,11 +56,17 @@ CREATE POLICY "orders_select_admin"
     EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role IN ('admin', 'vendedor', 'gestor_inventario')
+        AND p.role IN ('admin', 'gestor_inventario')
     )
   );
 
--- UPDATE: solo admin/equipo (cambiar estado, marcar whatsapp_sent, etc.)
+-- SELECT: vendedor solo sus propias ventas
+CREATE POLICY "orders_seller_read"
+  ON public.orders
+  FOR SELECT
+  USING (seller_id = auth.uid());
+
+-- UPDATE: admin + gestor pueden actualizar todo
 CREATE POLICY "orders_update_admin"
   ON public.orders
   FOR UPDATE
@@ -59,16 +74,23 @@ CREATE POLICY "orders_update_admin"
     EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role IN ('admin', 'vendedor', 'gestor_inventario')
+        AND p.role IN ('admin', 'gestor_inventario')
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role IN ('admin', 'vendedor', 'gestor_inventario')
+        AND p.role IN ('admin', 'gestor_inventario')
     )
   );
+
+-- UPDATE: vendedor solo sus propias ventas
+CREATE POLICY "orders_seller_update"
+  ON public.orders
+  FOR UPDATE
+  USING (seller_id = auth.uid())
+  WITH CHECK (seller_id = auth.uid());
 
 -- DELETE: solo admin
 CREATE POLICY "orders_delete_admin"
@@ -86,13 +108,15 @@ CREATE POLICY "orders_delete_admin"
 
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "order_items_guest_insert" ON public.order_items;
+DROP POLICY IF EXISTS "order_items_self_insert" ON public.order_items;
+DROP POLICY IF EXISTS "order_items_via_order" ON public.order_items;
 DROP POLICY IF EXISTS "order_items_insert_with_order" ON public.order_items;
 DROP POLICY IF EXISTS "order_items_select_owner" ON public.order_items;
 DROP POLICY IF EXISTS "order_items_select_admin" ON public.order_items;
+DROP POLICY IF EXISTS "order_items_seller_read" ON public.order_items;
 
--- INSERT: si el caller acaba de crear la order matching, debe poder
--- insertar items. Validamos que la order asociada cumpla las mismas
--- reglas que el INSERT de orders.
+-- INSERT: validado contra la order asociada (mismas reglas que orders)
 CREATE POLICY "order_items_insert_with_order"
   ON public.order_items
   FOR INSERT
@@ -112,7 +136,7 @@ CREATE POLICY "order_items_insert_with_order"
     )
   );
 
--- SELECT: el dueño de la order ve sus items
+-- SELECT: dueño de la order
 CREATE POLICY "order_items_select_owner"
   ON public.order_items
   FOR SELECT
@@ -123,7 +147,7 @@ CREATE POLICY "order_items_select_owner"
     )
   );
 
--- SELECT: admins/equipo ven todos los items
+-- SELECT: admin + gestor
 CREATE POLICY "order_items_select_admin"
   ON public.order_items
   FOR SELECT
@@ -131,6 +155,17 @@ CREATE POLICY "order_items_select_admin"
     EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role IN ('admin', 'vendedor', 'gestor_inventario')
+        AND p.role IN ('admin', 'gestor_inventario')
+    )
+  );
+
+-- SELECT: vendedor solo items de sus propias ventas
+CREATE POLICY "order_items_seller_read"
+  ON public.order_items
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.orders o
+      WHERE o.id = order_items.order_id AND o.seller_id = auth.uid()
     )
   );
