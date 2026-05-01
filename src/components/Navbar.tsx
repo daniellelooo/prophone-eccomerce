@@ -17,8 +17,17 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const toggleCart = useCartStore((s) => s.toggleCart);
-  const itemCount = useCartStore((s) => s.itemCount());
-  const wishlistCount = useWishlistStore((s) => s.slugs.length);
+  const itemCountRaw = useCartStore((s) => s.itemCount());
+  const wishlistCountRaw = useWishlistStore((s) => s.slugs.length);
+  // Evitamos hydration mismatch: en SSR los stores con persist son 0,
+  // pero localStorage en cliente puede tener valores. Renderizamos los
+  // badges solo después del primer mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const itemCount = mounted ? itemCountRaw : 0;
+  const wishlistCount = mounted ? wishlistCountRaw : 0;
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const whatsappMsg = useSiteConfigStore((s) => s.whatsappDefaultMessage);
   const waUrl = getWhatsappUrl(whatsappNumber, whatsappMsg);

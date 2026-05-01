@@ -10,8 +10,14 @@ import SearchModal from "@/components/SearchModal";
 export default function BottomNav() {
   const pathname = usePathname();
   const toggleCart = useCartStore((s) => s.toggleCart);
-  const itemCount = useCartStore((s) => s.itemCount());
+  const itemCountRaw = useCartStore((s) => s.itemCount());
   const [searchOpen, setSearchOpen] = useState(false);
+  // Evitar hydration mismatch (cart persiste en localStorage)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const itemCount = mounted ? itemCountRaw : 0;
 
   // Ocultar la barra durante el checkout (compite con el formulario) y en /admin
   const hide =
