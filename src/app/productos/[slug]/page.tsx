@@ -25,6 +25,7 @@ import { useCartStore } from "@/lib/store";
 import { useWishlistStore } from "@/lib/wishlist-store";
 import ProductGallery from "@/components/ProductGallery";
 import RelatedProducts from "@/components/RelatedProducts";
+import FrequentlyBoughtTogether from "@/components/FrequentlyBoughtTogether";
 import ProductDetails from "@/components/ProductDetails";
 import { track } from "@/lib/analytics";
 
@@ -434,6 +435,9 @@ export default function ProductPage() {
             <ProductDetails product={product} variant={selectedVariant} />
           </div>
         </div>
+
+        {/* Frecuentemente comprados juntos (cross-sell de accesorios) */}
+        <FrequentlyBoughtTogether current={product} />
 
         {/* Productos relacionados */}
         <RelatedProducts current={product} />
