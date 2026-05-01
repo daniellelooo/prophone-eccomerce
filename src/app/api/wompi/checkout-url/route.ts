@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/lib/database.types";
@@ -11,14 +12,16 @@ import { buildCheckoutUrl } from "@/lib/wompi";
  * Wompi. La orden ya debe existir en la DB (la crea el cliente con
  * createOrder antes de llamar a este endpoint).
  *
- * Verificación de dueño (defense-in-depth además de RLS):
- *   - Si order.user_id NO es null → requiere sesión y user.id === order.user_id
- *   - Si order.user_id es null (guest checkout) → permite (cualquiera con el
- *     orderId puede completar el pago, ese es el modelo de guest checkout)
- *
- * También marca la orden como `payment_provider='wompi'` y
- * `payment_status='pending'` para reflejar que se inició el flujo de
- * pago — si el cliente abandona, queda visible en el panel admin.
+ * Implementación:
+ *   - Usa service_role para LEER la orden y MARCARLA como wompi pending.
+ *     Necesario porque las policies de RLS no dejan al rol anon leer su
+ *     propia orden de guest checkout (no hay forma de saber "esta orden
+ *     fue recién creada por este caller").
+ *   - Verifica owner explícitamente con la sesión del caller para órdenes
+ *     con user_id (defense-in-depth).
+ *   - Si construir la URL de Wompi falla, CANCELA la orden para que el
+ *     trigger trg_restore_stock_on_cancel restaure el stock — sino
+ *     quedaba descontado para una orden que nunca se va a pagar.
  */
 export const runtime = "nodejs";
 
@@ -39,27 +42,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Falta orderId" }, { status: 400 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient<Database>(
+  // Cliente con service_role para bypassear RLS al leer la orden recién creada.
+  const supabaseAdmin = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            /* ignored — Server Component sin write access */
-          }
-        },
-      },
-    }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { data: order, error } = await supabase
+  const { data: order, error } = await supabaseAdmin
     .from("orders")
     .select("*")
     .eq("id", orderId)
@@ -67,14 +57,33 @@ export async function POST(request: Request) {
 
   if (error || !order) {
     return NextResponse.json(
-      { error: "Orden no encontrada o sin acceso" },
+      { error: "Orden no encontrada" },
       { status: 404 }
     );
   }
 
-  // Verificación explícita de dueño para órdenes con user_id.
+  // Verificación de dueño para órdenes con user_id, usando la sesión del caller.
   if (order.user_id) {
-    const { data: userData } = await supabase.auth.getUser();
+    const cookieStore = await cookies();
+    const supabaseCaller = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cookiesToSet) => {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              /* ignored — Server Component sin write access */
+            }
+          },
+        },
+      }
+    );
+    const { data: userData } = await supabaseCaller.auth.getUser();
     if (!userData.user || userData.user.id !== order.user_id) {
       return NextResponse.json(
         { error: "No tienes permiso para iniciar el pago de esta orden." },
@@ -83,10 +92,8 @@ export async function POST(request: Request) {
     }
   }
 
-  // Construir URL de redirect-url absoluta a partir del request.
   const origin =
-    request.headers.get("origin") ??
-    new URL(request.url).origin;
+    request.headers.get("origin") ?? new URL(request.url).origin;
   const redirectUrl = `${origin}/checkout/resultado/${order.order_number}`;
 
   let checkoutUrl: string;
@@ -110,14 +117,22 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[wompi/checkout-url] buildCheckoutUrl failed", err);
+    // Cancelar la orden para que el trigger restaure el stock.
+    await supabaseAdmin
+      .from("orders")
+      .update({ status: "cancelled" })
+      .eq("id", order.id);
     return NextResponse.json(
-      { error: "No se pudo construir la URL de pago." },
+      {
+        error:
+          "No se pudo construir la URL de pago. La orden se canceló y el stock se restauró.",
+      },
       { status: 500 }
     );
   }
 
   // Marcar la orden como inicio de flujo Wompi.
-  await supabase
+  await supabaseAdmin
     .from("orders")
     .update({
       payment_provider: "wompi",
