@@ -70,8 +70,10 @@ export default function MisVentasPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleUndo = async (saleId: string) => {
     setUndoingId(saleId);

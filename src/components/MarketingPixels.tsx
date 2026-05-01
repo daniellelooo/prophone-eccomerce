@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSiteConfigStore } from "@/lib/site-config-store";
 import { track } from "@/lib/analytics";
+import { getCookieConsent, onConsentChange } from "@/components/CookieBanner";
 
 /**
- * Inyecta Meta Pixel y GA4 si están configurados desde admin → Configuración.
- * Solo carga scripts si los IDs están presentes; nada se inyecta sin config.
+ * Inyecta Meta Pixel y GA4 si están configurados desde admin → Configuración
+ * Y el usuario otorgó consent (Ley 1581 Colombia). Sin consent no se carga
+ * absolutamente nada de tracking.
  *
  * Dispara PageView en cada cambio de ruta (App Router no recarga en navegación).
  */
@@ -18,8 +20,17 @@ export default function MarketingPixels() {
   const searchParams = useSearchParams();
   const initialPageViewSent = useRef(false);
 
-  // Meta Pixel — bootstrap una sola vez
+  // Consent del usuario para cookies de marketing/analytics.
+  const [consentGranted, setConsentGranted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConsentGranted(getCookieConsent() === "granted");
+    return onConsentChange((s) => setConsentGranted(s === "granted"));
+  }, []);
+
+  // Meta Pixel — bootstrap una sola vez (solo si hay consent)
+  useEffect(() => {
+    if (!consentGranted) return;
     if (!metaPixelId) return;
     if (typeof window === "undefined") return;
     /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -48,10 +59,11 @@ export default function MarketingPixels() {
     }
     fbq("init", metaPixelId);
     /* eslint-enable @typescript-eslint/no-explicit-any */
-  }, [metaPixelId]);
+  }, [metaPixelId, consentGranted]);
 
-  // GA4 — bootstrap una sola vez
+  // GA4 — bootstrap una sola vez (solo con consent)
   useEffect(() => {
+    if (!consentGranted) return;
     if (!gaId) return;
     if (typeof window === "undefined") return;
     /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -75,10 +87,11 @@ export default function MarketingPixels() {
     // send_page_view: false porque lo manejamos manualmente para SPA
     w.gtag("config", gaId, { send_page_view: false });
     /* eslint-enable @typescript-eslint/no-explicit-any */
-  }, [gaId]);
+  }, [gaId, consentGranted]);
 
-  // PageView en cada cambio de ruta (incluye la inicial)
+  // PageView en cada cambio de ruta (incluye la inicial) — solo si hay consent
   useEffect(() => {
+    if (!consentGranted) return;
     if (!metaPixelId && !gaId) return;
     if (typeof window === "undefined") return;
     // Pequeño defer para que el script del pixel termine de inicializarse en la primera carga
@@ -88,9 +101,9 @@ export default function MarketingPixels() {
     }, initialPageViewSent.current ? 0 : 200);
     return () => clearTimeout(t);
     // searchParams en deps para captar también query-string changes
-  }, [pathname, searchParams, metaPixelId, gaId]);
+  }, [pathname, searchParams, metaPixelId, gaId, consentGranted]);
 
-  if (!metaPixelId) return null;
+  if (!metaPixelId || !consentGranted) return null;
   return (
     <noscript>
       {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -37,6 +37,7 @@ export default function VendedorPage() {
       .slice(0, 8);
   }, [products, query]);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const selectedVariant = useMemo(() => {
     if (!selectedSku) return null;
     for (const p of products) {

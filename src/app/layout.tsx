@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import { Suspense } from "react";
 import CatalogHydrator from "@/components/CatalogHydrator";
 import MarketingPixels from "@/components/MarketingPixels";
+import CookieBanner from "@/components/CookieBanner";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -110,6 +111,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <BottomNav />
+        <CookieBanner />
       </body>
     </html>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MapPin, Phone } from "lucide-react";
 import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
+import { CookiePreferencesLink } from "@/components/CookieBanner";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -178,6 +179,7 @@ export default function Footer() {
             <Link href="/catalogo" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Catálogo</Link>
             <Link href="/privacidad" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Privacidad</Link>
             <Link href="/terminos" className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors">Términos</Link>
+            <CookiePreferencesLink className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors text-left" />
           </div>
         </div>
       </div>
