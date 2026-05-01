@@ -440,6 +440,24 @@ export type Database = {
           prev_status: string
         }[]
       }
+      create_order_with_items: {
+        Args: {
+          p_customer_email: string | null
+          p_customer_name: string
+          p_customer_phone: string
+          p_items: Json
+          p_notes: string | null
+          p_payment_method: string | null
+          p_shipping_address: string | null
+          p_shipping_city: string | null
+          p_shipping_cop: number
+          p_shipping_department: string | null
+          p_subtotal_cop: number
+          p_total_cop: number
+          p_user_id: string | null
+        }
+        Returns: Json
+      }
       is_current_user_admin: { Args: never; Returns: boolean }
       lookup_order: {
         Args: { p_order_number: string; p_phone: string }

@@ -100,36 +100,8 @@ export async function createOrder(
   const shipping = input.shippingCop ?? 0;
   const total = subtotal + shipping;
 
-  // 1) Insertar orden y obtener su id + order_number
-  const { data: orderRow, error: orderErr } = await supabase
-    .from("orders")
-    .insert({
-      user_id: input.userId,
-      customer_name: input.customerName.trim(),
-      customer_email: input.customerEmail?.trim() || null,
-      customer_phone: input.customerPhone.trim(),
-      shipping_department: input.shippingDepartment ?? null,
-      shipping_city: input.shippingCity ?? null,
-      shipping_address: input.shippingAddress ?? null,
-      notes: input.notes?.trim() || null,
-      subtotal_cop: subtotal,
-      shipping_cop: shipping,
-      total_cop: total,
-      payment_method: input.paymentMethod ?? null,
-    })
-    .select("*")
-    .single();
-
-  if (orderErr || !orderRow) {
-    return {
-      ok: false,
-      error: orderErr?.message ?? "No se pudo crear la orden",
-    };
-  }
-
-  // 2) Insertar order_items
+  // Items en formato JSON para la RPC
   const itemRows = input.items.map((i) => ({
-    order_id: orderRow.id,
     product_id: i.product.id,
     product_name: i.product.name,
     variant_sku: i.variant.sku,
@@ -139,32 +111,58 @@ export async function createOrder(
     image_url: i.product.image,
   }));
 
-  const { error: itemsErr } = await supabase
-    .from("order_items")
-    .insert(itemRows);
-  if (itemsErr) {
-    return { ok: false, error: itemsErr.message };
+  // Llamar a la RPC SECURITY DEFINER que crea orden + items atómicamente
+  // (evita problemas de RLS y garantiza que ambos inserts queden en la
+  // misma transacción).
+  const { data, error } = await supabase.rpc("create_order_with_items", {
+    p_user_id: input.userId,
+    p_customer_name: input.customerName.trim(),
+    p_customer_email: input.customerEmail?.trim() || null,
+    p_customer_phone: input.customerPhone.trim(),
+    p_shipping_department: input.shippingDepartment ?? null,
+    p_shipping_city: input.shippingCity ?? null,
+    p_shipping_address: input.shippingAddress ?? null,
+    p_notes: input.notes?.trim() || null,
+    p_subtotal_cop: subtotal,
+    p_shipping_cop: shipping,
+    p_total_cop: total,
+    p_payment_method: input.paymentMethod ?? null,
+    p_items: itemRows,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      error: error?.message ?? "No se pudo crear la orden",
+    };
   }
+
+  const result = data as {
+    id: string;
+    order_number: string;
+    status: string;
+    created_at: string;
+  };
 
   return {
     ok: true,
     order: {
-      id: orderRow.id,
-      orderNumber: orderRow.order_number,
-      status: orderRow.status,
-      customerName: orderRow.customer_name,
-      customerPhone: orderRow.customer_phone,
-      customerEmail: orderRow.customer_email,
-      shippingDepartment: orderRow.shipping_department,
-      shippingCity: orderRow.shipping_city,
-      shippingAddress: orderRow.shipping_address,
-      notes: orderRow.notes,
-      subtotalCop: orderRow.subtotal_cop,
-      shippingCop: orderRow.shipping_cop,
-      totalCop: orderRow.total_cop,
-      paymentMethod: orderRow.payment_method,
-      whatsappSent: orderRow.whatsapp_sent,
-      createdAt: orderRow.created_at,
+      id: result.id,
+      orderNumber: result.order_number,
+      status: result.status,
+      customerName: input.customerName.trim(),
+      customerPhone: input.customerPhone.trim(),
+      customerEmail: input.customerEmail?.trim() ?? null,
+      shippingDepartment: input.shippingDepartment ?? null,
+      shippingCity: input.shippingCity ?? null,
+      shippingAddress: input.shippingAddress ?? null,
+      notes: input.notes?.trim() ?? null,
+      subtotalCop: subtotal,
+      shippingCop: shipping,
+      totalCop: total,
+      paymentMethod: input.paymentMethod ?? null,
+      whatsappSent: false,
+      createdAt: result.created_at,
       items: itemRows.map((r) => ({
         productId: r.product_id,
         productName: r.product_name,
