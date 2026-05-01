@@ -24,6 +24,7 @@ export default function Navbar() {
   // badges solo después del primer mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
   const itemCount = mounted ? itemCountRaw : 0;

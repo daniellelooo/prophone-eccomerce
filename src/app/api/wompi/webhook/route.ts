@@ -50,11 +50,13 @@ export async function POST(request: Request) {
   const tx = body.data.transaction;
   const internalStatus = mapWompiStatus(tx.status);
 
-  // Cliente Supabase con anon key — la función apply_payment_event es
-  // SECURITY DEFINER y usa permisos elevados internos.
+  // Cliente Supabase con service_role: la RPC apply_payment_event tiene
+  // GRANT EXECUTE solo a service_role para que ningún cliente con la
+  // anon key pueda marcar órdenes como pagadas sin pasar por el webhook
+  // verificado o por el endpoint server-side de transaction.
   const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } }
   );
 

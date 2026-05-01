@@ -38,44 +38,49 @@ export async function GET(
     );
   }
 
-  // Cliente de Supabase con la sesión del request (cookies) — para
-  // verificar el user_id de la orden contra el usuario autenticado.
-  const cookieStore = await cookies();
-  const userClient = createServerClient<Database>(
+  // Service-role client: necesario porque (1) las RLS de orders no
+  // permiten al rol anon leer una orden de guest checkout, y (2) la RPC
+  // apply_payment_event ahora solo tiene GRANT a service_role.
+  const supabaseAdmin = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            /* ignored */
-          }
-        },
-      },
-    }
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
   );
 
-  const { data: order } = await userClient
+  const { data: order } = await supabaseAdmin
     .from("orders")
     .select("id, user_id")
     .eq("order_number", tx.reference)
     .maybeSingle();
 
   if (!order) {
-    // No existe orden con esa referencia — no devolvemos info de la transacción.
     return NextResponse.json(
       { error: "Orden no encontrada para esta transacción." },
       { status: 404 }
     );
   }
 
-  // Verificación de dueño explícita.
+  // Verificación de dueño con la sesión del caller para órdenes con user_id.
   if (order.user_id) {
+    const cookieStore = await cookies();
+    const userClient = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cookiesToSet) => {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              /* ignored */
+            }
+          },
+        },
+      }
+    );
     const { data: userData } = await userClient.auth.getUser();
     if (!userData.user || userData.user.id !== order.user_id) {
       return NextResponse.json(
@@ -85,16 +90,8 @@ export async function GET(
     }
   }
 
-  // Apply same RPC para sincronizar la orden con el estado actual
-  // (idempotente — sobrescribe). Usamos cliente sin sesión porque la RPC
-  // está marcada SECURITY DEFINER en el backend.
   const internalStatus = mapWompiStatus(tx.status);
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
-  );
-  await supabase.rpc("apply_payment_event", {
+  await supabaseAdmin.rpc("apply_payment_event", {
     p_reference: tx.reference,
     p_payment_status: internalStatus,
     p_transaction_id: tx.id,
