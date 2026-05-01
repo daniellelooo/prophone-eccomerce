@@ -440,6 +440,10 @@ export type Database = {
           prev_status: string
         }[]
       }
+      cancel_stale_pending_orders: {
+        Args: { p_minutes?: number }
+        Returns: number
+      }
       create_order_with_items: {
         Args: {
           p_customer_email: string | null
