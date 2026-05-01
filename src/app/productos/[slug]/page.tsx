@@ -362,45 +362,57 @@ export default function ProductPage() {
                   {stockMsg}
                 </div>
               )}
-              <div className="flex flex-row gap-3">
-              <button
-                onClick={handleAddToCart}
-                disabled={!selectedVariant?.inStock}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base transition-all active:scale-98 disabled:opacity-40 disabled:cursor-not-allowed ${
-                  added
-                    ? "bg-green-500 text-white"
-                    : "bg-[#0071E3] text-white hover:bg-[#0051a2]"
-                }`}
-              >
-                {added ? (
-                  <>
-                    <Check size={18} /> Agregado al carrito
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag size={18} /> Agregar al carrito
-                  </>
-                )}
-              </button>
-              <a
-                href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base bg-[#25D366] text-white hover:bg-[#1ebe5d] active:scale-98 transition-all"
-              >
-                Pedir por WhatsApp
-              </a>
-              <button
-                onClick={() => toggleWishlist(product.slug)}
-                title={isWished ? "Quitar de favoritos" : "Guardar en favoritos"}
-                className={`shrink-0 w-14 flex items-center justify-center rounded-2xl border-2 transition-all active:scale-95 ${
-                  isWished
-                    ? "border-[#CC0000] bg-red-50 text-[#CC0000]"
-                    : "border-neutral-200 text-neutral-400 hover:border-[#CC0000] hover:text-[#CC0000]"
-                }`}
-              >
-                <Heart size={20} className={isWished ? "fill-[#CC0000]" : ""} />
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Fila 1 en mobile: Agregar (flex) + Heart (cuadrado) */}
+                <div className="flex gap-3 sm:contents">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!selectedVariant?.inStock}
+                    className={`flex-1 sm:flex-1 flex items-center justify-center gap-2 py-3.5 px-3 rounded-2xl font-semibold text-base whitespace-nowrap transition-all active:scale-98 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      added
+                        ? "bg-green-500 text-white"
+                        : "bg-[#0071E3] text-white hover:bg-[#0051a2]"
+                    }`}
+                  >
+                    {added ? (
+                      <>
+                        <Check size={18} /> Agregado
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag size={18} /> Agregar al carrito
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => toggleWishlist(product.slug)}
+                    title={
+                      isWished ? "Quitar de favoritos" : "Guardar en favoritos"
+                    }
+                    aria-label={
+                      isWished ? "Quitar de favoritos" : "Guardar en favoritos"
+                    }
+                    className={`shrink-0 w-14 sm:order-last flex items-center justify-center rounded-2xl border-2 transition-all active:scale-95 ${
+                      isWished
+                        ? "border-[#CC0000] bg-red-50 text-[#CC0000]"
+                        : "border-neutral-200 text-neutral-400 hover:border-[#CC0000] hover:text-[#CC0000]"
+                    }`}
+                  >
+                    <Heart
+                      size={20}
+                      className={isWished ? "fill-[#CC0000]" : ""}
+                    />
+                  </button>
+                </div>
+                {/* WhatsApp: full-width abajo en mobile, en línea en desktop */}
+                <a
+                  href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base whitespace-nowrap bg-[#25D366] text-white hover:bg-[#1ebe5d] active:scale-98 transition-all"
+                >
+                  Pedir por WhatsApp
+                </a>
               </div>
             </div>
 
