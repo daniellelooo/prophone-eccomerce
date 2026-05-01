@@ -148,7 +148,7 @@ export default function HomePage() {
   return (
     <>
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section className="bg-white pt-24 pb-10 md:pt-28 md:pb-16 lg:pt-32 lg:pb-20">
+      <section className="bg-white flex items-center pt-24 pb-10 md:pt-28 md:pb-16 lg:pt-32 lg:pb-20 min-h-screen md:min-h-[calc(100svh-2rem)]">
         <div className="max-w-7xl mx-auto w-full">
           {/* Mobile: image on top, text below. Desktop: side by side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
