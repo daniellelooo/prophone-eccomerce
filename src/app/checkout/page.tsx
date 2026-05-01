@@ -64,8 +64,20 @@ function isValidCoPhone(raw: string): boolean {
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
 export default function CheckoutPage() {
-  const { items, total, clearCart } = useCartStore();
-  const cartTotal = total();
+  const {
+    items: itemsRaw,
+    total: totalFn,
+    clearCart,
+  } = useCartStore();
+  // Hydration mismatch fix: el cart persiste en localStorage, así que en
+  // SSR es vacío pero en cliente puede tener items. Hasta que monte,
+  // renderizamos como vacío para que el HTML del server coincida.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const items = mounted ? itemsRaw : [];
+  const cartTotal = mounted ? totalFn() : 0;
   const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const [step, setStep] = useState<"form" | "confirm" | "done">("form");
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
