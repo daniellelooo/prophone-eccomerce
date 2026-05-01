@@ -90,9 +90,23 @@ export default function ProductPage() {
   const toggleWishlist = useWishlistStore((s) => s.toggle);
   const isWished = useWishlistStore((s) => s.has(product.slug));
 
+  const [stockMsg, setStockMsg] = useState<string | null>(null);
+
   const handleAddToCart = () => {
     if (!selectedVariant) return;
-    addItem(product, { variant: selectedVariant, color: selectedColor });
+    const result = addItem(product, {
+      variant: selectedVariant,
+      color: selectedColor,
+    });
+    if (!result.ok) {
+      setStockMsg(
+        result.reason === "out_of_stock"
+          ? "Sin stock disponible."
+          : `Solo hay ${result.max} unidad${result.max === 1 ? "" : "es"} disponibles — ya las tienes todas en el carrito.`
+      );
+      setTimeout(() => setStockMsg(null), 3000);
+      return;
+    }
     track("add_to_cart", {
       value: selectedVariant.price,
       contentName: product.name,
@@ -341,6 +355,11 @@ export default function ProductPage() {
                       Consultar por WhatsApp
                     </a>
                   </p>
+                </div>
+              )}
+              {stockMsg && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800 font-medium">
+                  {stockMsg}
                 </div>
               )}
               <div className="flex flex-row gap-3">

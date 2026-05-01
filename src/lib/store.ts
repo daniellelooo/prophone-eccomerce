@@ -12,13 +12,18 @@ export type CartItem = {
   selectedColor?: string;
 };
 
+type AddItemResult =
+  | { ok: true; quantity: number }
+  | { ok: false; reason: "out_of_stock" | "max_reached"; max: number };
+
 type CartStore = {
   items: CartItem[];
   isOpen: boolean;
+  /** Devuelve `ok: false` si la variante está agotada o ya alcanzó el tope de stock. */
   addItem: (
     product: Product,
     options?: { variant?: Variant; color?: string }
-  ) => void;
+  ) => AddItemResult;
   removeItem: (sku: string) => void;
   updateQuantity: (sku: string, quantity: number) => void;
   clearCart: () => void;
@@ -29,6 +34,12 @@ type CartStore = {
   itemCount: () => number;
 };
 
+/** Stock disponible de una variante (cap superior para añadir al carrito). */
+function maxStockOf(v: Variant): number {
+  if (typeof v.stockQuantity === "number") return Math.max(0, v.stockQuantity);
+  return v.inStock ? 1 : 0;
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
@@ -37,17 +48,32 @@ export const useCartStore = create<CartStore>()(
 
       addItem: (product, options) => {
         const variant = options?.variant ?? getDefaultVariant(product);
-        if (!variant) return;
+        if (!variant) return { ok: false, reason: "out_of_stock", max: 0 };
+
+        const max = maxStockOf(variant);
+        if (max <= 0) {
+          return { ok: false, reason: "out_of_stock", max: 0 };
+        }
+
+        const existing = get().items.find(
+          (item) => item.variant.sku === variant.sku
+        );
+        const currentQty = existing?.quantity ?? 0;
+
+        // Ya tope: no sumamos pero abrimos el cart para que el usuario lo vea
+        if (currentQty >= max) {
+          set({ isOpen: true });
+          return { ok: false, reason: "max_reached", max };
+        }
+
+        const nextQty = currentQty + 1;
 
         set((state) => {
-          const existing = state.items.find(
-            (item) => item.variant.sku === variant.sku
-          );
           if (existing) {
             return {
               items: state.items.map((item) =>
                 item.variant.sku === variant.sku
-                  ? { ...item, quantity: item.quantity + 1 }
+                  ? { ...item, quantity: nextQty }
                   : item
               ),
               isOpen: true,
@@ -66,6 +92,8 @@ export const useCartStore = create<CartStore>()(
             isOpen: true,
           };
         });
+
+        return { ok: true, quantity: nextQty };
       },
 
       removeItem: (sku) => {
@@ -80,9 +108,12 @@ export const useCartStore = create<CartStore>()(
           return;
         }
         set((state) => ({
-          items: state.items.map((item) =>
-            item.variant.sku === sku ? { ...item, quantity } : item
-          ),
+          items: state.items.map((item) => {
+            if (item.variant.sku !== sku) return item;
+            const max = maxStockOf(item.variant);
+            const capped = max > 0 ? Math.min(quantity, max) : 0;
+            return { ...item, quantity: capped };
+          }),
         }));
       },
 
