@@ -11,6 +11,38 @@ export type Sede = {
   detail: string;
 };
 
+/**
+ * Tile editable del bento "El precio manda" en la landing.
+ * Pueden ser N elementos; el primer item se renderiza grande, los siguientes
+ * en el grid. Aunque el componente actualmente espera 3 entradas para el
+ * layout 1+2, soporta cualquier cantidad si se ajusta la presentación.
+ */
+export type FeaturedOffer = {
+  id: string;
+  badge: string;
+  /** primary = rojo Prophone, dark = negro, subtle = gris claro */
+  badgeStyle: "primary" | "dark" | "subtle";
+  title: string;
+  subtitle: string;
+  image: string;
+  price: number;
+  /** URL de destino al hacer click. */
+  href: string;
+};
+
+/**
+ * Override de la imagen de portada por categoría en CategoryShowcase.
+ * Si el valor está vacío, se usa la imagen del producto destacado o
+ * el primero de la categoría (comportamiento default).
+ */
+export type CategoryShowcaseOverrides = {
+  iphone: string;
+  macbook: string;
+  ipad: string;
+  watch: string;
+  accesorios: string;
+};
+
 export type SiteConfig = {
   whatsappNumber: string;
   whatsappDefaultMessage: string;
@@ -50,6 +82,10 @@ export type SiteConfig = {
   promoHeroCta: string;
   /** Imágenes del hero de la página de promo. Vacío = solo texto, sin imágenes. */
   promoImages: string[];
+  /** Tiles editables del bento "El precio manda" en la landing. */
+  featuredOffers: FeaturedOffer[];
+  /** Override de imagen por categoría en CategoryShowcase. Vacío = usa producto destacado. */
+  categoryShowcaseOverrides: CategoryShowcaseOverrides;
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -108,6 +144,46 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   promoSubtitle: "Descuentos especiales por tiempo limitado.",
   promoHeroCta: "Ver promociones",
   promoImages: [],
+  featuredOffers: [
+    {
+      id: "iphone-16",
+      badge: "Nuevo · Sellado",
+      badgeStyle: "primary",
+      title: "iPhone 16. Recién llegado.",
+      subtitle:
+        "128 GB · 1 año de garantía oficial Apple. El nuevo iPhone, al precio Prophone.",
+      image: "/IPHONE16.jpeg",
+      price: 2950000,
+      href: "/catalogo",
+    },
+    {
+      id: "ipad-a16",
+      badge: "El más accesible",
+      badgeStyle: "dark",
+      title: "iPad A16",
+      subtitle: 'Chip A16 · 10.9"',
+      image: "/IPADA16.png",
+      price: 1420000,
+      href: "/catalogo",
+    },
+    {
+      id: "iphone-14",
+      badge: "Mega descuento",
+      badgeStyle: "primary",
+      title: "iPhone 14",
+      subtitle: "Exhibición · 128 GB",
+      image: "/IPHONE14.jpeg",
+      price: 1400000,
+      href: "/catalogo",
+    },
+  ],
+  categoryShowcaseOverrides: {
+    iphone: "",
+    macbook: "",
+    ipad: "",
+    watch: "",
+    accesorios: "",
+  },
 };
 
 type ConfigState = SiteConfig & {
@@ -150,6 +226,8 @@ const CONFIG_KEYS = {
   promoSubtitle: "promo_subtitle",
   promoHeroCta: "promo_hero_cta",
   promoImages: "promo_images",
+  featuredOffers: "featured_offers",
+  categoryShowcaseOverrides: "category_showcase_overrides",
 } as const;
 
 type ConfigKey = keyof typeof CONFIG_KEYS;

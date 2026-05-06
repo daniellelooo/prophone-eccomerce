@@ -119,6 +119,14 @@ export function configRowsToSiteConfig(
     promoSubtitle: get("promo_subtitle", DEFAULT_SITE_CONFIG.promoSubtitle),
     promoHeroCta: get("promo_hero_cta", DEFAULT_SITE_CONFIG.promoHeroCta),
     promoImages: get("promo_images", DEFAULT_SITE_CONFIG.promoImages),
+    featuredOffers: get(
+      "featured_offers",
+      DEFAULT_SITE_CONFIG.featuredOffers
+    ),
+    categoryShowcaseOverrides: get(
+      "category_showcase_overrides",
+      DEFAULT_SITE_CONFIG.categoryShowcaseOverrides
+    ),
     sedes,
   };
 }

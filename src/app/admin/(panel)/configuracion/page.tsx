@@ -1,26 +1,30 @@
 "use client";
 
-import Image from "next/image";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Save,
-  Check,
   MessageCircle,
   AtSign,
   Image as ImageIcon,
   Search,
   BarChart3,
-  Trash2,
-  Upload,
-  Type,
   Building2,
   Package,
+  LayoutGrid,
+  Sparkles,
   Plus,
-  Tag,
+  Trash2,
 } from "lucide-react";
-import { useSiteConfigStore } from "@/lib/site-config-store";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  useSiteConfigStore,
+  type FeaturedOffer,
+} from "@/lib/site-config-store";
+import {
+  Section,
+  Label,
+  ImageGallery,
+  SingleImageInput,
+} from "@/components/admin/AdminUI";
 
 export default function AdminConfiguracionPage() {
   const cfg = useSiteConfigStore();
@@ -47,9 +51,15 @@ export default function AdminConfiguracionPage() {
 
   const [draftLowStock, setDraftLowStock] = useState(cfg.stockLowThreshold);
 
-  const [draftPromoLabel, setDraftPromoLabel] = useState(cfg.promoLabel);
-  const [draftPromoSubtitle, setDraftPromoSubtitle] = useState(cfg.promoSubtitle);
-  const [draftPromoHeroCta, setDraftPromoHeroCta] = useState(cfg.promoHeroCta);
+  // "El precio manda" — bento de 3 ofertas editables
+  const [draftOffers, setDraftOffers] = useState<FeaturedOffer[]>(
+    cfg.featuredOffers
+  );
+
+  // Override de imágenes del ecosistema Apple (CategoryShowcase)
+  const [draftShowcase, setDraftShowcase] = useState(
+    cfg.categoryShowcaseOverrides
+  );
 
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -151,105 +161,247 @@ export default function AdminConfiguracionPage() {
         </div>
       </Section>
 
-      {/* Promoción / Campaña */}
+      {/* Ecosistema Apple — override de imágenes por categoría */}
       <Section
-        icon={<Tag size={16} className="text-[#CC0000]" />}
-        title="Promociones / Campaña activa"
-        desc="Activa una campaña (Día de las Madres, Black Friday, etc.). Aparecerá un link en el navbar y un CTA en el hero. La página /promociones lista los productos con precio antes asignado."
+        icon={<LayoutGrid size={16} className="text-[#CC0000]" />}
+        title='Ecosistema Apple — "El ecosistema, a precio reseller"'
+        desc="Imagen de portada por categoría en la sección del ecosistema. Si la dejas vacía, se usa automáticamente la del producto destacado de esa categoría."
         onSave={() =>
-          trySave("promo", async () => {
-            await update({
-              promoLabel: draftPromoLabel.trim() || "Promociones",
-              promoSubtitle: draftPromoSubtitle.trim(),
-              promoHeroCta: draftPromoHeroCta.trim(),
-            });
-          })
+          trySave("showcase", () =>
+            update({ categoryShowcaseOverrides: draftShowcase })
+          )
         }
-        saved={savedKey === "promo"}
+        saved={savedKey === "showcase"}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SingleImageInput
+            label="iPhone"
+            url={draftShowcase.iphone}
+            onChange={(url) =>
+              setDraftShowcase((s) => ({ ...s, iphone: url }))
+            }
+          />
+          <SingleImageInput
+            label="MacBook"
+            url={draftShowcase.macbook}
+            onChange={(url) =>
+              setDraftShowcase((s) => ({ ...s, macbook: url }))
+            }
+          />
+          <SingleImageInput
+            label="iPad"
+            url={draftShowcase.ipad}
+            onChange={(url) => setDraftShowcase((s) => ({ ...s, ipad: url }))}
+          />
+          <SingleImageInput
+            label="Apple Watch"
+            url={draftShowcase.watch}
+            onChange={(url) =>
+              setDraftShowcase((s) => ({ ...s, watch: url }))
+            }
+          />
+          <SingleImageInput
+            label="Accesorios"
+            url={draftShowcase.accesorios}
+            onChange={(url) =>
+              setDraftShowcase((s) => ({ ...s, accesorios: url }))
+            }
+          />
+        </div>
+      </Section>
+
+      {/* "El precio manda" — bento de ofertas destacadas */}
+      <Section
+        icon={<Sparkles size={16} className="text-[#CC0000]" />}
+        title='Ofertas destacadas — "El precio manda"'
+        desc="Las 3 tarjetas del bento debajo del ecosistema. La primera se renderiza grande y las siguientes en grilla. Edita imagen, precio, badge y link de cada una."
+        onSave={() =>
+          trySave("offers", () =>
+            update({
+              featuredOffers: draftOffers
+                .map((o) => ({
+                  ...o,
+                  badge: o.badge.trim(),
+                  title: o.title.trim(),
+                  subtitle: o.subtitle.trim(),
+                  image: o.image.trim(),
+                  href: o.href.trim() || "/catalogo",
+                  price: Number(o.price) || 0,
+                }))
+                .filter((o) => o.title.length > 0),
+            })
+          )
+        }
+        saved={savedKey === "offers"}
       >
         <div className="space-y-4">
+          {draftOffers.map((offer, i) => (
+            <div
+              key={offer.id || i}
+              className="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+                  Tile #{i + 1} {i === 0 && "· Grande"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDraftOffers((d) => d.filter((_, idx) => idx !== i))
+                  }
+                  className="text-[#CC0000] hover:bg-red-50 p-1.5 rounded-lg transition"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+
+              <SingleImageInput
+                label="Imagen del producto"
+                url={offer.image}
+                onChange={(url) =>
+                  setDraftOffers((d) => {
+                    const next = [...d];
+                    next[i] = { ...next[i], image: url };
+                    return next;
+                  })
+                }
+              />
+
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Badge / etiqueta</Label>
+                  <input
+                    value={offer.badge}
+                    onChange={(e) =>
+                      setDraftOffers((d) => {
+                        const next = [...d];
+                        next[i] = { ...next[i], badge: e.target.value };
+                        return next;
+                      })
+                    }
+                    placeholder="Nuevo · Sellado"
+                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                  />
+                </div>
+                <div>
+                  <Label>Color del badge</Label>
+                  <select
+                    value={offer.badgeStyle}
+                    onChange={(e) =>
+                      setDraftOffers((d) => {
+                        const next = [...d];
+                        next[i] = {
+                          ...next[i],
+                          badgeStyle: e.target.value as FeaturedOffer["badgeStyle"],
+                        };
+                        return next;
+                      })
+                    }
+                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                  >
+                    <option value="primary">Rojo (destacado)</option>
+                    <option value="dark">Negro</option>
+                    <option value="subtle">Gris claro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label>Título del tile</Label>
+                <input
+                  value={offer.title}
+                  onChange={(e) =>
+                    setDraftOffers((d) => {
+                      const next = [...d];
+                      next[i] = { ...next[i], title: e.target.value };
+                      return next;
+                    })
+                  }
+                  placeholder="iPhone 16. Recién llegado."
+                  className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                />
+              </div>
+
+              <div>
+                <Label>Subtítulo / descripción corta</Label>
+                <textarea
+                  value={offer.subtitle}
+                  onChange={(e) =>
+                    setDraftOffers((d) => {
+                      const next = [...d];
+                      next[i] = { ...next[i], subtitle: e.target.value };
+                      return next;
+                    })
+                  }
+                  rows={2}
+                  placeholder="128 GB · Garantía oficial Apple"
+                  className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 resize-none"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Precio (COP, sin separadores)</Label>
+                  <input
+                    type="number"
+                    value={offer.price}
+                    onChange={(e) =>
+                      setDraftOffers((d) => {
+                        const next = [...d];
+                        next[i] = {
+                          ...next[i],
+                          price: Number(e.target.value) || 0,
+                        };
+                        return next;
+                      })
+                    }
+                    placeholder="2950000"
+                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                  />
+                </div>
+                <div>
+                  <Label>Link de destino</Label>
+                  <input
+                    value={offer.href}
+                    onChange={(e) =>
+                      setDraftOffers((d) => {
+                        const next = [...d];
+                        next[i] = { ...next[i], href: e.target.value };
+                        return next;
+                      })
+                    }
+                    placeholder="/catalogo"
+                    className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+
           <button
             type="button"
             onClick={() =>
-              trySave("promo-toggle", () =>
-                update({ promoEnabled: !cfg.promoEnabled })
-              )
+              setDraftOffers((d) => [
+                ...d,
+                {
+                  id: `tile-${Date.now()}`,
+                  badge: "Oferta",
+                  badgeStyle: "primary",
+                  title: "",
+                  subtitle: "",
+                  image: "",
+                  price: 0,
+                  href: "/catalogo",
+                },
+              ])
             }
-            className={`text-left p-3.5 rounded-xl border w-full transition ${
-              cfg.promoEnabled
-                ? "border-[#CC0000] bg-red-50/40"
-                : "border-neutral-200 bg-white hover:border-neutral-400"
-            }`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#CC0000] hover:bg-red-50 px-3 py-2 rounded-lg transition"
           >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-neutral-900">
-                  {cfg.promoEnabled
-                    ? "Campaña activa — visible en el sitio"
-                    : "Campaña apagada — link y CTA ocultos"}
-                </p>
-                <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
-                  Activa o desactiva el link del navbar, el CTA del hero y la página /promociones.
-                </p>
-              </div>
-              <span
-                className={`shrink-0 w-10 h-6 rounded-full p-0.5 transition ${
-                  cfg.promoEnabled ? "bg-[#CC0000]" : "bg-neutral-300"
-                }`}
-              >
-                <span
-                  className={`block w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
-                    cfg.promoEnabled ? "translate-x-4" : ""
-                  }`}
-                />
-              </span>
-            </div>
+            <Plus size={13} /> Agregar tile
           </button>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <Label>Nombre / título de la campaña</Label>
-              <input
-                value={draftPromoLabel}
-                onChange={(e) => setDraftPromoLabel(e.target.value)}
-                placeholder="Día de las Madres"
-                className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
-              />
-              <p className="text-[11px] text-neutral-400 mt-1.5">
-                Se usa en el link del navbar y como título principal de /promociones.
-              </p>
-            </div>
-            <div>
-              <Label>Texto del botón en el hero de la landing</Label>
-              <input
-                value={draftPromoHeroCta}
-                onChange={(e) => setDraftPromoHeroCta(e.target.value)}
-                placeholder="Ver promociones"
-                className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Subtítulo de la página /promociones</Label>
-            <textarea
-              value={draftPromoSubtitle}
-              onChange={(e) => setDraftPromoSubtitle(e.target.value)}
-              placeholder="Descuentos especiales por tiempo limitado."
-              rows={2}
-              className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 resize-none"
-            />
-          </div>
-          <ImageGallery
-            label="Imágenes del hero (opcional · si dejas la lista vacía no se muestra el lado visual)"
-            images={cfg.promoImages}
-            onChange={(imgs) =>
-              trySave("promo-images", () => update({ promoImages: imgs }))
-            }
-            saved={savedKey === "promo-images"}
-          />
           <p className="text-[11px] text-neutral-400">
-            💡 Para que un producto aparezca en /promociones, asígnale un{" "}
-            <strong>&quot;Precio antes&quot;</strong> mayor al precio actual en la
-            sección de variantes.
+            💡 El primer tile se renderiza grande con foto flotante. Los siguientes son horizontales más compactos. Para que la sección no aparezca, borra todos los tiles.
           </p>
         </div>
       </Section>
@@ -532,236 +684,3 @@ export default function AdminConfiguracionPage() {
   );
 }
 
-/* ─── Subcomponentes ─────────────────────────────────────────── */
-
-function Section({
-  icon,
-  title,
-  desc,
-  children,
-  onSave,
-  saved,
-}: {
-  icon?: React.ReactNode;
-  title: string;
-  desc?: string;
-  children: React.ReactNode;
-  onSave?: () => void;
-  saved?: boolean;
-}) {
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="bg-white rounded-2xl border border-neutral-200 p-5"
-    >
-      <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2">
-            {icon}
-            <h2 className="text-sm font-bold text-neutral-900">{title}</h2>
-          </div>
-          {desc && <p className="text-[11px] text-neutral-500 mt-0.5">{desc}</p>}
-        </div>
-        {onSave && (
-          <button
-            onClick={onSave}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition active:scale-95 ${
-              saved ? "bg-green-500" : "bg-[#CC0000] hover:bg-[#A00000]"
-            }`}
-          >
-            {saved ? (
-              <>
-                <Check size={12} /> Guardado
-              </>
-            ) : (
-              <>
-                <Save size={12} /> Guardar
-              </>
-            )}
-          </button>
-        )}
-      </div>
-      {children}
-    </motion.section>
-  );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">
-      {children}
-    </label>
-  );
-}
-
-function ImageGallery({
-  label,
-  images,
-  onChange,
-  saved,
-}: {
-  label: string;
-  images: string[];
-  onChange: (imgs: string[]) => void;
-  saved?: boolean;
-}) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [pasteUrl, setPasteUrl] = useState("");
-
-  const handleUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploading(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const uploaded: string[] = [];
-      for (const f of Array.from(files)) {
-        const ext = f.name.split(".").pop() || "jpg";
-        const path = `site/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
-        const { error } = await supabase.storage
-          .from("product-images")
-          .upload(path, f, { cacheControl: "3600", upsert: false });
-        if (error) {
-          alert(`Error: ${error.message}`);
-          continue;
-        }
-        const { data } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(path);
-        uploaded.push(data.publicUrl);
-      }
-      if (uploaded.length > 0) onChange([...images, ...uploaded]);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const removeAt = (i: number) =>
-    onChange(images.filter((_, idx) => idx !== i));
-
-  const move = (i: number, dir: -1 | 1) => {
-    const next = [...images];
-    const j = i + dir;
-    if (j < 0 || j >= next.length) return;
-    [next[i], next[j]] = [next[j], next[i]];
-    onChange(next);
-  };
-
-  return (
-    <div className="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40">
-      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 flex items-center gap-1.5">
-          <ImageIcon size={11} /> {label}
-        </p>
-        <div className="flex items-center gap-2">
-          {saved && (
-            <span className="text-[11px] font-semibold text-green-600 inline-flex items-center gap-1">
-              <Check size={11} /> Guardado
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#CC0000] hover:bg-red-50 px-3 py-1.5 rounded-lg transition disabled:opacity-50"
-          >
-            <Upload size={12} /> {uploading ? "Subiendo…" : "Subir imágenes"}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              handleUpload(e.target.files);
-              if (e.target) e.target.value = "";
-            }}
-          />
-        </div>
-      </div>
-
-      {images.length === 0 ? (
-        <p className="text-xs text-neutral-400 text-center py-6">
-          Sin imágenes — sube al menos una.
-        </p>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          {images.map((url, i) => (
-            <div
-              key={`${url}-${i}`}
-              className="relative group aspect-square rounded-lg bg-white border border-neutral-200 overflow-hidden"
-            >
-              <Image
-                src={url}
-                alt={`${label} ${i + 1}`}
-                fill
-                className="object-cover"
-                unoptimized
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => move(i, -1)}
-                  disabled={i === 0}
-                  className="p-1.5 bg-white text-neutral-700 rounded-full disabled:opacity-30 hover:bg-neutral-100"
-                  title="Mover arriba"
-                >
-                  ←
-                </button>
-                <button
-                  type="button"
-                  onClick={() => move(i, 1)}
-                  disabled={i === images.length - 1}
-                  className="p-1.5 bg-white text-neutral-700 rounded-full disabled:opacity-30 hover:bg-neutral-100"
-                  title="Mover abajo"
-                >
-                  →
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeAt(i)}
-                  className="p-1.5 bg-white text-[#CC0000] rounded-full hover:bg-red-50"
-                  title="Eliminar"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-              <span className="absolute top-1 left-1 bg-white/90 text-neutral-700 text-[9px] font-bold px-1.5 py-0.5 rounded">
-                {i + 1}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-3 flex items-center gap-2">
-        <input
-          value={pasteUrl}
-          onChange={(e) => setPasteUrl(e.target.value)}
-          placeholder="Pegar URL de imagen…"
-          className="flex-1 px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            const u = pasteUrl.trim();
-            if (!u) return;
-            onChange([...images, u]);
-            setPasteUrl("");
-          }}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-400 px-3 py-1.5 rounded-lg transition"
-        >
-          <Plus size={11} /> Agregar
-        </button>
-      </div>
-
-      <p className="mt-2 text-[10px] text-neutral-400 inline-flex items-center gap-1">
-        <Type size={10} /> El orden es el orden del carrusel. Hover sobre una
-        imagen para reordenar o eliminar.
-      </p>
-    </div>
-  );
-}

@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { useCatalogStore } from "@/lib/catalog-store";
+import { useSiteConfigStore } from "@/lib/site-config-store";
 import {
   formatPrice,
   getMinPrice,
@@ -31,6 +32,7 @@ const IMAGE_PANEL_BG = "bg-white";
 
 export default function CategoryShowcase() {
   const products = useCatalogStore((s) => s.products);
+  const overrides = useSiteConfigStore((s) => s.categoryShowcaseOverrides);
 
   const cards = useMemo(() => {
     return CATEGORIES.map((cat) => {
@@ -41,15 +43,17 @@ export default function CategoryShowcase() {
         const m = getMinPrice(p);
         return m > 0 && (acc === 0 || m < acc) ? m : acc;
       }, 0);
+      // Override desde admin tiene prioridad sobre la imagen del producto destacado
+      const overrideImage = overrides?.[cat.id as keyof typeof overrides] || "";
       return {
         ...cat,
-        image: cover?.image ?? null,
+        image: overrideImage || cover?.image || null,
         productName: cover?.name ?? null,
         count: inCat.length,
         minPrice,
       };
     }).filter((c) => c.count > 0);
-  }, [products]);
+  }, [products, overrides]);
 
   if (cards.length === 0) return null;
 

@@ -60,19 +60,13 @@ export default function Navbar() {
 
   const hasTickerSpace = pathname === "/" || pathname === "/catalogo";
 
-  const navLinks: { href: string; label: string; promo?: boolean }[] = [
+  // Categorías de catálogo (sin promo — ese tiene un tratamiento aparte)
+  const navLinks: { href: string; label: string }[] = [
     { href: "/catalogo?cat=iphone", label: "iPhone" },
     { href: "/catalogo?cat=ipad", label: "iPad" },
     { href: "/catalogo?cat=watch", label: "Watch" },
     { href: "/catalogo?cat=accesorios", label: "Accesorios" },
   ];
-  if (promoEnabled) {
-    navLinks.push({
-      href: "/promociones",
-      label: promoLabel || "Promociones",
-      promo: true,
-    });
-  }
 
   return (
     <>
@@ -117,16 +111,33 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors duration-200 px-3 py-1.5 rounded-full ${
-                  link.promo
-                    ? "bg-[#CC0000]/10 text-[#CC0000] hover:bg-[#CC0000] hover:text-white inline-flex items-center gap-1.5"
-                    : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
-                }`}
+                className="text-sm font-medium transition-colors duration-200 px-3 py-1.5 rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
               >
-                {link.promo && <span className="w-1.5 h-1.5 rounded-full bg-[#CC0000] animate-pulse" />}
                 {link.label}
               </Link>
             ))}
+
+            {/* Promo CTA — separado del cluster con un divider y estilo "hot" */}
+            {promoEnabled && (
+              <>
+                <span aria-hidden className="mx-2 h-5 w-px bg-neutral-200" />
+                <Link
+                  href="/promociones"
+                  className="group relative inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-[#CC0000] to-[#A00000] shadow-md shadow-[#CC0000]/25 hover:shadow-lg hover:shadow-[#CC0000]/40 hover:scale-[1.02] active:scale-95 transition-all overflow-hidden"
+                >
+                  <span className="relative flex w-2 h-2">
+                    <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" />
+                    <span className="relative w-2 h-2 rounded-full bg-white" />
+                  </span>
+                  {promoLabel || "Promociones"}
+                  {/* Shine sweep effect on hover */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                  />
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
@@ -150,6 +161,25 @@ export default function Navbar() {
             >
               <Search size={18} className="text-[#CC0000]" />
             </button>
+
+            {/* Promo CTA mobile — visible fuera del menú hamburguesa */}
+            {promoEnabled && (
+              <Link
+                href="/promociones"
+                aria-label={promoLabel || "Promociones"}
+                title={promoLabel || "Promociones"}
+                className="lg:hidden relative inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-gradient-to-r from-[#CC0000] to-[#A00000] text-white text-[11px] font-bold shadow-md shadow-[#CC0000]/25 active:scale-95 transition-all overflow-hidden"
+              >
+                <span className="relative flex w-1.5 h-1.5">
+                  <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-75" />
+                  <span className="relative w-1.5 h-1.5 rounded-full bg-white" />
+                </span>
+                <span className="hidden sm:inline">
+                  {promoLabel || "Promo"}
+                </span>
+                <span className="sm:hidden">Promo</span>
+              </Link>
+            )}
 
             {/* Icon cluster — segmented chip on desktop */}
             <div className="hidden md:flex items-center bg-neutral-100 rounded-2xl p-1 gap-0.5">

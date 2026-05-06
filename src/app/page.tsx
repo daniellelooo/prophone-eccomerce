@@ -142,7 +142,18 @@ export default function HomePage() {
   const promoEnabled = useSiteConfigStore((s) => s.promoEnabled);
   const promoLabel = useSiteConfigStore((s) => s.promoLabel);
   const promoHeroCta = useSiteConfigStore((s) => s.promoHeroCta);
+  const featuredOffers = useSiteConfigStore((s) => s.featuredOffers);
   const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
+
+  // Estilos del badge según el tipo configurado en admin
+  const badgeStyleClass = (style: "primary" | "dark" | "subtle") => {
+    if (style === "dark") return "bg-neutral-900 text-white";
+    if (style === "subtle") return "bg-neutral-100 text-neutral-700";
+    return "bg-[#CC0000] text-white";
+  };
+
+  const bigOffer = featuredOffers[0];
+  const smallOffers = featuredOffers.slice(1);
 
   return (
     <>
@@ -359,132 +370,119 @@ export default function HomePage() {
       {/* ── COMPRA POR LÍNEA ──────────────────────────────────────── */}
       <CategoryShowcase />
 
-      {/* ── PRECIOS DESTACADOS — bento ────────────────────────────── */}
-      <section className="py-14 md:py-24 bg-[#FAFAFA]">
-        <div className="max-w-6xl mx-auto px-5 md:px-12">
-          <AnimatedSection className="mb-9 md:flex md:items-end md:justify-between">
-            <div className="max-w-xl">
-              <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-2">
-                El precio <em className="font-serif text-[#CC0000] font-normal">manda</em>.
-              </h2>
-              <p className="text-neutral-500 text-sm md:text-base">
-                Tres ofertas del día. Sin intermediarios. Sin maquillaje.
-              </p>
-            </div>
-            <Link
-              href="/catalogo"
-              className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-900 mt-4 group"
-            >
-              Ver todas las ofertas
-              <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </Link>
-          </AnimatedSection>
-
-          {/* Bento: 1 large + 2 small */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5">
-            {/* Big tile — iPhone 16 Nuevo */}
-            <Link
-              href="/catalogo"
-              className="md:col-span-7 md:row-span-2 group relative bg-white rounded-3xl overflow-hidden tile-shadow min-h-[440px] flex flex-col border border-neutral-200/70"
-            >
-              <div className="p-7 md:p-10 pb-0">
-                <span className="inline-block bg-[#CC0000] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-5">
-                  Nuevo · Sellado
-                </span>
-                <h3 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-3">
-                  iPhone 16. <span className="text-neutral-400">Recién llegado.</span>
-                </h3>
-                <p className="text-neutral-500 text-sm md:text-base max-w-md">
-                  128 GB · 1 año de garantía oficial Apple. El nuevo iPhone, al precio Prophone.
+      {/* ── PRECIOS DESTACADOS — bento (editable desde admin/configuracion) ──── */}
+      {bigOffer && (
+        <section className="py-14 md:py-24 bg-[#FAFAFA]">
+          <div className="max-w-6xl mx-auto px-5 md:px-12">
+            <AnimatedSection className="mb-9 md:flex md:items-end md:justify-between">
+              <div className="max-w-xl">
+                <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-2">
+                  El precio <em className="font-serif text-[#CC0000] font-normal">manda</em>.
+                </h2>
+                <p className="text-neutral-500 text-sm md:text-base">
+                  Sin intermediarios. Sin maquillaje.
                 </p>
               </div>
+              <Link
+                href="/catalogo"
+                className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-900 mt-4 group"
+              >
+                Ver todas las ofertas
+                <ArrowUpRight size={16} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+              </Link>
+            </AnimatedSection>
 
-              <div className="relative flex-1 mt-6 mx-5 md:mx-7 rounded-2xl bg-white overflow-hidden min-h-[220px] md:min-h-[260px]">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-[60%] md:w-[55%] aspect-[3/4] animate-float-soft">
-                    <Image
-                      src="/IPHONE16.jpeg"
-                      alt="iPhone 16"
-                      fill
-                      className="object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.18)]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-end justify-between p-7 md:p-10 pt-5">
-                <div>
-                  <p className="text-neutral-400 text-[10px] uppercase tracking-wider font-semibold mb-1">Precio hoy</p>
-                  <p className="text-3xl md:text-5xl font-bold text-neutral-900 tabular-nums">
-                    {formatPrice(2950000)}
+            {/* Bento: 1 grande + N pequeños */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5">
+              {/* Big tile */}
+              <Link
+                href={bigOffer.href || "/catalogo"}
+                className="md:col-span-7 md:row-span-2 group relative bg-white rounded-3xl overflow-hidden tile-shadow min-h-[440px] flex flex-col border border-neutral-200/70"
+              >
+                <div className="p-7 md:p-10 pb-0">
+                  <span className={`inline-block text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-5 ${badgeStyleClass(bigOffer.badgeStyle)}`}>
+                    {bigOffer.badge}
+                  </span>
+                  <h3 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-3">
+                    {bigOffer.title}
+                  </h3>
+                  <p className="text-neutral-500 text-sm md:text-base max-w-md">
+                    {bigOffer.subtitle}
                   </p>
                 </div>
-                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-neutral-900 text-white group-hover:bg-[#CC0000] transition-colors">
-                  <ArrowUpRight size={20} />
-                </span>
-              </div>
-            </Link>
 
-            {/* Small tile 1 — iPad A16 */}
-            <Link
-              href="/catalogo"
-              className="md:col-span-5 group relative bg-white rounded-3xl overflow-hidden tile-shadow min-h-[210px] flex flex-row items-stretch border border-neutral-200/70"
-            >
-              <div className="flex flex-col p-5 md:p-6 flex-1 min-w-0">
-                <span className="inline-block bg-neutral-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 self-start">
-                  El más accesible
-                </span>
-                <h3 className="text-lg md:text-2xl font-bold text-neutral-900 leading-tight mb-0.5">
-                  iPad A16
-                </h3>
-                <p className="text-[11px] md:text-xs text-neutral-500 mb-3">
-                  Chip A16 · 10.9&quot;
-                </p>
-                <p className="text-xl md:text-2xl font-bold text-neutral-900 mt-auto tabular-nums">
-                  {formatPrice(1420000)}
-                </p>
-                <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#CC0000] group-hover:gap-2 transition-all">
-                  Ver más <ArrowUpRight size={12} />
-                </span>
-              </div>
-              <div className="relative w-[44%] shrink-0 bg-white flex items-center justify-center">
-                <div className="relative w-[80%] aspect-square">
-                  <Image src="/IPADA16.png" alt="iPad A16" fill className="object-contain" />
+                <div className="relative flex-1 mt-6 mx-5 md:mx-7 rounded-2xl bg-white overflow-hidden min-h-[220px] md:min-h-[260px]">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="relative w-[60%] md:w-[55%] aspect-[3/4] animate-float-soft">
+                      {bigOffer.image && (
+                        <Image
+                          src={bigOffer.image}
+                          alt={bigOffer.title}
+                          fill
+                          className="object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.18)]"
+                          unoptimized
+                        />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </Link>
 
-            {/* Small tile 2 — iPhone 14 exhibición */}
-            <Link
-              href="/catalogo"
-              className="md:col-span-5 group relative bg-white rounded-3xl overflow-hidden tile-shadow min-h-[210px] flex flex-row items-stretch border border-neutral-200/70"
-            >
-              <div className="flex flex-col p-5 md:p-6 flex-1 min-w-0">
-                <span className="inline-block bg-[#CC0000] text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 self-start">
-                  Mega descuento
-                </span>
-                <h3 className="text-lg md:text-2xl font-bold text-neutral-900 leading-tight mb-0.5">
-                  iPhone 14
-                </h3>
-                <p className="text-[11px] md:text-xs text-neutral-500 mb-3">
-                  Exhibición · 128 GB
-                </p>
-                <p className="text-xl md:text-2xl font-bold text-neutral-900 mt-auto tabular-nums">
-                  {formatPrice(1400000)}
-                </p>
-                <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#CC0000] group-hover:gap-2 transition-all">
-                  Ver más <ArrowUpRight size={12} />
-                </span>
-              </div>
-              <div className="relative w-[44%] shrink-0 bg-white flex items-center justify-center">
-                <div className="relative w-[60%] aspect-[3/4]">
-                  <Image src="/IPHONE14.jpeg" alt="iPhone 14" fill className="object-contain" />
+                <div className="flex items-end justify-between p-7 md:p-10 pt-5">
+                  <div>
+                    <p className="text-neutral-400 text-[10px] uppercase tracking-wider font-semibold mb-1">Precio hoy</p>
+                    <p className="text-3xl md:text-5xl font-bold text-neutral-900 tabular-nums">
+                      {formatPrice(bigOffer.price)}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-neutral-900 text-white group-hover:bg-[#CC0000] transition-colors">
+                    <ArrowUpRight size={20} />
+                  </span>
                 </div>
-              </div>
-            </Link>
+              </Link>
+
+              {/* Small tiles */}
+              {smallOffers.map((offer) => (
+                <Link
+                  key={offer.id}
+                  href={offer.href || "/catalogo"}
+                  className="md:col-span-5 group relative bg-white rounded-3xl overflow-hidden tile-shadow min-h-[210px] flex flex-row items-stretch border border-neutral-200/70"
+                >
+                  <div className="flex flex-col p-5 md:p-6 flex-1 min-w-0">
+                    <span className={`inline-block text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 self-start ${badgeStyleClass(offer.badgeStyle)}`}>
+                      {offer.badge}
+                    </span>
+                    <h3 className="text-lg md:text-2xl font-bold text-neutral-900 leading-tight mb-0.5">
+                      {offer.title}
+                    </h3>
+                    <p className="text-[11px] md:text-xs text-neutral-500 mb-3">
+                      {offer.subtitle}
+                    </p>
+                    <p className="text-xl md:text-2xl font-bold text-neutral-900 mt-auto tabular-nums">
+                      {formatPrice(offer.price)}
+                    </p>
+                    <span className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-[#CC0000] group-hover:gap-2 transition-all">
+                      Ver más <ArrowUpRight size={12} />
+                    </span>
+                  </div>
+                  <div className="relative w-[44%] shrink-0 bg-white flex items-center justify-center">
+                    <div className="relative w-[70%] aspect-square">
+                      {offer.image && (
+                        <Image
+                          src={offer.image}
+                          alt={offer.title}
+                          fill
+                          className="object-contain"
+                          unoptimized
+                        />
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── PRODUCTOS DESTACADOS ──────────────────────────────────── */}
       <section className="py-14 md:py-24 bg-white">
