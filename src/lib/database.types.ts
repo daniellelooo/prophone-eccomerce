@@ -467,15 +467,10 @@ export type Database = {
         Args: { p_order_number: string; p_phone: string }
         Returns: Json | null
       }
-      register_local_sale: {
-        Args: { p_notes?: string; p_qty: number; p_sku: string }
-        Returns: string
-      }
       set_variant_stock: {
         Args: { p_qty: number; p_sku: string }
         Returns: undefined
       }
-      undo_local_sale: { Args: { p_order_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -714,11 +714,6 @@ function KanbanBoard({
                         <span className="font-mono text-[11px] font-bold text-neutral-700">
                           {o.orderNumber}
                         </span>
-                        {o.paymentProvider === "local" && (
-                          <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0.5 rounded bg-blue-100 text-blue-700">
-                            Local
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs font-semibold text-neutral-900 truncate">
                         {o.customerName}

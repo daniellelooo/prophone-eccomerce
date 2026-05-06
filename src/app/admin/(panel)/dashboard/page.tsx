@@ -35,7 +35,6 @@ type OrderData = {
   payment_method_type: string | null;
   customer_name: string;
   customer_phone: string;
-  seller_id: string | null;
 };
 
 type OrderItemData = {
@@ -196,7 +195,7 @@ export default function AdminDashboardPage() {
           supabase
             .from("orders")
             .select(
-              "id, order_number, status, total_cop, created_at, payment_provider, payment_method_type, customer_name, customer_phone, seller_id"
+              "id, order_number, status, total_cop, created_at, payment_provider, payment_method_type, customer_name, customer_phone"
             )
             .order("created_at", { ascending: false }),
           supabase
@@ -235,11 +234,7 @@ export default function AdminDashboardPage() {
     [period, customMonth]
   );
 
-  // Web-only orders (sin ventas locales — el dashboard es solo web)
-  const webOrders = useMemo(
-    () => (orders ?? []).filter((o) => o.payment_provider !== "local"),
-    [orders]
-  );
+  const webOrders = useMemo(() => orders ?? [], [orders]);
 
   const inPeriod = useMemo(() => {
     if (!periodInfo.start || !periodInfo.end) return webOrders;
