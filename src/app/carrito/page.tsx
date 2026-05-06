@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart } =
     useCartStore();
   const cartTotal = total();
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
 
   const whatsappMessage = items
     .map((item) => {
@@ -24,9 +26,10 @@ export default function CartPage() {
     })
     .join("\n");
 
-  const whatsappUrl = `https://wa.me/573148941200?text=${encodeURIComponent(
+  const whatsappUrl = getWhatsappUrl(
+    whatsappNumber,
     `Hola! Me interesa comprar:\n\n${whatsappMessage}\n\n*Total: ${formatPrice(cartTotal)}*\n\n¿Me pueden ayudar?`
-  )}`;
+  );
 
   return (
     <div className="pt-24 min-h-screen bg-[#F5F5F7] px-6 pb-24">

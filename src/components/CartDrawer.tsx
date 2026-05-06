@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { formatPrice } from "@/lib/products";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total } =
     useCartStore();
   const cartTotal = total();
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
 
   const whatsappMessage = items
     .map((item) => {
@@ -24,9 +26,10 @@ export default function CartDrawer() {
     })
     .join("\n");
 
-  const whatsappUrl = `https://wa.me/573001234567?text=${encodeURIComponent(
+  const whatsappUrl = getWhatsappUrl(
+    whatsappNumber,
     `Hola! Me interesa comprar:\n\n${whatsappMessage}\n\n*Total: ${formatPrice(cartTotal)}*\n\n¿Me pueden ayudar?`
-  )}`;
+  );
 
   return (
     <AnimatePresence>

@@ -28,6 +28,7 @@ import {
 import { useCatalogStore } from "@/lib/catalog-store";
 import { useCartStore } from "@/lib/store";
 import { useWishlistStore } from "@/lib/wishlist-store";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 import ProductGallery from "@/components/ProductGallery";
 import RelatedProducts from "@/components/RelatedProducts";
 import FrequentlyBoughtTogether from "@/components/FrequentlyBoughtTogether";
@@ -193,9 +194,13 @@ export default function ProductPage() {
     .filter(Boolean)
     .join(" · ");
 
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const whatsappMsg = `Hola, me interesa el ${product.name}${
     variantInfo ? ` (${variantInfo})` : ""
   }. ¿Tienen disponibilidad?`;
+  const whatsappOutOfStockMsg = `Hola, me interesa el ${product.name} pero aparece sin stock. ¿Pueden avisarme cuando esté disponible?`;
+  const whatsappUrl = getWhatsappUrl(whatsappNumber, whatsappMsg);
+  const whatsappOutOfStockUrl = getWhatsappUrl(whatsappNumber, whatsappOutOfStockMsg);
 
   return (
     <div className="pt-24 min-h-screen bg-white">
@@ -477,7 +482,7 @@ export default function ProductPage() {
                   <p className="text-sm text-neutral-600 font-medium">
                     Esta variante no tiene stock disponible.{" "}
                     <a
-                      href={`https://wa.me/573148941200?text=${encodeURIComponent(`Hola, me interesa el ${product.name} pero aparece sin stock. ¿Pueden avisarme cuando esté disponible?`)}`}
+                      href={whatsappOutOfStockUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#25D366] font-semibold hover:underline"
@@ -536,7 +541,7 @@ export default function ProductPage() {
                 </div>
                 {/* WhatsApp: full-width abajo en mobile, en línea en desktop */}
                 <a
-                  href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-base whitespace-nowrap bg-[#25D366] text-white hover:bg-[#1ebe5d] active:scale-98 transition-all"
@@ -601,7 +606,7 @@ export default function ProductPage() {
             )}
           </button>
           <a
-            href={`https://wa.me/573148941200?text=${encodeURIComponent(whatsappMsg)}`}
+            href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 w-11 h-11 rounded-2xl bg-[#25D366] text-white flex items-center justify-center active:scale-95 transition"

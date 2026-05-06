@@ -7,12 +7,14 @@ import { Search, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { categories, getMinPrice } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
+import { useSiteConfigStore, getWhatsappUrl } from "@/lib/site-config-store";
 
 function BuscarContent() {
   const params = useSearchParams();
   const router = useRouter();
   const initialQ = params.get("q") ?? "";
   const products = useCatalogStore((s) => s.products);
+  const whatsappNumber = useSiteConfigStore((s) => s.whatsappNumber);
   const [query, setQuery] = useState(initialQ);
   const [activeCategory, setActiveCategory] = useState("todos");
   const [sortBy, setSortBy] = useState("relevance");
@@ -156,9 +158,10 @@ function BuscarContent() {
               </p>
               {query && (
                 <a
-                  href={`https://wa.me/573148941200?text=${encodeURIComponent(
+                  href={getWhatsappUrl(
+                    whatsappNumber,
                     `Hola, busco un ${query} pero no apareció en la web. ¿Tienen disponibilidad?`
-                  )}`}
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-[#25D366] text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-[#1ebe5d] transition"
