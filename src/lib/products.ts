@@ -43,6 +43,22 @@ export type Variant = {
   notes?: string; // "Naranja", "Batería 100%", "Sim física", etc.
   inStock: boolean;
   stockQuantity?: number; // unidades disponibles; undefined = no rastreado, 0 = agotado
+  /**
+   * Precio "antes" / sin descuento. Si está presente y es > price, se renderiza
+   * tachado en cards y PDP, y se calcula `% off` automáticamente.
+   * Undefined = sin promoción activa.
+   */
+  comparePrice?: number;
+  /**
+   * Salud de batería (0-100%). Sólo aplica a equipos de exhibición — cada
+   * unidad física es distinta. Undefined para "nuevo" / "preventa".
+   */
+  batteryHealth?: number;
+  /**
+   * Detalles del estado físico del equipo de exhibición: rayones, accesorios,
+   * observaciones del vendedor. Sólo aplica a no-nuevos.
+   */
+  conditionDetails?: string;
 };
 
 /**
@@ -1060,6 +1076,32 @@ export function getPriceRange(product: Product): { min: number; max: number } {
 
 export function hasMultipleVariants(product: Product): boolean {
   return product.variants.length > 1;
+}
+
+/** % de descuento de una variante (entero). Null si no hay promo. */
+export function getDiscountPct(variant: Variant): number | null {
+  if (!variant.comparePrice || variant.comparePrice <= variant.price) return null;
+  return Math.floor(
+    ((variant.comparePrice - variant.price) / variant.comparePrice) * 100
+  );
+}
+
+/** ¿El producto tiene al menos una variante en promoción? */
+export function hasActivePromotion(product: Product): boolean {
+  return product.variants.some((v) => getDiscountPct(v) !== null);
+}
+
+/** Mejor descuento (mayor %) entre todas las variantes del producto. 0 si ninguna. */
+export function getBestDiscountPct(product: Product): number {
+  return product.variants.reduce((best, v) => {
+    const d = getDiscountPct(v);
+    return d && d > best ? d : best;
+  }, 0);
+}
+
+/** Productos con al menos una variante en promoción activa. */
+export function getProductsOnPromo(items: Product[]): Product[] {
+  return items.filter(hasActivePromotion);
 }
 
 export function getDefaultVariant(product: Product): Variant | undefined {

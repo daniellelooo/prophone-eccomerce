@@ -40,6 +40,16 @@ export type SiteConfig = {
   /** Stock crítico — alerta si quantity ≤ N */
   stockLowThreshold: number;
   sedes: Sede[];
+  /** Promoción activa — controla el link en el navbar y la página /promociones. */
+  promoEnabled: boolean;
+  /** Etiqueta del link en el navbar y título principal de la página. Ej: "Día de las Madres". */
+  promoLabel: string;
+  /** Subtítulo en el hero de la página de promo. */
+  promoSubtitle: string;
+  /** CTA del hero de la landing (vacío = no se muestra el botón). */
+  promoHeroCta: string;
+  /** Imágenes del hero de la página de promo. Vacío = solo texto, sin imágenes. */
+  promoImages: string[];
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -91,9 +101,13 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   sedes: [
     { id: "monterrey-206", name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Local 206" },
     { id: "monterrey-098-099", name: "C.C. Monterrey", area: "El Poblado, Medellín", detail: "Locales 098 / 099" },
-    { id: "supercentro-itagui", name: "Super Centro de la Moda", area: "Itagüí", detail: "Local 118" },
-    { id: "pasaje-roberesco", name: "Pasaje Roberesco", area: "Centro, Medellín", detail: "Local 105" },
+    { id: "pasaje-roberesco", name: "Pasaje Comercial Roberesco", area: "Centro, Medellín", detail: "Local 105" },
   ],
+  promoEnabled: false,
+  promoLabel: "Promociones",
+  promoSubtitle: "Descuentos especiales por tiempo limitado.",
+  promoHeroCta: "Ver promociones",
+  promoImages: [],
 };
 
 type ConfigState = SiteConfig & {
@@ -131,6 +145,11 @@ const CONFIG_KEYS = {
   gaMeasurementId: "ga_measurement_id",
   footerTagline: "footer_tagline",
   stockLowThreshold: "stock_low_threshold",
+  promoEnabled: "promo_enabled",
+  promoLabel: "promo_label",
+  promoSubtitle: "promo_subtitle",
+  promoHeroCta: "promo_hero_cta",
+  promoImages: "promo_images",
 } as const;
 
 type ConfigKey = keyof typeof CONFIG_KEYS;

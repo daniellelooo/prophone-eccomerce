@@ -362,8 +362,11 @@ export type Database = {
       }
       variants: {
         Row: {
+          battery_health: number | null
           color: string | null
+          compare_price_cop: number | null
           condition: string
+          condition_details: string | null
           created_at: string
           in_stock: boolean
           notes: string | null
@@ -378,8 +381,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          battery_health?: number | null
           color?: string | null
+          compare_price_cop?: number | null
           condition: string
+          condition_details?: string | null
           created_at?: string
           in_stock?: boolean
           notes?: string | null
@@ -394,8 +400,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          battery_health?: number | null
           color?: string | null
+          compare_price_cop?: number | null
           condition?: string
+          condition_details?: string | null
           created_at?: string
           in_stock?: boolean
           notes?: string | null

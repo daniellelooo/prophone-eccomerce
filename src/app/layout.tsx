@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import CatalogHydrator from "@/components/CatalogHydrator";
 import MarketingPixels from "@/components/MarketingPixels";
 import CookieBanner from "@/components/CookieBanner";
+import CompareBar from "@/components/CompareBar";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -111,6 +112,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <BottomNav />
+        <CompareBar />
         <CookieBanner />
       </body>
     </html>

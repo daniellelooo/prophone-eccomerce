@@ -17,6 +17,7 @@ import {
   Building2,
   Package,
   Plus,
+  Tag,
 } from "lucide-react";
 import { useSiteConfigStore } from "@/lib/site-config-store";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -45,6 +46,10 @@ export default function AdminConfiguracionPage() {
   const [draftGa, setDraftGa] = useState(cfg.gaMeasurementId);
 
   const [draftLowStock, setDraftLowStock] = useState(cfg.stockLowThreshold);
+
+  const [draftPromoLabel, setDraftPromoLabel] = useState(cfg.promoLabel);
+  const [draftPromoSubtitle, setDraftPromoSubtitle] = useState(cfg.promoSubtitle);
+  const [draftPromoHeroCta, setDraftPromoHeroCta] = useState(cfg.promoHeroCta);
 
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -143,6 +148,109 @@ export default function AdminConfiguracionPage() {
             }
             saved={savedKey === "hero-mobile"}
           />
+        </div>
+      </Section>
+
+      {/* Promoción / Campaña */}
+      <Section
+        icon={<Tag size={16} className="text-[#CC0000]" />}
+        title="Promociones / Campaña activa"
+        desc="Activa una campaña (Día de las Madres, Black Friday, etc.). Aparecerá un link en el navbar y un CTA en el hero. La página /promociones lista los productos con precio antes asignado."
+        onSave={() =>
+          trySave("promo", async () => {
+            await update({
+              promoLabel: draftPromoLabel.trim() || "Promociones",
+              promoSubtitle: draftPromoSubtitle.trim(),
+              promoHeroCta: draftPromoHeroCta.trim(),
+            });
+          })
+        }
+        saved={savedKey === "promo"}
+      >
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={() =>
+              trySave("promo-toggle", () =>
+                update({ promoEnabled: !cfg.promoEnabled })
+              )
+            }
+            className={`text-left p-3.5 rounded-xl border w-full transition ${
+              cfg.promoEnabled
+                ? "border-[#CC0000] bg-red-50/40"
+                : "border-neutral-200 bg-white hover:border-neutral-400"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-neutral-900">
+                  {cfg.promoEnabled
+                    ? "Campaña activa — visible en el sitio"
+                    : "Campaña apagada — link y CTA ocultos"}
+                </p>
+                <p className="text-[11px] text-neutral-500 mt-0.5 leading-snug">
+                  Activa o desactiva el link del navbar, el CTA del hero y la página /promociones.
+                </p>
+              </div>
+              <span
+                className={`shrink-0 w-10 h-6 rounded-full p-0.5 transition ${
+                  cfg.promoEnabled ? "bg-[#CC0000]" : "bg-neutral-300"
+                }`}
+              >
+                <span
+                  className={`block w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
+                    cfg.promoEnabled ? "translate-x-4" : ""
+                  }`}
+                />
+              </span>
+            </div>
+          </button>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div>
+              <Label>Nombre / título de la campaña</Label>
+              <input
+                value={draftPromoLabel}
+                onChange={(e) => setDraftPromoLabel(e.target.value)}
+                placeholder="Día de las Madres"
+                className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+              />
+              <p className="text-[11px] text-neutral-400 mt-1.5">
+                Se usa en el link del navbar y como título principal de /promociones.
+              </p>
+            </div>
+            <div>
+              <Label>Texto del botón en el hero de la landing</Label>
+              <input
+                value={draftPromoHeroCta}
+                onChange={(e) => setDraftPromoHeroCta(e.target.value)}
+                placeholder="Ver promociones"
+                className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Subtítulo de la página /promociones</Label>
+            <textarea
+              value={draftPromoSubtitle}
+              onChange={(e) => setDraftPromoSubtitle(e.target.value)}
+              placeholder="Descuentos especiales por tiempo limitado."
+              rows={2}
+              className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 resize-none"
+            />
+          </div>
+          <ImageGallery
+            label="Imágenes del hero (opcional · si dejas la lista vacía no se muestra el lado visual)"
+            images={cfg.promoImages}
+            onChange={(imgs) =>
+              trySave("promo-images", () => update({ promoImages: imgs }))
+            }
+            saved={savedKey === "promo-images"}
+          />
+          <p className="text-[11px] text-neutral-400">
+            💡 Para que un producto aparezca en /promociones, asígnale un{" "}
+            <strong>&quot;Precio antes&quot;</strong> mayor al precio actual en la
+            sección de variantes.
+          </p>
         </div>
       </Section>
 

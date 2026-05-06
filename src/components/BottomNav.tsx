@@ -3,16 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, ShoppingBag, Search, LayoutGrid, User } from "lucide-react";
+import {
+  Sparkles,
+  ShoppingCart,
+  Search,
+  Boxes,
+  CircleUser,
+} from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import SearchModal from "@/components/SearchModal";
 
+/**
+ * BottomNav distintivo de Prophone:
+ *  - Tabs con indicador superior en rojo (no sólo color en el icono).
+ *  - Acción central "Carrito" elevada con FAB rojo (ancla visual de
+ *    la tarea más importante: comprar).
+ *  - Iconos: Sparkles (Inicio) · Boxes (Catálogo) · ShoppingCart (FAB) ·
+ *    Search · CircleUser (Cuenta).
+ */
 export default function BottomNav() {
   const pathname = usePathname();
   const toggleCart = useCartStore((s) => s.toggleCart);
   const itemCountRaw = useCartStore((s) => s.itemCount());
   const [searchOpen, setSearchOpen] = useState(false);
-  // Evitar hydration mismatch (cart persiste en localStorage)
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -20,69 +33,91 @@ export default function BottomNav() {
   }, []);
   const itemCount = mounted ? itemCountRaw : 0;
 
-  // Ocultar la barra durante el checkout (compite con el formulario) y en /admin
   const hide =
     pathname?.startsWith("/checkout") || pathname?.startsWith("/admin");
-
-  // Bloquear el scroll del body al abrir search ya lo maneja SearchModal
-  useEffect(() => {
-    /* noop — solo para asegurar que el componente queda listo en cliente */
-  }, []);
-
   if (hide) return null;
 
   const isActive = (match: (p: string) => boolean) =>
     pathname ? match(pathname) : false;
 
-  const items: {
-    key: string;
-    label: string;
-    icon: React.ReactNode;
-    onClick?: () => void;
-    href?: string;
-    target?: string;
-    rel?: string;
-    active?: boolean;
-    badge?: number;
-    accent?: boolean;
-  }[] = [
+  // Pestañas a izquierda y derecha del FAB central.
+  const leftItems = [
     {
       key: "inicio",
       label: "Inicio",
-      icon: <Home size={20} />,
+      icon: <Sparkles size={19} />,
       href: "/",
       active: isActive((p) => p === "/"),
     },
     {
       key: "catalogo",
       label: "Catálogo",
-      icon: <LayoutGrid size={20} />,
+      icon: <Boxes size={19} />,
       href: "/catalogo",
-      active: isActive((p) => p.startsWith("/catalogo") || p.startsWith("/productos")),
+      active: isActive(
+        (p) => p.startsWith("/catalogo") || p.startsWith("/productos")
+      ),
     },
+  ];
+  const rightItems = [
     {
       key: "buscar",
       label: "Buscar",
-      icon: <Search size={20} />,
+      icon: <Search size={19} />,
       onClick: () => setSearchOpen(true),
       active: isActive((p) => p.startsWith("/buscar")),
     },
     {
-      key: "carrito",
-      label: "Carrito",
-      icon: <ShoppingBag size={20} />,
-      onClick: toggleCart,
-      active: isActive((p) => p.startsWith("/carrito")),
-      badge: itemCount,
-    },
-    {
       key: "cuenta",
       label: "Cuenta",
-      icon: <User size={20} />,
+      icon: <CircleUser size={19} />,
       href: "/cuenta",
       active: isActive((p) => p.startsWith("/cuenta")),
     },
   ];
+
+  const renderTab = (item: {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    href?: string;
+    onClick?: () => void;
+    active?: boolean;
+  }) => {
+    const content = (
+      <span
+        className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 pt-3 pb-2 text-[10px] font-medium transition ${
+          item.active ? "text-[#CC0000]" : "text-neutral-500"
+        }`}
+      >
+        {/* Indicador superior (barra) en lugar de fondo o solo color */}
+        <span
+          className={`absolute top-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full transition-all ${
+            item.active ? "w-6 bg-[#CC0000]" : "w-0 bg-transparent"
+          }`}
+        />
+        {item.icon}
+        <span>{item.label}</span>
+      </span>
+    );
+    if (item.href) {
+      return (
+        <Link key={item.key} href={item.href} className="flex-1 active:opacity-60 transition">
+          {content}
+        </Link>
+      );
+    }
+    return (
+      <button
+        key={item.key}
+        onClick={item.onClick}
+        className="flex-1 active:opacity-60 transition"
+        aria-label={item.label}
+      >
+        {content}
+      </button>
+    );
+  };
 
   return (
     <>
@@ -90,63 +125,27 @@ export default function BottomNav() {
         className="fixed bottom-0 inset-x-0 z-40 md:hidden bg-white/95 backdrop-blur-xl border-t border-neutral-200 pb-[env(safe-area-inset-bottom)]"
         aria-label="Navegación inferior"
       >
-        <div className="flex items-stretch justify-between px-1">
-          {items.map((item) => {
-            const content = (
-              <span
-                className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 py-2.5 text-[10px] font-medium transition ${
-                  item.accent
-                    ? "text-[#25D366]"
-                    : item.active
-                    ? "text-[#CC0000]"
-                    : "text-neutral-500"
-                }`}
-              >
-                <span className="relative">
-                  {item.icon}
-                  {typeof item.badge === "number" && item.badge > 0 && (
-                    <span className="absolute -top-1 -right-2 min-w-[16px] h-[16px] px-1 rounded-full bg-[#CC0000] text-white text-[9px] font-bold flex items-center justify-center">
-                      {item.badge}
-                    </span>
-                  )}
+        <div className="relative flex items-stretch justify-between px-1">
+          {leftItems.map(renderTab)}
+
+          {/* FAB central — Carrito (sin label, evita superposición) */}
+          <div className="flex-1 flex items-start justify-center relative pt-2">
+            <button
+              onClick={toggleCart}
+              aria-label="Carrito"
+              title="Carrito"
+              className="relative -translate-y-3 w-14 h-14 rounded-full bg-[#CC0000] text-white flex items-center justify-center shadow-[0_8px_18px_-6px_rgba(204,0,0,0.45)] active:scale-95 transition ring-4 ring-white hover:bg-[#A00000]"
+            >
+              <ShoppingCart size={22} />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-neutral-900 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                  {itemCount}
                 </span>
-                <span>{item.label}</span>
-              </span>
-            );
+              )}
+            </button>
+          </div>
 
-            if (item.href && !item.onClick) {
-              return item.target ? (
-                <a
-                  key={item.key}
-                  href={item.href}
-                  target={item.target}
-                  rel={item.rel}
-                  className="flex-1 active:opacity-60 transition"
-                >
-                  {content}
-                </a>
-              ) : (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className="flex-1 active:opacity-60 transition"
-                >
-                  {content}
-                </Link>
-              );
-            }
-
-            return (
-              <button
-                key={item.key}
-                onClick={item.onClick}
-                className="flex-1 active:opacity-60 transition"
-                aria-label={item.label}
-              >
-                {content}
-              </button>
-            );
-          })}
+          {rightItems.map(renderTab)}
         </div>
       </nav>
 

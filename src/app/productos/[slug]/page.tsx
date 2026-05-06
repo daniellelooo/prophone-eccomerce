@@ -11,6 +11,10 @@ import {
   ArrowLeft,
   Check,
   Heart,
+  BatteryFull,
+  BatteryMedium,
+  BatteryLow,
+  Info,
 } from "lucide-react";
 import {
   formatPrice,
@@ -18,6 +22,7 @@ import {
   conditionWarranty,
   getImageColor,
   getImageUrl,
+  getDiscountPct,
   type ProductCondition,
 } from "@/lib/products";
 import { useCatalogStore } from "@/lib/catalog-store";
@@ -47,28 +52,58 @@ export default function ProductPage() {
     conditions[0] ?? "nuevo"
   );
 
-  const variantsForCondition = useMemo(
-    () => product.variants.filter((v) => v.condition === selectedCondition),
-    [product, selectedCondition]
+  /** Colores que tienen al menos UNA variante para la condición seleccionada. */
+  const colorsForCondition = useMemo(() => {
+    const set = new Set<string>();
+    for (const v of product.variants) {
+      if (v.condition !== selectedCondition) continue;
+      if (v.color) set.add(v.color);
+    }
+    return product.colors.filter((c) => set.has(c.name));
+  }, [product, selectedCondition]);
+
+  const [selectedColor, setSelectedColor] = useState(
+    colorsForCondition[0]?.name ?? product.colors[0]?.name ?? ""
   );
 
+  /** Variantes filtradas por (condición, color). */
+  const variantsForSelection = useMemo(() => {
+    return product.variants.filter((v) => {
+      if (v.condition !== selectedCondition) return false;
+      if (selectedColor) return v.color === selectedColor;
+      return !v.color;
+    });
+  }, [product, selectedCondition, selectedColor]);
+
   const [selectedSku, setSelectedSku] = useState<string>(
-    variantsForCondition[0]?.sku ?? ""
+    variantsForSelection[0]?.sku ?? ""
   );
+
+  /** Si la variante actual no aplica a la nueva selección, escoger la primera. */
+  const effectiveSelectedSku = useMemo(() => {
+    if (variantsForSelection.some((v) => v.sku === selectedSku)) return selectedSku;
+    return variantsForSelection[0]?.sku ?? selectedSku;
+  }, [variantsForSelection, selectedSku]);
+
   const selectedVariant =
-    product.variants.find((v) => v.sku === selectedSku) ??
-    variantsForCondition[0] ??
+    product.variants.find((v) => v.sku === effectiveSelectedSku) ??
+    variantsForSelection[0] ??
     product.variants[0];
 
   const handleConditionChange = (c: ProductCondition) => {
     setSelectedCondition(c);
-    const first = product.variants.find((v) => v.condition === c);
-    if (first) setSelectedSku(first.sku);
+    // Si el color seleccionado no tiene variantes para la nueva condición,
+    // mover al primer color disponible.
+    const colorsAvailable = product.colors.filter((col) =>
+      product.variants.some((v) => v.condition === c && v.color === col.name)
+    );
+    if (
+      colorsAvailable.length > 0 &&
+      !colorsAvailable.some((c2) => c2.name === selectedColor)
+    ) {
+      setSelectedColor(colorsAvailable[0].name);
+    }
   };
-
-  const [selectedColor, setSelectedColor] = useState(
-    product.colors[0]?.name ?? ""
-  );
 
   // Imágenes filtradas por color: si hay imágenes asociadas al color
   // seleccionado, sólo muestra esas; si no, muestra las genéricas (sin
@@ -211,12 +246,36 @@ export default function ProductPage() {
             </div>
 
             <div>
-              <p className="text-3xl font-bold text-neutral-900">
+              {selectedVariant && getDiscountPct(selectedVariant) !== null && (
+                <div className="flex items-baseline gap-3 mb-1">
+                  <span className="text-base text-neutral-400 line-through font-medium tabular-nums">
+                    {formatPrice(selectedVariant.comparePrice!)}
+                  </span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#CC0000] text-white">
+                    -{getDiscountPct(selectedVariant)}% OFF
+                  </span>
+                </div>
+              )}
+              <p
+                className={`text-3xl font-bold tabular-nums ${
+                  selectedVariant && getDiscountPct(selectedVariant) !== null
+                    ? "text-[#CC0000]"
+                    : "text-neutral-900"
+                }`}
+              >
                 {formatPrice(selectedVariant?.price ?? 0)}
               </p>
               {selectedVariant && (
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700">
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
+                      selectedVariant.condition === "exhibicion"
+                        ? "bg-amber-100 text-amber-800"
+                        : selectedVariant.condition === "preventa"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-green-100 text-green-700"
+                    }`}
+                  >
                     {conditionLabels[selectedVariant.condition]}
                   </span>
                   {(selectedVariant.size ||
@@ -232,11 +291,38 @@ export default function ProductPage() {
                         .join(" · ")}
                     </span>
                   )}
-                  {selectedVariant.notes && (
-                    <span className="inline-flex items-center text-[11px] text-neutral-500 italic">
-                      {selectedVariant.notes}
-                    </span>
-                  )}
+                  {selectedVariant.notes &&
+                    selectedVariant.condition !== "exhibicion" && (
+                      <span className="inline-flex items-center text-[11px] text-neutral-500 italic">
+                        {selectedVariant.notes}
+                      </span>
+                    )}
+                  {/* Batería % para equipos de exhibición */}
+                  {selectedVariant.condition === "exhibicion" &&
+                    selectedVariant.batteryHealth !== undefined &&
+                    (() => {
+                      const bh = selectedVariant.batteryHealth;
+                      const colorCls =
+                        bh >= 90
+                          ? "bg-green-100 text-green-800"
+                          : bh >= 80
+                            ? "bg-amber-100 text-amber-800"
+                            : "bg-red-100 text-red-800";
+                      const Icon =
+                        bh >= 90
+                          ? BatteryFull
+                          : bh >= 60
+                            ? BatteryMedium
+                            : BatteryLow;
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${colorCls}`}
+                        >
+                          <Icon size={13} />
+                          Batería {bh}%
+                        </span>
+                      );
+                    })()}
                 </div>
               )}
               {selectedVariant && (
@@ -244,6 +330,49 @@ export default function ProductPage() {
                   {conditionWarranty[selectedVariant.condition]}
                 </p>
               )}
+
+              {/* Caja informativa para equipos de exhibición — datos críticos
+                  antes de comprar: batería real, estado físico, accesorios. */}
+              {selectedVariant?.condition === "exhibicion" &&
+                (selectedVariant.conditionDetails ||
+                  selectedVariant.notes ||
+                  selectedVariant.batteryHealth !== undefined) && (
+                  <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3.5 space-y-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                      <Info size={12} /> Información del equipo de exhibición
+                    </p>
+                    {selectedVariant.batteryHealth !== undefined && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold uppercase text-amber-800 w-20 shrink-0 mt-0.5">
+                          Batería
+                        </span>
+                        <span className="text-xs text-amber-900 font-semibold">
+                          {selectedVariant.batteryHealth}% de salud
+                        </span>
+                      </div>
+                    )}
+                    {selectedVariant.conditionDetails && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold uppercase text-amber-800 w-20 shrink-0 mt-0.5">
+                          Estado
+                        </span>
+                        <span className="text-xs text-amber-900 leading-relaxed">
+                          {selectedVariant.conditionDetails}
+                        </span>
+                      </div>
+                    )}
+                    {selectedVariant.notes && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold uppercase text-amber-800 w-20 shrink-0 mt-0.5">
+                          Notas
+                        </span>
+                        <span className="text-xs text-amber-900 leading-relaxed">
+                          {selectedVariant.notes}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
 
             {/* Condición */}
@@ -276,20 +405,20 @@ export default function ProductPage() {
             {/* Variantes (almacenamiento / RAM / tamaño) — siempre visibles si hay
                 al menos una variante con storage/ram/size, aunque sea única,
                 para que se vea qué configuración exacta tiene la variante. */}
-            {variantsForCondition.length > 0 &&
-              variantsForCondition.some((v) => v.storage || v.ram || v.size) && (
+            {variantsForSelection.length > 0 &&
+              variantsForSelection.some((v) => v.storage || v.ram || v.size) && (
                 <div>
                   <p className="text-sm font-semibold text-neutral-700 mb-3">
-                    {variantsForCondition.length > 1
+                    {variantsForSelection.length > 1
                       ? "Configuración"
                       : "Configuración disponible"}
                   </p>
                   <div className="flex gap-2 flex-wrap">
-                    {variantsForCondition.map((v) => {
+                    {variantsForSelection.map((v) => {
                       const label = [v.size, v.ram, v.storage]
                         .filter(Boolean)
                         .join(" / ");
-                      const isOnly = variantsForCondition.length === 1;
+                      const isOnly = variantsForSelection.length === 1;
                       return (
                         <button
                           key={v.sku}
@@ -313,8 +442,8 @@ export default function ProductPage() {
                 </div>
               )}
 
-            {/* Colors */}
-            {product.colors.length > 0 && (
+            {/* Colors — sólo los disponibles para la condición seleccionada */}
+            {colorsForCondition.length > 0 && (
               <div>
                 <p className="text-sm font-semibold text-neutral-700 mb-3">
                   Color:{" "}
@@ -323,7 +452,7 @@ export default function ProductPage() {
                   </span>
                 </p>
                 <div className="flex gap-3 flex-wrap">
-                  {product.colors.map((color) => (
+                  {colorsForCondition.map((color) => (
                     <button
                       key={color.name}
                       onClick={() => setSelectedColor(color.name)}

@@ -30,6 +30,9 @@ import {
   conditionLabels,
   formatPrice,
 } from "@/lib/products";
+import ColorGroupedVariants, {
+  CATEGORY_AXES,
+} from "@/components/admin/ColorGroupedVariants";
 
 const CONDITIONS: ProductCondition[] = [
   "nuevo",
@@ -556,11 +559,24 @@ export default function ProductEditorPage() {
         </div>
       </Section>
 
-      {/* Variantes */}
+      {/* Variantes — agrupadas por color, secciones separadas para nuevos / exhibición */}
       <Section
-        title="Variantes (precio + condición)"
-        desc="Cada combinación de almacenamiento, RAM, tamaño o condición se vende como una variante con su propio precio y stock."
+        title={`Variantes (${draft.variants.length})`}
+        desc='Agrega un color, luego sus combinaciones de almacenamiento. Para "exhibición" cada equipo es una unidad física distinta con su propia batería y detalles.'
       >
+        <ColorGroupedVariants
+          draft={draft}
+          setDraft={setDraft}
+          axes={CATEGORY_AXES[draft.category]}
+        />
+      </Section>
+
+      {/* Vista avanzada (legacy) — escondida por defecto, accesible vía toggle */}
+      <details className="bg-white rounded-2xl border border-neutral-200">
+        <summary className="px-5 py-3 text-xs font-semibold text-neutral-500 hover:text-neutral-900 cursor-pointer select-none">
+          Vista avanzada (grilla SKU por SKU)
+        </summary>
+        <div className="px-5 pb-5">
         {draft.variants.length === 0 ? (
           <div className="text-center py-8 border-2 border-dashed border-neutral-200 rounded-xl">
             <p className="text-sm font-semibold text-neutral-700 mb-1">
@@ -732,7 +748,8 @@ export default function ProductEditorPage() {
         >
           <Plus size={14} /> Agregar variante
         </button>
-      </Section>
+        </div>
+      </details>
 
       {/* Colores */}
       <Section title="Colores" desc="Solo para mostrar al cliente. No afectan el precio.">
@@ -832,7 +849,7 @@ export default function ProductEditorPage() {
         </button>
       </Section>
 
-      {/* Footer actions */}
+      {/* Footer actions inline (visible al final del scroll, redundante con la sticky bar) */}
       <div className="flex justify-end gap-2 pt-4">
         <Link
           href="/admin/productos"
@@ -856,6 +873,49 @@ export default function ProductEditorPage() {
             </>
           )}
         </button>
+      </div>
+
+      {/* Sticky save bar — siempre visible para guardar sin tener que bajar */}
+      <div className="sticky bottom-0 -mx-5 md:-mx-8 px-5 md:px-8 py-3 mt-4 bg-white/90 backdrop-blur-xl border-t border-neutral-200 z-30 flex items-center justify-between gap-3">
+        <p className="text-xs text-neutral-500 truncate">
+          {isCreating ? (
+            <>Creando nuevo producto</>
+          ) : (
+            <>
+              Editando <strong className="text-neutral-900">{draft.name || "producto sin nombre"}</strong>
+              {" · "}
+              <span className="text-neutral-400">
+                {draft.variants.length} variante{draft.variants.length === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/admin/productos"
+            className="hidden sm:inline-flex px-3.5 py-2 rounded-xl text-xs font-semibold text-neutral-700 bg-white border border-neutral-200 hover:border-neutral-400 transition"
+          >
+            Cancelar
+          </Link>
+          <button
+            onClick={handleSave}
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition active:scale-95 shadow-sm ${
+              saved
+                ? "bg-green-500"
+                : "bg-[#CC0000] hover:bg-[#A00000] shadow-[#CC0000]/25"
+            }`}
+          >
+            {saved ? (
+              <>
+                <Check size={13} /> Guardado
+              </>
+            ) : (
+              <>
+                <Save size={13} /> {isCreating ? "Crear" : "Guardar"}
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

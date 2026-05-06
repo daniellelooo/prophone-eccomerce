@@ -163,59 +163,84 @@ function CatalogoContent() {
     setSortBy("featured");
   };
 
+  // Conteo de productos por categoría (para el chip)
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { todos: products.length };
+    products.forEach((p) => {
+      counts[p.category] = (counts[p.category] ?? 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
   return (
     <>
-      {/* Header */}
-      <section className="pt-28 pb-6 px-5 md:px-12 bg-white">
+      {/* Header — split: title left, stats right */}
+      <section className="pt-28 pb-8 md:pb-10 px-5 md:px-12 bg-white border-b border-neutral-100">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45 }}
           >
-            <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-neutral-900 mb-2">
-              Catálogo
-            </h1>
-            <p className="text-sm md:text-xl text-neutral-500">
-              iPhone, iPad, Watch, MacBook y accesorios — nuevos y exhibición
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#CC0000] mb-3">
+              Tienda Prophone
             </p>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-neutral-900 leading-[1.05]">
+              Todo Apple,
+              <span className="block text-neutral-400">en un solo lugar.</span>
+            </h1>
           </motion.div>
         </div>
       </section>
 
-      {/* Sticky filter bar */}
+      {/* Sticky filter bar — segmented + tools */}
       <section
-        className={`sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-100 px-5 md:px-12 transition-all duration-300 ${filterScrolled ? "py-2" : "py-4"}`}
+        className={`sticky top-[96px] z-30 bg-white/90 backdrop-blur-xl border-b border-neutral-200 px-5 md:px-12 transition-all duration-300 ${filterScrolled ? "py-2" : "py-3.5"}`}
         aria-label="Filtros del catálogo"
       >
         <div className={`max-w-7xl mx-auto flex flex-col ${filterScrolled ? "gap-1.5" : "gap-3"}`}>
-          {/* Category pills */}
+          {/* Segmented control: categorías con conteo */}
           <div
-            className="flex gap-2 overflow-x-auto no-scrollbar"
+            className="flex gap-1.5 overflow-x-auto no-scrollbar bg-neutral-100 rounded-2xl p-1 self-start max-w-full"
             role="tablist"
             aria-label="Categorías"
           >
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                role="tab"
-                aria-selected={activeCategory === cat.id}
-                className={`rounded-full font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-2 ${filterScrolled ? "px-3 py-1 text-xs" : "px-5 py-2.5 text-sm"} ${
-                  activeCategory === cat.id
-                    ? "bg-neutral-900 text-white shadow-sm"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const count = categoryCounts[cat.id] ?? 0;
+              const isActive = activeCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`group relative flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] focus-visible:ring-offset-1 ${filterScrolled ? "px-3 py-1 text-xs" : "px-4 py-2 text-sm"} ${
+                    isActive
+                      ? "bg-white text-neutral-900 shadow-sm"
+                      : "text-neutral-500 hover:text-neutral-800"
+                  }`}
+                >
+                  <span>{cat.label}</span>
+                  {count > 0 && (
+                    <span
+                      className={`inline-flex items-center justify-center text-[10px] font-bold rounded-full px-1.5 min-w-[18px] h-[18px] tabular-nums ${
+                        isActive
+                          ? "bg-[#CC0000] text-white"
+                          : "bg-neutral-200 text-neutral-500 group-hover:bg-neutral-300"
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Condition pills — se ocultan al comprimir */}
           {!filterScrolled && (
             <div
-              className="flex gap-2 overflow-x-auto no-scrollbar"
+              className="flex gap-1.5 overflow-x-auto no-scrollbar"
               role="tablist"
               aria-label="Condición"
             >
@@ -225,10 +250,10 @@ function CatalogoContent() {
                   onClick={() => setActiveCondition(c.id)}
                   role="tab"
                   aria-selected={activeCondition === c.id}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+                  className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all duration-200 border focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
                     activeCondition === c.id
-                      ? "bg-[#CC0000] text-white shadow-sm"
-                      : "bg-neutral-50 text-neutral-500 hover:bg-neutral-100"
+                      ? "bg-[#CC0000] text-white border-[#CC0000]"
+                      : "bg-white text-neutral-600 border-neutral-200 hover:border-neutral-400"
                   }`}
                 >
                   {c.label}
@@ -419,8 +444,8 @@ function CatalogoContent() {
         </div>
       </section>
 
-      {/* Product grid */}
-      <section className="py-8 px-5 md:px-12 bg-[#F5F5F7] min-h-[60vh]">
+      {/* Product grid — fondo gris suave para que las cards blancas resalten */}
+      <section className="py-8 md:py-12 px-5 md:px-12 bg-[#F7F7F8] min-h-[60vh]">
         <div className="max-w-7xl mx-auto">
           {filtered.length === 0 ? (
             <EmptyCatalog
@@ -431,26 +456,44 @@ function CatalogoContent() {
             />
           ) : (
             <>
-              <p className="text-xs text-neutral-500 mb-5">
-                {filtered.length} producto{filtered.length !== 1 ? "s" : ""}
-              </p>
+              {/* Result bar */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-neutral-100">
+                <p className="text-sm font-semibold text-neutral-900">
+                  <span className="tabular-nums">{filtered.length}</span>{" "}
+                  <span className="text-neutral-500 font-medium">
+                    {filtered.length === 1 ? "resultado" : "resultados"}
+                    {activeCategory !== "todos" && (
+                      <>
+                        {" "}en{" "}
+                        <span className="text-neutral-900 font-semibold">
+                          {categories.find((c) => c.id === activeCategory)?.label}
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </p>
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-[#CC0000] transition px-2 py-1"
+                  >
+                    <RotateCcw size={11} aria-hidden />
+                    Limpiar filtros
+                  </button>
+                )}
+              </div>
+
               <motion.div
                 layout
-                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12"
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5"
               >
                 <AnimatePresence mode="popLayout">
                   {filtered.map((product, i) => (
                     <motion.div
                       key={product.id}
                       layout
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.96 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: i * 0.02,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
+                      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     >
                       <ProductCard product={product} index={i} />
                     </motion.div>

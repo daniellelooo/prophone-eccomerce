@@ -145,8 +145,9 @@ export default function FrequentlyBoughtTogether({ current }: Props) {
       </div>
 
       <div className="bg-neutral-50 rounded-2xl border border-neutral-100 p-4 md:p-6">
-        {/* Visual: imágenes con + entre ellas */}
-        <div className="flex items-center justify-center gap-2 md:gap-4 mb-6 overflow-x-auto no-scrollbar">
+        {/* Visual: imágenes con + entre ellas. pt-3/pr-3 dejan aire para que
+            el chulito flotante (-top-1.5 -right-1.5) no se recorte. */}
+        <div className="flex items-center justify-center gap-2 md:gap-4 mb-6 overflow-x-auto no-scrollbar pt-3 pr-3">
           {all.map((p, i) => (
             <div key={p.id} className="flex items-center gap-2 md:gap-4 shrink-0">
               <div
@@ -164,7 +165,7 @@ export default function FrequentlyBoughtTogether({ current }: Props) {
                   unoptimized
                 />
                 {selected[p.id] && (
-                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-[#CC0000] text-white rounded-full flex items-center justify-center">
+                  <span className="absolute top-1 right-1 w-5 h-5 bg-[#CC0000] text-white rounded-full flex items-center justify-center shadow-md z-10">
                     <Check size={12} />
                   </span>
                 )}

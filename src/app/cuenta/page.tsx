@@ -10,13 +10,15 @@ import {
   Package,
   ShoppingBag,
   Truck,
-  User,
+  CircleUser,
   Mail,
   Phone,
   Calendar,
   ChevronRight,
   Save,
   Check,
+  Sparkles,
+  ShieldCheck,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
@@ -128,76 +130,156 @@ export default function CuentaPage() {
     );
   }
 
+  // Stats derivados de las órdenes
+  const totalSpent = (orders ?? []).reduce(
+    (s, o) => s + (o.totalCop ?? 0),
+    0
+  );
+  // Si tenemos al menos un pedido, "miembro desde" = fecha del pedido más viejo.
+  const oldestOrderAt = (orders ?? []).reduce<Date | null>((acc, o) => {
+    const d = new Date(o.createdAt);
+    return !acc || d < acc ? d : acc;
+  }, null);
+  const memberSince = oldestOrderAt
+    ? oldestOrderAt.toLocaleDateString("es-CO", {
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   return (
-    <div className="pt-24 min-h-screen bg-[#F5F5F7] px-5 md:px-12 py-10 pb-32">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
+    <div className="pt-24 min-h-screen bg-white px-5 md:px-12 py-10 pb-32">
+      <div className="max-w-6xl mx-auto">
+        {/* Hero header con gradient avatar + stats */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="bg-white rounded-3xl p-6 md:p-8 shadow-sm mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          className="relative mb-8"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-[#CC0000]/10 rounded-full flex items-center justify-center text-[#CC0000] text-xl font-bold">
-              {(profile.fullName || profile.email).charAt(0).toUpperCase()}
+          <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#CC0000] mb-3">
+            Mi cuenta
+          </p>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5">
+            <div className="flex items-center gap-5 min-w-0">
+              <div className="relative shrink-0">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-[#CC0000] flex items-center justify-center text-white text-2xl md:text-3xl font-bold shadow-lg shadow-[#CC0000]/25">
+                  {(profile.fullName || profile.email).charAt(0).toUpperCase()}
+                </div>
+                <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 ring-4 ring-white flex items-center justify-center">
+                  <ShieldCheck size={11} className="text-white" />
+                </span>
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-neutral-900 leading-tight truncate">
+                  Hola, {(profile.fullName || profile.email.split("@")[0]).split(" ")[0]}
+                </h1>
+                <p className="text-sm text-neutral-500 truncate flex items-center gap-1.5 mt-1">
+                  <Mail size={12} />
+                  {profile.email}
+                </p>
+                {memberSince && (
+                  <p className="text-[11px] text-neutral-400 mt-1 flex items-center gap-1.5">
+                    <Sparkles size={10} className="text-[#CC0000]" />
+                    Cliente desde {memberSince}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-neutral-400 font-bold">
-                Mi cuenta
-              </p>
-              <h1 className="text-xl md:text-2xl font-bold text-neutral-900 truncate">
-                {profile.fullName || profile.email.split("@")[0]}
-              </h1>
-              <p className="text-xs text-neutral-500 truncate">
-                {profile.email}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {profile.isAdmin && (
-              <Link
-                href="/admin/productos"
-                className="text-xs font-semibold text-[#CC0000] bg-[#CC0000]/10 hover:bg-[#CC0000]/20 px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
+            <div className="flex items-center gap-2 shrink-0">
+              {profile.isAdmin && (
+                <Link
+                  href="/admin/productos"
+                  className="text-xs font-semibold text-[#CC0000] bg-red-50 hover:bg-red-100 border border-red-100 px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
+                >
+                  Panel admin →
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-[#CC0000] hover:bg-neutral-100 px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
               >
-                Panel admin →
-              </Link>
-            )}
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 px-3 py-2 rounded-xl transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000]"
-            >
-              <LogOut size={12} aria-hidden /> Cerrar sesión
-            </button>
+                <LogOut size={12} aria-hidden /> Salir
+              </button>
+            </div>
           </div>
+
+          {/* Stats strip */}
+          {orders && orders.length > 0 && (
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mt-6 max-w-2xl">
+              <StatCard
+                label="Pedidos"
+                value={String(orders.length)}
+                tone="dark"
+              />
+              <StatCard
+                label="Invertido"
+                value={formatPrice(totalSpent)}
+                tone="accent"
+              />
+              <StatCard
+                label="En curso"
+                value={String(
+                  orders.filter((o) =>
+                    ["pending", "paid", "in_review"].includes(o.status)
+                  ).length
+                )}
+                tone="soft"
+              />
+            </div>
+          )}
         </motion.div>
 
-        {/* Tabs */}
-        <div
-          className="flex gap-2 mb-6 overflow-x-auto no-scrollbar"
-          role="tablist"
-        >
-          <TabButton
-            active={tab === "pedidos"}
-            onClick={() => setTab("pedidos")}
-            icon={<Package size={14} aria-hidden />}
-          >
-            Mis pedidos
-            {orders && (
-              <span className="ml-1.5 bg-white/30 text-[10px] px-1.5 py-0.5 rounded">
-                {orders.length}
-              </span>
-            )}
-          </TabButton>
-          <TabButton
-            active={tab === "datos"}
-            onClick={() => setTab("datos")}
-            icon={<User size={14} aria-hidden />}
-          >
-            Datos personales
-          </TabButton>
-        </div>
+        {/* Layout sidebar (desktop) + tabs horizontales (mobile) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {/* Sidebar nav */}
+          <aside className="md:col-span-3">
+            {/* Mobile: tabs horizontales */}
+            <div
+              className="flex gap-2 mb-2 overflow-x-auto no-scrollbar md:hidden"
+              role="tablist"
+            >
+              <TabButton
+                active={tab === "pedidos"}
+                onClick={() => setTab("pedidos")}
+                icon={<Package size={14} aria-hidden />}
+              >
+                Pedidos
+                {orders && (
+                  <span className="ml-1 text-[10px] opacity-70">
+                    {orders.length}
+                  </span>
+                )}
+              </TabButton>
+              <TabButton
+                active={tab === "datos"}
+                onClick={() => setTab("datos")}
+                icon={<CircleUser size={14} aria-hidden />}
+              >
+                Datos
+              </TabButton>
+            </div>
 
+            {/* Desktop: sidebar list */}
+            <div className="hidden md:flex flex-col gap-1 sticky top-24">
+              <SidebarItem
+                active={tab === "pedidos"}
+                onClick={() => setTab("pedidos")}
+                icon={<Package size={15} aria-hidden />}
+                label="Mis pedidos"
+                badge={orders?.length}
+              />
+              <SidebarItem
+                active={tab === "datos"}
+                onClick={() => setTab("datos")}
+                icon={<CircleUser size={15} aria-hidden />}
+                label="Datos personales"
+              />
+            </div>
+          </aside>
+
+          {/* Content */}
+          <div className="md:col-span-9">
         <AnimatePresence mode="wait">
           {tab === "pedidos" && (
             <motion.div
@@ -208,7 +290,7 @@ export default function CuentaPage() {
               transition={{ duration: 0.2 }}
             >
               {orders === null ? (
-                <div className="bg-white rounded-2xl p-12 text-center">
+                <div className="bg-white rounded-3xl border border-neutral-200 p-12 text-center">
                   <p className="text-sm text-neutral-400 animate-pulse">
                     Cargando tus pedidos…
                   </p>
@@ -232,7 +314,7 @@ export default function CuentaPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-2xl p-6 md:p-8"
+              className="bg-white rounded-3xl border border-neutral-200 p-6 md:p-8"
             >
               <h2 className="text-lg font-bold text-neutral-900 mb-6">
                 Datos personales
@@ -251,7 +333,7 @@ export default function CuentaPage() {
                 </Field>
                 <Field
                   label="Nombre completo"
-                  icon={<User size={12} aria-hidden />}
+                  icon={<CircleUser size={12} aria-hidden />}
                 >
                   <input
                     type="text"
@@ -293,8 +375,81 @@ export default function CuentaPage() {
             </motion.div>
           )}
         </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "dark" | "accent" | "soft";
+}) {
+  const styles = {
+    dark: "bg-neutral-900 text-white",
+    accent: "bg-[#CC0000] text-white",
+    soft: "bg-neutral-100 text-neutral-900",
+  };
+  return (
+    <div className={`rounded-2xl px-4 py-3.5 ${styles[tone]}`}>
+      <p
+        className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
+          tone === "soft" ? "text-neutral-500" : "text-white/70"
+        }`}
+      >
+        {label}
+      </p>
+      <p className="text-base md:text-xl font-bold tabular-nums truncate">
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function SidebarItem({
+  active,
+  onClick,
+  icon,
+  label,
+  badge,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      role="tab"
+      aria-selected={active}
+      className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#CC0000] ${
+        active
+          ? "bg-[#CC0000] text-white shadow-md shadow-[#CC0000]/25"
+          : "text-neutral-700 hover:bg-neutral-100"
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        {icon}
+        {label}
+      </span>
+      {typeof badge === "number" && badge > 0 && (
+        <span
+          className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
+            active ? "bg-white/20" : "bg-neutral-200 text-neutral-600"
+          }`}
+        >
+          {badge}
+        </span>
+      )}
+    </button>
   );
 }
 

@@ -27,6 +27,9 @@ export function rowToVariant(v: VariantRow): Variant {
     notes: v.notes ?? undefined,
     inStock: v.in_stock,
     stockQuantity: v.stock_quantity ?? (v.in_stock ? 1 : 0),
+    comparePrice: v.compare_price_cop ?? undefined,
+    batteryHealth: v.battery_health ?? undefined,
+    conditionDetails: v.condition_details ?? undefined,
   };
 }
 
@@ -111,6 +114,11 @@ export function configRowsToSiteConfig(
       "stock_low_threshold",
       DEFAULT_SITE_CONFIG.stockLowThreshold
     ),
+    promoEnabled: get("promo_enabled", DEFAULT_SITE_CONFIG.promoEnabled),
+    promoLabel: get("promo_label", DEFAULT_SITE_CONFIG.promoLabel),
+    promoSubtitle: get("promo_subtitle", DEFAULT_SITE_CONFIG.promoSubtitle),
+    promoHeroCta: get("promo_hero_cta", DEFAULT_SITE_CONFIG.promoHeroCta),
+    promoImages: get("promo_images", DEFAULT_SITE_CONFIG.promoImages),
     sedes,
   };
 }
@@ -149,6 +157,9 @@ export function productToRows(p: Product): {
       in_stock: v.inStock,
       stock_quantity: v.stockQuantity ?? 1,
       notes: v.notes ?? null,
+      compare_price_cop: v.comparePrice ?? null,
+      battery_health: v.batteryHealth ?? null,
+      condition_details: v.conditionDetails ?? null,
       sort_order: i,
     })),
     images: p.images.map((img, i) => {
