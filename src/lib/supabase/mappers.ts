@@ -127,6 +127,13 @@ export function configRowsToSiteConfig(
       "category_showcase_overrides",
       DEFAULT_SITE_CONFIG.categoryShowcaseOverrides
     ),
+    landingTexts: {
+      // Merge: cualquier key faltante en DB cae al default. Esto evita
+      // que un seed parcial (o un campo nuevo añadido después) rompa el
+      // landing por undefined.
+      ...DEFAULT_SITE_CONFIG.landingTexts,
+      ...get("landing_texts", {} as Partial<typeof DEFAULT_SITE_CONFIG.landingTexts>),
+    },
     sedes,
   };
 }

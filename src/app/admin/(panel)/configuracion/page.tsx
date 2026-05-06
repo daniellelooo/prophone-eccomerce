@@ -14,6 +14,7 @@ import {
   Sparkles,
   Plus,
   Trash2,
+  Type,
 } from "lucide-react";
 import {
   useSiteConfigStore,
@@ -60,6 +61,9 @@ export default function AdminConfiguracionPage() {
   const [draftShowcase, setDraftShowcase] = useState(
     cfg.categoryShowcaseOverrides
   );
+
+  // Textos editables del landing
+  const [draftTexts, setDraftTexts] = useState(cfg.landingTexts);
 
   const [savedKey, setSavedKey] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -158,6 +162,253 @@ export default function AdminConfiguracionPage() {
             }
             saved={savedKey === "hero-mobile"}
           />
+        </div>
+      </Section>
+
+      {/* Textos del landing — todos los títulos editables */}
+      <Section
+        icon={<Type size={16} className="text-[#CC0000]" />}
+        title="Textos del landing"
+        desc="Edita el título grande del hero, los CTAs y los títulos de cada sección. Los campos 'Accent' se renderizan en rojo o serif italic para darle ritmo editorial."
+        onSave={() =>
+          trySave("texts", () => update({ landingTexts: draftTexts }))
+        }
+        saved={savedKey === "texts"}
+      >
+        <div className="space-y-5">
+          {/* Hero — 3 líneas + descripción + CTAs */}
+          <TextBlock title="Hero (titular gigante)">
+            <div className="grid md:grid-cols-3 gap-3">
+              <TextField
+                label="Línea 1"
+                value={draftTexts.heroLine1}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, heroLine1: v }))
+                }
+                placeholder="Los precios"
+              />
+              <TextField
+                label="Línea 2 (opcional)"
+                value={draftTexts.heroLine2}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, heroLine2: v }))
+                }
+                placeholder="más bajos"
+              />
+              <TextField
+                label="Línea 3 — accent rojo (opcional)"
+                value={draftTexts.heroLine3Accent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, heroLine3Accent: v }))
+                }
+                placeholder="en iPhone."
+              />
+            </div>
+            <TextArea
+              label="Descripción / subtítulo del hero"
+              value={draftTexts.heroDescription}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, heroDescription: v }))
+              }
+              placeholder="Sin intermediarios. Garantía oficial Apple…"
+              rows={2}
+            />
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label='CTA principal (botón rojo)'
+                value={draftTexts.heroCtaPrimary}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, heroCtaPrimary: v }))
+                }
+                placeholder="Comprar ahora"
+              />
+              <TextField
+                label="CTA secundario (botón negro WA)"
+                value={draftTexts.heroCtaSecondary}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, heroCtaSecondary: v }))
+                }
+                placeholder="Hablar con asesor"
+              />
+            </div>
+          </TextBlock>
+
+          {/* Ecosistema */}
+          <TextBlock title="Ecosistema Apple (debajo del hero)">
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.ecosystemTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, ecosystemTitle: v }))
+                }
+                placeholder="El ecosistema Apple,"
+              />
+              <TextField
+                label="Accent rojo (segunda línea)"
+                value={draftTexts.ecosystemAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, ecosystemAccent: v }))
+                }
+                placeholder="a precio reseller."
+              />
+            </div>
+          </TextBlock>
+
+          {/* El precio manda */}
+          <TextBlock title='Bento "El precio manda"'>
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.priceCommandTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, priceCommandTitle: v }))
+                }
+                placeholder="El precio"
+              />
+              <TextField
+                label="Accent (italic serif rojo)"
+                value={draftTexts.priceCommandAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, priceCommandAccent: v }))
+                }
+                placeholder="manda"
+              />
+            </div>
+            <TextField
+              label="Subtítulo"
+              value={draftTexts.priceCommandSubtitle}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, priceCommandSubtitle: v }))
+              }
+              placeholder="Sin intermediarios. Sin maquillaje."
+            />
+          </TextBlock>
+
+          {/* Productos destacados */}
+          <TextBlock title="Productos destacados (grid de 4)">
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.featuredTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, featuredTitle: v }))
+                }
+                placeholder="Los que se llevan"
+              />
+              <TextField
+                label="Accent (italic serif rojo)"
+                value={draftTexts.featuredAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, featuredAccent: v }))
+                }
+                placeholder="todos"
+              />
+            </div>
+            <TextField
+              label="Subtítulo"
+              value={draftTexts.featuredSubtitle}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, featuredSubtitle: v }))
+              }
+              placeholder="Equipos con garantía oficial Apple"
+            />
+          </TextBlock>
+
+          {/* Por qué Prophone */}
+          <TextBlock title='Sección "Por qué Prophone"'>
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.whyProphoneTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, whyProphoneTitle: v }))
+                }
+                placeholder="Lo que nos hace"
+              />
+              <TextField
+                label="Accent (italic serif rojo)"
+                value={draftTexts.whyProphoneAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, whyProphoneAccent: v }))
+                }
+                placeholder="Prophone"
+              />
+            </div>
+          </TextBlock>
+
+          {/* Regalos */}
+          <TextBlock title="Tu compra incluye (regalos)">
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.giftsTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, giftsTitle: v }))
+                }
+                placeholder="Tres regalos."
+              />
+              <TextField
+                label="Accent (italic serif rojo)"
+                value={draftTexts.giftsAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, giftsAccent: v }))
+                }
+                placeholder="Cero costo extra."
+              />
+            </div>
+            <TextField
+              label="Subtítulo"
+              value={draftTexts.giftsSubtitle}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, giftsSubtitle: v }))
+              }
+              placeholder="Solo en compras de contado"
+            />
+          </TextBlock>
+
+          {/* Reseñas */}
+          <TextBlock title="Reseñas">
+            <TextField
+              label="Título"
+              value={draftTexts.reviewsTitle}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, reviewsTitle: v }))
+              }
+              placeholder="Lo que dicen quienes ya compraron."
+            />
+          </TextBlock>
+
+          {/* CTA final */}
+          <TextBlock title="CTA final (banner rojo)">
+            <div className="grid md:grid-cols-2 gap-3">
+              <TextField
+                label="Título"
+                value={draftTexts.finalCtaTitle}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, finalCtaTitle: v }))
+                }
+                placeholder="Tu nuevo iPhone"
+              />
+              <TextField
+                label="Accent (italic serif)"
+                value={draftTexts.finalCtaAccent}
+                onChange={(v) =>
+                  setDraftTexts((d) => ({ ...d, finalCtaAccent: v }))
+                }
+                placeholder="te espera"
+              />
+            </div>
+            <TextArea
+              label="Descripción"
+              value={draftTexts.finalCtaDescription}
+              onChange={(v) =>
+                setDraftTexts((d) => ({ ...d, finalCtaDescription: v }))
+              }
+              placeholder="Más de 200K seguidores ya escogieron Prophone…"
+              rows={2}
+            />
+          </TextBlock>
         </div>
       </Section>
 
@@ -680,6 +931,76 @@ export default function AdminConfiguracionPage() {
           </p>
         </div>
       </Section>
+    </div>
+  );
+}
+
+/* ─── Subcomponentes inline para "Textos del landing" ──────────────── */
+
+function TextBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 rounded-lg border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30"
+      />
+    </div>
+  );
+}
+
+function TextArea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full px-3 py-2 rounded-lg border border-neutral-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#CC0000]/30 resize-none"
+      />
     </div>
   );
 }

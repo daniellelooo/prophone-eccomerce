@@ -143,6 +143,7 @@ export default function HomePage() {
   const promoLabel = useSiteConfigStore((s) => s.promoLabel);
   const promoHeroCta = useSiteConfigStore((s) => s.promoHeroCta);
   const featuredOffers = useSiteConfigStore((s) => s.featuredOffers);
+  const t = useSiteConfigStore((s) => s.landingTexts);
   const WA_URL = getWhatsappUrl(whatsappNumber, whatsappMsg);
 
   // Estilos del badge según el tipo configurado en admin
@@ -214,11 +215,19 @@ export default function HomePage() {
                 transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className="text-[2.6rem] leading-[1.05] md:text-6xl lg:text-7xl xl:text-[5.5rem] font-bold tracking-tight text-neutral-900 mb-6"
               >
-                Los precios
-                <br />
-                más bajos
-                <br />
-                <span className="text-[#CC0000]">en iPhone.</span>
+                {t.heroLine1}
+                {t.heroLine2 && (
+                  <>
+                    <br />
+                    {t.heroLine2}
+                  </>
+                )}
+                {t.heroLine3Accent && (
+                  <>
+                    <br />
+                    <span className="text-[#CC0000]">{t.heroLine3Accent}</span>
+                  </>
+                )}
               </motion.h1>
 
               <motion.p
@@ -227,8 +236,7 @@ export default function HomePage() {
                 transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
                 className="text-base md:text-lg text-neutral-600 mb-8 max-w-md leading-relaxed"
               >
-                Sin intermediarios. Garantía oficial Apple. Crédito con Banco de Bogotá.
-                El reseller número 1 de Medellín.
+                {t.heroDescription}
               </motion.p>
 
               {/* CTA promo destacado — solo cuando hay campaña activa */}
@@ -260,7 +268,7 @@ export default function HomePage() {
                   href="/catalogo"
                   className="group inline-flex items-center justify-center gap-2 bg-[#CC0000] text-white px-7 py-4 sm:py-[18px] rounded-2xl font-semibold text-base hover:bg-[#A00000] active:scale-95 transition-all shadow-lg shadow-[#CC0000]/30 ring-1 ring-[#CC0000]/40"
                 >
-                  Comprar ahora
+                  {t.heroCtaPrimary}
                   <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <a
@@ -277,7 +285,7 @@ export default function HomePage() {
                   >
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488" />
                   </svg>
-                  Hablar con asesor
+                  {t.heroCtaSecondary}
                 </a>
               </motion.div>
 
@@ -377,10 +385,16 @@ export default function HomePage() {
             <AnimatedSection className="mb-9 md:flex md:items-end md:justify-between">
               <div className="max-w-xl">
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-2">
-                  El precio <em className="font-serif text-[#CC0000] font-normal">manda</em>.
+                  {t.priceCommandTitle}{" "}
+                  {t.priceCommandAccent && (
+                    <em className="font-serif text-[#CC0000] font-normal">
+                      {t.priceCommandAccent}
+                    </em>
+                  )}
+                  .
                 </h2>
                 <p className="text-neutral-500 text-sm md:text-base">
-                  Sin intermediarios. Sin maquillaje.
+                  {t.priceCommandSubtitle}
                 </p>
               </div>
               <Link
@@ -490,9 +504,15 @@ export default function HomePage() {
           <AnimatedSection className="flex items-end justify-between mb-9 px-5 md:px-12">
             <div>
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 mb-1 leading-[1.05]">
-                Los que se llevan <em className="font-serif font-normal text-[#CC0000]">todos</em>.
+                {t.featuredTitle}{" "}
+                {t.featuredAccent && (
+                  <em className="font-serif font-normal text-[#CC0000]">
+                    {t.featuredAccent}
+                  </em>
+                )}
+                .
               </h2>
-              <p className="text-neutral-500 text-sm">Equipos con garantía oficial Apple</p>
+              <p className="text-neutral-500 text-sm">{t.featuredSubtitle}</p>
             </div>
             <Link
               href="/catalogo"
@@ -515,7 +535,13 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-5 md:px-12">
           <AnimatedSection className="mb-9 max-w-2xl">
             <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05]">
-              Lo que nos hace <em className="font-serif font-normal text-[#CC0000]">Prophone</em>.
+              {t.whyProphoneTitle}{" "}
+              {t.whyProphoneAccent && (
+                <em className="font-serif font-normal text-[#CC0000]">
+                  {t.whyProphoneAccent}
+                </em>
+              )}
+              .
             </h2>
           </AnimatedSection>
 
@@ -605,9 +631,14 @@ export default function HomePage() {
           <AnimatedSection className="mb-9 md:flex md:items-end md:justify-between">
             <div>
               <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05] mb-2">
-                Tres regalos. <em className="font-serif font-normal text-[#CC0000]">Cero costo extra.</em>
+                {t.giftsTitle}{" "}
+                {t.giftsAccent && (
+                  <em className="font-serif font-normal text-[#CC0000]">
+                    {t.giftsAccent}
+                  </em>
+                )}
               </h2>
-              <p className="text-neutral-500 text-sm">Solo en compras de contado</p>
+              <p className="text-neutral-500 text-sm">{t.giftsSubtitle}</p>
             </div>
           </AnimatedSection>
 
@@ -791,7 +822,7 @@ export default function HomePage() {
             <div className="lg:col-span-8">
               <AnimatedSection className="mb-8">
                 <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05]">
-                  Lo que dicen quienes ya compraron.
+                  {t.reviewsTitle}
                 </h2>
               </AnimatedSection>
 
@@ -924,10 +955,16 @@ export default function HomePage() {
             <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-white/10 blur-3xl pointer-events-none" />
             <AnimatedSection className="relative max-w-2xl mx-auto text-white">
               <h2 className="text-4xl md:text-7xl font-bold tracking-tight mb-5 leading-[1.02]">
-                Tu nuevo iPhone <em className="font-serif font-normal opacity-80">te espera</em>.
+                {t.finalCtaTitle}{" "}
+                {t.finalCtaAccent && (
+                  <em className="font-serif font-normal opacity-80">
+                    {t.finalCtaAccent}
+                  </em>
+                )}
+                .
               </h2>
               <p className="text-white/70 text-base md:text-lg mb-8 max-w-md mx-auto leading-relaxed">
-                Más de 200K seguidores ya escogieron Prophone. ¿Listo para sumarte?
+                {t.finalCtaDescription}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <a

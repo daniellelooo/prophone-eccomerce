@@ -33,6 +33,12 @@ const IMAGE_PANEL_BG = "bg-white";
 export default function CategoryShowcase() {
   const products = useCatalogStore((s) => s.products);
   const overrides = useSiteConfigStore((s) => s.categoryShowcaseOverrides);
+  const ecosystemTitle = useSiteConfigStore(
+    (s) => s.landingTexts.ecosystemTitle
+  );
+  const ecosystemAccent = useSiteConfigStore(
+    (s) => s.landingTexts.ecosystemAccent
+  );
 
   const cards = useMemo(() => {
     return CATEGORIES.map((cat) => {
@@ -79,8 +85,10 @@ export default function CategoryShowcase() {
                 id="category-showcase-heading"
                 className="text-3xl md:text-5xl font-bold tracking-tight text-neutral-900 leading-[1.05]"
               >
-                El ecosistema Apple,
-                <span className="block text-[#CC0000]">a precio reseller.</span>
+                {ecosystemTitle}
+                {ecosystemAccent && (
+                  <span className="block text-[#CC0000]">{ecosystemAccent}</span>
+                )}
               </h2>
             </div>
             <Link

@@ -43,6 +43,55 @@ export type CategoryShowcaseOverrides = {
   accesorios: string;
 };
 
+/**
+ * Textos editables del landing. Cada bloque permite definir un título base
+ * (negro, sans bold) y un "accent" — generalmente la última frase, que se
+ * renderiza en color o italic serif para darle ritmo editorial.
+ *
+ * Si un campo se deja vacío, se usa el default (lo que está actualmente
+ * hardcoded en el landing). Esto permite migrar progresivamente sin romper.
+ */
+export type LandingTexts = {
+  // Hero principal
+  heroLine1: string;
+  heroLine2: string;
+  heroLine3Accent: string;
+  heroDescription: string;
+  heroCtaPrimary: string;
+  heroCtaSecondary: string;
+
+  // CategoryShowcase ("El ecosistema Apple, a precio reseller.")
+  ecosystemTitle: string;
+  ecosystemAccent: string;
+
+  // "El precio manda."
+  priceCommandTitle: string;
+  priceCommandAccent: string;
+  priceCommandSubtitle: string;
+
+  // "Los que se llevan todos."
+  featuredTitle: string;
+  featuredAccent: string;
+  featuredSubtitle: string;
+
+  // "Lo que nos hace Prophone."
+  whyProphoneTitle: string;
+  whyProphoneAccent: string;
+
+  // "Tres regalos. Cero costo extra."
+  giftsTitle: string;
+  giftsAccent: string;
+  giftsSubtitle: string;
+
+  // "Lo que dicen quienes ya compraron."
+  reviewsTitle: string;
+
+  // CTA final ("Tu nuevo iPhone te espera.")
+  finalCtaTitle: string;
+  finalCtaAccent: string;
+  finalCtaDescription: string;
+};
+
 export type SiteConfig = {
   whatsappNumber: string;
   whatsappDefaultMessage: string;
@@ -86,6 +135,8 @@ export type SiteConfig = {
   featuredOffers: FeaturedOffer[];
   /** Override de imagen por categoría en CategoryShowcase. Vacío = usa producto destacado. */
   categoryShowcaseOverrides: CategoryShowcaseOverrides;
+  /** Textos editables de cada bloque del landing (título, accent, subtítulo). */
+  landingTexts: LandingTexts;
 };
 
 export const DEFAULT_SITE_CONFIG: SiteConfig = {
@@ -184,6 +235,33 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     watch: "",
     accesorios: "",
   },
+  landingTexts: {
+    heroLine1: "Los precios",
+    heroLine2: "más bajos",
+    heroLine3Accent: "en iPhone.",
+    heroDescription:
+      "Sin intermediarios. Garantía oficial Apple. Crédito con Banco de Bogotá. El reseller número 1 de Medellín.",
+    heroCtaPrimary: "Comprar ahora",
+    heroCtaSecondary: "Hablar con asesor",
+    ecosystemTitle: "El ecosistema Apple,",
+    ecosystemAccent: "a precio reseller.",
+    priceCommandTitle: "El precio",
+    priceCommandAccent: "manda",
+    priceCommandSubtitle: "Sin intermediarios. Sin maquillaje.",
+    featuredTitle: "Los que se llevan",
+    featuredAccent: "todos",
+    featuredSubtitle: "Equipos con garantía oficial Apple",
+    whyProphoneTitle: "Lo que nos hace",
+    whyProphoneAccent: "Prophone",
+    giftsTitle: "Tres regalos.",
+    giftsAccent: "Cero costo extra.",
+    giftsSubtitle: "Solo en compras de contado",
+    reviewsTitle: "Lo que dicen quienes ya compraron.",
+    finalCtaTitle: "Tu nuevo iPhone",
+    finalCtaAccent: "te espera",
+    finalCtaDescription:
+      "Más de 200K seguidores ya escogieron Prophone. ¿Listo para sumarte?",
+  },
 };
 
 type ConfigState = SiteConfig & {
@@ -228,6 +306,7 @@ const CONFIG_KEYS = {
   promoImages: "promo_images",
   featuredOffers: "featured_offers",
   categoryShowcaseOverrides: "category_showcase_overrides",
+  landingTexts: "landing_texts",
 } as const;
 
 type ConfigKey = keyof typeof CONFIG_KEYS;
