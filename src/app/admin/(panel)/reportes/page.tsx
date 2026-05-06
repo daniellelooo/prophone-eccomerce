@@ -17,7 +17,6 @@ type OrderRow = {
   total_cop: number;
   created_at: string;
   status: string;
-  payment_provider: string | null;
 };
 
 type ItemRow = {
@@ -33,14 +32,11 @@ type ProductMeta = {
   category: string;
 };
 
-type ChannelKey = "all" | "web" | "local";
-
 export default function AdminReportesPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [productMeta, setProductMeta] = useState<Map<string, ProductMeta>>(new Map());
   const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [channel, setChannel] = useState<ChannelKey>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +48,7 @@ export default function AdminReportesPage() {
         const [ordersRes, itemsRes, productsRes] = await Promise.all([
           supabase
             .from("orders")
-            .select("id, total_cop, created_at, status, payment_provider"),
+            .select("id, total_cop, created_at, status"),
           supabase
             .from("order_items")
             .select("order_id, product_id, product_name, quantity, unit_price_cop"),
@@ -85,12 +81,10 @@ export default function AdminReportesPage() {
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       if (o.status === "cancelled") return false;
-      if (channel === "web" && o.payment_provider === "local") return false;
-      if (channel === "local" && o.payment_provider !== "local") return false;
       const d = new Date(o.created_at.replace(" ", "T"));
       return d.getFullYear() === year;
     });
-  }, [orders, channel, year]);
+  }, [orders, year]);
 
   const filteredOrderIds = useMemo(
     () => new Set(filteredOrders.map((o) => o.id)),
@@ -189,7 +183,7 @@ export default function AdminReportesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reporte-${year}-${channel}.csv`;
+    a.download = `reporte-${year}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -248,27 +242,6 @@ export default function AdminReportesPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="inline-flex bg-white border border-neutral-200 rounded-xl p-0.5">
-            {(
-              [
-                { k: "all", l: "Todo" },
-                { k: "web", l: "Web" },
-                { k: "local", l: "Local" },
-              ] as { k: ChannelKey; l: string }[]
-            ).map((c) => (
-              <button
-                key={c.k}
-                onClick={() => setChannel(c.k)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  channel === c.k
-                    ? "bg-neutral-900 text-white"
-                    : "text-neutral-500 hover:text-neutral-800"
-                }`}
-              >
-                {c.l}
-              </button>
-            ))}
           </div>
           <button
             onClick={exportCsv}

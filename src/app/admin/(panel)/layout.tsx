@@ -14,8 +14,6 @@ import {
   Settings,
   Sparkles,
   ShoppingBag,
-  Store,
-  TrendingUp,
   Users,
   UserCog,
   Menu,
@@ -28,48 +26,23 @@ import { useSiteConfigStore } from "@/lib/site-config-store";
 type NavItem = { href: string; label: string; icon: React.ElementType; badgeKey?: string };
 
 const NAV_ADMIN: NavItem[] = [
-  { href: "/admin/dashboard", label: "Dashboard web", icon: BarChart3 },
-  { href: "/admin/ventas-local", label: "Ventas local", icon: Store },
+  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/admin/reportes", label: "Reportes", icon: FileBarChart },
   { href: "/admin/productos", label: "Productos", icon: Box, badgeKey: "lowStock" },
   { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag, badgeKey: "pending" },
   { href: "/admin/clientes", label: "Clientes", icon: Users },
-  { href: "/admin/usuarios", label: "Equipo", icon: UserCog },
+  { href: "/admin/usuarios", label: "Admins", icon: UserCog },
   { href: "/admin/promociones", label: "Promociones", icon: Sparkles },
   { href: "/admin/sedes", label: "Sedes", icon: MapPin },
   { href: "/admin/configuracion", label: "Configuración", icon: Settings },
 ];
 
-const NAV_GESTOR: NavItem[] = [
-  { href: "/admin/productos", label: "Productos", icon: Box },
-  { href: "/admin/ordenes", label: "Pedidos", icon: ShoppingBag },
-];
-
-const NAV_VENDEDOR: NavItem[] = [
-  { href: "/admin/mis-ventas", label: "Mis ventas", icon: TrendingUp },
-];
-
-const PANEL_LABELS: Record<string, string> = {
-  admin: "Admin",
-  gestor_inventario: "Gestor",
-  vendedor: "Vendedor",
-};
-
 function navForRole(role: string): NavItem[] {
   if (role === "admin") return NAV_ADMIN;
-  if (role === "gestor_inventario") return NAV_GESTOR;
-  if (role === "vendedor") return NAV_VENDEDOR;
   return [];
 }
 
-/** Rutas permitidas que no aparecen en el sidebar pero a las que el rol puede acceder. */
-const EXTRA_ALLOWED: Record<string, string[]> = {
-  admin: ["/admin/vendedor"],
-};
-
-function defaultRouteForRole(role: string): string {
-  if (role === "vendedor") return "/admin/mis-ventas";
-  if (role === "gestor_inventario") return "/admin/productos";
+function defaultRouteForRole(_role: string): string {
   return "/admin/dashboard";
 }
 
@@ -112,7 +85,7 @@ export default function AdminPanelLayout({
 
       const userRole = profile?.role ?? "cliente";
 
-      if (userRole === "cliente" || !profile) {
+      if (userRole !== "admin" || !profile) {
         router.replace("/");
         setAuthChecked(true);
         return;
@@ -155,7 +128,6 @@ export default function AdminPanelLayout({
           .from("orders")
           .select("id", { count: "exact", head: true })
           .eq("status", "pending")
-          .neq("payment_provider", "local"),
       ]);
       if (cancelled) return;
       setBadges({
@@ -171,18 +143,13 @@ export default function AdminPanelLayout({
     };
   }, [authed, lowStockThreshold]);
 
-  // Route protection: redirect to role's default if on unauthorized route
+  // Route protection: redirect to default if on unauthorized route
   useEffect(() => {
     if (!authed || !pathname) return;
     const nav = navForRole(role);
-    const extras = EXTRA_ALLOWED[role] ?? [];
-    const allowed =
-      nav.some(
-        (item) => pathname === item.href || pathname.startsWith(item.href + "/")
-      ) ||
-      extras.some(
-        (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
-      );
+    const allowed = nav.some(
+      (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+    );
     if (!allowed) {
       router.replace(defaultRouteForRole(role));
     }
@@ -207,7 +174,6 @@ export default function AdminPanelLayout({
   if (!authed) return null;
 
   const nav = navForRole(role);
-  const panelLabel = PANEL_LABELS[role] ?? "Panel";
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] flex">
@@ -227,7 +193,7 @@ export default function AdminPanelLayout({
           />
           <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-wider text-neutral-500 font-semibold">
-              {panelLabel}
+              Admin
             </p>
             <p className="text-sm font-bold truncate">
               {displayName || "Prophone"}
@@ -277,16 +243,14 @@ export default function AdminPanelLayout({
         </nav>
 
         <div className="p-3 space-y-1 border-t border-white/10">
-          {role !== "vendedor" && (
-            <Link
-              href="/"
-              target="_blank"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
-            >
-              <ExternalLink size={15} />
-              Ver tienda pública
-            </Link>
-          )}
+          <Link
+            href="/"
+            target="_blank"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
+          >
+            <ExternalLink size={15} />
+            Ver tienda pública
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-neutral-400 hover:bg-white/5 transition"
@@ -316,19 +280,15 @@ export default function AdminPanelLayout({
           >
             <Menu size={18} />
           </button>
-          <p className="text-sm font-semibold">Prophone {panelLabel}</p>
-          {role !== "vendedor" ? (
-            <Link
-              href="/"
-              target="_blank"
-              className="p-2 rounded-full hover:bg-neutral-100"
-              aria-label="Ver tienda"
-            >
-              <ExternalLink size={16} />
-            </Link>
-          ) : (
-            <div className="w-9" />
-          )}
+          <p className="text-sm font-semibold">Prophone Admin</p>
+          <Link
+            href="/"
+            target="_blank"
+            className="p-2 rounded-full hover:bg-neutral-100"
+            aria-label="Ver tienda"
+          >
+            <ExternalLink size={16} />
+          </Link>
         </header>
 
         <main className="flex-1 p-5 md:p-10 max-w-7xl w-full mx-auto">
